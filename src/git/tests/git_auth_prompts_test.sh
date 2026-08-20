@@ -29,11 +29,11 @@ nds_git_auth_prompts_selfcheck() {
 
     cfg[GIT_ACCESS_HOST]="github.com"
     cfg[GIT_ACCESS_OWNER]="CodeAnthem"
-    cfg[GIT_ACCESS_REPO]="dps_swarm"
+    cfg[GIT_ACCESS_REPO]="dp_cluster"
     if ! nds_git_auth_prompts cfg \
         || [[ "$got_host" != "github.com" ]] \
         || [[ "$got_owner" != "CodeAnthem" ]] \
-        || [[ "$got_repo" != "dps_swarm" ]]; then
+        || [[ "$got_repo" != "dp_cluster" ]]; then
         unset -f nds_git_auth_wizard_step_repo 2>/dev/null || true
         [[ -n "$saved_wizard" ]] && eval "$saved_wizard"
         return 1

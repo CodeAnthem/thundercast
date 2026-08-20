@@ -131,7 +131,7 @@ _nds_install_write_mounts_nix() {
     {
         printf '%s\n' \
             '# ==================================================================================================' \
-            "# dps_swarm - ${hostname}" \
+            "# NDS - ${hostname}" \
             '# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::' \
             "# Date:          Created: $(date -u +%Y-%m-%d) | Modified: $(date -u +%Y-%m-%d)" \
             '# Description:   NDS install-time mounts (by-uuid) - commit and push after install' \

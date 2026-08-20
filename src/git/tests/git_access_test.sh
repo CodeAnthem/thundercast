@@ -8,7 +8,7 @@
 # Description: Assert normalize + wants_gh helpers (called from suite_git when present).
 nds_git_access_logic_selfcheck() {
     local -A cfg=()
-    cfg[FLAKE_REPO_URL]="https://github.com/CodeAnthem/dps_swarm.git"
+    cfg[FLAKE_REPO_URL]="https://github.com/CodeAnthem/dp_cluster.git"
     if ! nds_git_access_logic_normalize cfg; then
         return 1
     fi

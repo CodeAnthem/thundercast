@@ -182,7 +182,7 @@ See `src/tests/fixtures/nds-remote-preset.sh` for a minimal example.
 
 ```bash
 export NDS_ACTION=installFlake
-export NDS_FLAKE_REPO_URL="git@github.com:ORG/dps_swarm.git"
+export NDS_FLAKE_REPO_URL="git@github.com:ORG/dp_cluster.git"
 export NDS_FLAKE_HOST="worker-01"
 export NDS_DISK_TARGET="/dev/nvme0n1"
 export NDS_GIT_IMPORT_KEY_PATH="/tmp/nds-ssh-key"
@@ -204,18 +204,18 @@ Per-repo git access (URL-keyed) — only arrays in the contract. A flake restore
 
 ```bash
 declare -gA NDS_GIT_METHOD=(
-  ['git@github.com:CodeAnthem/dps_swarm.git']='account'
+  ['git@github.com:CodeAnthem/dp_cluster.git']='account'
   ['git@github.com:CodeAnthem/thundercast.git']='account'
   ['git@github.com:CodeAnthem/thundercore.git']='account'
 )
 declare -gA NDS_GIT_KEY_PATH=(
-  ['git@github.com:CodeAnthem/dps_swarm.git']='/root/.ssh/git-codeanthem-key'
+  ['git@github.com:CodeAnthem/dp_cluster.git']='/root/.ssh/git-codeanthem-key'
   ['git@github.com:CodeAnthem/thundercast.git']='/root/.ssh/git-codeanthem-key'
   ['git@github.com:CodeAnthem/thundercore.git']='/root/.ssh/git-codeanthem-key'
 )
 # Optional: paste key material per URL (never restore-exported). Use $'...' for newlines.
 # declare -gA NDS_GIT_KEY_BODY=(
-#   ['git@github.com:CodeAnthem/dps_swarm.git']=$'-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----'
+#   ['git@github.com:CodeAnthem/dp_cluster.git']=$'-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----'
 # )
 ```
 
@@ -253,11 +253,11 @@ Per-URL maps (restore / unattended):
 
 ```bash
 declare -gA NDS_GIT_EXISTING_KEY=(
-  ['git@github.com:CodeAnthem/dps_swarm.git']='true'
+  ['git@github.com:CodeAnthem/dp_cluster.git']='true'
   ['git@github.com:CodeAnthem/thundercast.git']='true'
 )
 declare -gA NDS_GIT_KEY_MODE=(
-  ['git@github.com:CodeAnthem/dps_swarm.git']='paste'
+  ['git@github.com:CodeAnthem/dp_cluster.git']='paste'
   ['git@github.com:CodeAnthem/thundercast.git']='path'
 )
 ```

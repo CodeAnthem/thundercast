@@ -3,7 +3,7 @@ description: NDS src structure, naming, lib vs tools, git subfeatures — catch 
 alwaysApply: true
 ---
 
-# NDS `src` conventions (dps_bootstrap)
+# NDS `src` conventions (ThunderCast)
 
 **Source of truth:** `internal-context/nds-src-conventions.md` (gitignored; whole `src/` tree, not git-only). Do not dump agent rules into `src/README.md`.
 

@@ -16,7 +16,7 @@ nds_install_aa_bridge_selfcheck() {
     local -A cfg=([DISK_TARGET]="/dev/sda")
     nds_feature_require_keys cfg DISK_TARGET || return 1
 
-    cfg[FLAKE_REPO_URL]="git@github.com:CodeAnthem/dps_swarm.git"
+    cfg[FLAKE_REPO_URL]="git@github.com:CodeAnthem/dp_cluster.git"
     nds_cfg_aa_bind cfg
     nds_flake_gate_logic_existing_location || {
         nds_cfg_aa_unbind

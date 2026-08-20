@@ -130,7 +130,7 @@ nds_uismoke_walk() {
     _nds_uismoke_pause "7/7 — git collision + hints (no gh network)"
     nds_git_ui_ask_gh_title_collision \
         "Smoke: pretend deploy key title collision on owner/repo." || true
-    nds_git_ui_deploy_key_hint "CodeAnthem" "dps_swarm"
+    nds_git_ui_deploy_key_hint "CodeAnthem" "dp_cluster"
     nds_git_ui_offer_clear_gh_session || true
     nds_app_session_ui_showFailure 42 || true
     _nds_uismoke_step_ok "git collision / hints / failure display"

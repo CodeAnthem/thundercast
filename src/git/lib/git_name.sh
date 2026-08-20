@@ -23,7 +23,7 @@ _nds_git_deploy_slug_part() {
 # - owner: <String> Git owner/org
 # - repo:  <String> Repository name
 # Returns:
-# - <String> slug e.g. codeanthem-dps-swarm (stdout)
+# - <String> slug e.g. codeanthem-dp-cluster (stdout)
 nds_git_repo_slug() {
     local owner="$1" repo="$2"
     printf '%s-%s\n' "$(_nds_git_slug_part "$owner")" "$(_nds_git_slug_part "$repo")"

@@ -421,8 +421,8 @@ suite_install() {
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ flake.lock: thundercast parse failed"
     fi
-    NDS_FLAKE_REPO_URL="git@github.com:CodeAnthem/dps_swarm.git"
-    if _nds_git_is_install_leaf CodeAnthem dps_swarm \
+    NDS_FLAKE_REPO_URL="git@github.com:CodeAnthem/dp_cluster.git"
+    if _nds_git_is_install_leaf CodeAnthem dp_cluster \
         && ! _nds_git_is_install_leaf CodeAnthem thundercast; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ install leaf: write-key match is the flake URL only"
@@ -543,8 +543,8 @@ suite_install() {
     git -C "$probe_git" config user.email nds@localhost
     git -C "$probe_git" config user.name NDS
     git -C "$probe_git" commit --quiet --allow-empty -m init
-    nds_cfg_set FLAKE_REPO_URL "git@github.com:CodeAnthem/dps_swarm.git"
-    export NDS_FLAKE_REPO_URL="git@github.com:CodeAnthem/dps_swarm.git"
+    nds_cfg_set FLAKE_REPO_URL "git@github.com:CodeAnthem/dp_cluster.git"
+    export NDS_FLAKE_REPO_URL="git@github.com:CodeAnthem/dp_cluster.git"
     _saved_push="$(declare -f _nds_install_flake_git_for_url)"
     _nds_install_flake_git_for_url() {
         case "$*" in
@@ -592,8 +592,8 @@ suite_install() {
     _saved_git="$(declare -f nds_git_clone)"
     _saved_run="$(declare -f nds_git_access_run)"
     _saved_runtime="${NDS_RUNTIME_DIR:-}"
-    nds_cfg_set FLAKE_REPO_URL "git@github.com:CodeAnthem/dps_swarm.git"
-    export NDS_FLAKE_REPO_URL="git@github.com:CodeAnthem/dps_swarm.git"
+    nds_cfg_set FLAKE_REPO_URL "git@github.com:CodeAnthem/dp_cluster.git"
+    export NDS_FLAKE_REPO_URL="git@github.com:CodeAnthem/dp_cluster.git"
     nds_cfg_set GIT_ACCESS_STRATEGY ""
     nds_cfg_set GIT_EXISTING_KEY ""
     nds_git_access_run() {
@@ -605,8 +605,8 @@ suite_install() {
         return 0
     }
     if nds_cast_ensure_access "https://github.com/CodeAnthem/thundercast.git" \
-        && [[ "$(nds_cfg_get FLAKE_REPO_URL)" == "git@github.com:CodeAnthem/dps_swarm.git" ]] \
-        && [[ "${NDS_FLAKE_REPO_URL}" == "git@github.com:CodeAnthem/dps_swarm.git" ]] \
+        && [[ "$(nds_cfg_get FLAKE_REPO_URL)" == "git@github.com:CodeAnthem/dp_cluster.git" ]] \
+        && [[ "${NDS_FLAKE_REPO_URL}" == "git@github.com:CodeAnthem/dp_cluster.git" ]] \
         && [[ -z "$(nds_cfg_get GIT_ACCESS_STRATEGY)" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ cast access: catalog wizard does not steal FLAKE_REPO_URL or GIT_ACCESS_STRATEGY"

@@ -8,7 +8,7 @@
 suite_standalone() {
     local out parsed host owner repo
 
-    out=$(nds_git_owner_slug "https://github.com/CodeAnthem/dps_swarm.git")
+    out=$(nds_git_owner_slug "https://github.com/CodeAnthem/dp_cluster.git")
     if [[ "$out" == "codeanthem" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ nds_git_owner_slug: extracts owner slug"
@@ -17,13 +17,13 @@ suite_standalone() {
         console "  ✗ nds_git_owner_slug: expected codeanthem got $out"
     fi
 
-    out=$(nds_git_repo_slug "CodeAnthem" "dps_swarm")
-    if [[ "$out" == "codeanthem-dps-swarm" ]]; then
+    out=$(nds_git_repo_slug "CodeAnthem" "dp_cluster")
+    if [[ "$out" == "codeanthem-dp-cluster" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ nds_git_repo_slug: normalizes owner and repo"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ nds_git_repo_slug: expected codeanthem-dps-swarm got $out"
+        console "  ✗ nds_git_repo_slug: expected codeanthem-dp-cluster got $out"
     fi
 
     out=$(nds_git_deploy_key_basename "CodeAnthem" "thundercast")

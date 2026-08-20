@@ -28,8 +28,8 @@ suite_git() {
         console "  ✗ git_auth_prompts: AA keys + wizard dispatch"
     fi
 
-    out=$(nds_git_normalize_url "https://github.com/CodeAnthem/dps_swarm.git")
-    if [[ "$out" == "git@github.com:CodeAnthem/dps_swarm.git" ]]; then
+    out=$(nds_git_normalize_url "https://github.com/CodeAnthem/dp_cluster.git")
+    if [[ "$out" == "git@github.com:CodeAnthem/dp_cluster.git" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ normalize_url: HTTPS → SSH (underscore repo name)"
     else
@@ -38,8 +38,8 @@ suite_git() {
     fi
 
     declare -gA NDS_GIT_METHOD=()
-    nds_git_access_set method "https://github.com/CodeAnthem/dps_swarm.git" "account"
-    if [[ "$(nds_git_access_get method "git@github.com:CodeAnthem/dps_swarm.git")" == "account" ]]; then
+    nds_git_access_set method "https://github.com/CodeAnthem/dp_cluster.git" "account"
+    if [[ "$(nds_git_access_get method "git@github.com:CodeAnthem/dp_cluster.git")" == "account" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ access map: same key for https and ssh forms"
     else
@@ -53,11 +53,11 @@ suite_git() {
     NDS_GIT_SESSION_KEY_PATH="$rec_key"
     NDS_GIT_METHOD=()
     NDS_GIT_KEY_PATH=()
-    _nds_git_record_url_access "git@github.com:CodeAnthem/dps_swarm.git"
+    _nds_git_record_url_access "git@github.com:CodeAnthem/dp_cluster.git"
     _nds_git_record_url_access "git@github.com:CodeAnthem/thundercast.git"
-    if [[ "$(nds_git_access_get method "git@github.com:CodeAnthem/dps_swarm.git")" == "import" ]] \
+    if [[ "$(nds_git_access_get method "git@github.com:CodeAnthem/dp_cluster.git")" == "import" ]] \
        && [[ "$(nds_git_access_get method "git@github.com:CodeAnthem/thundercast.git")" == "import" ]] \
-       && [[ "$(nds_git_access_get key_path "git@github.com:CodeAnthem/dps_swarm.git")" == "$rec_key" ]]; then
+       && [[ "$(nds_git_access_get key_path "git@github.com:CodeAnthem/dp_cluster.git")" == "$rec_key" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ record closure access: every URL gets method + key path"
     else
@@ -69,9 +69,9 @@ suite_git() {
     NDS_GIT_METHOD=()
     NDS_GIT_KEY_PATH=()
 
-    parsed=$(_nds_git_url_parse "https://github.com/CodeAnthem/dps_swarm.git")
+    parsed=$(_nds_git_url_parse "https://github.com/CodeAnthem/dp_cluster.git")
     IFS=$'\t' read -r host owner repo <<< "$parsed"
-    if [[ "$host" == "github.com" && "$owner" == "CodeAnthem" && "$repo" == "dps_swarm" ]]; then
+    if [[ "$host" == "github.com" && "$owner" == "CodeAnthem" && "$repo" == "dp_cluster" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ _nds_git_url_parse: https github URL"
     else
@@ -106,13 +106,13 @@ suite_git() {
         console "  ✗ _nds_git_url_toSsh: git+ssh:// normalize got $out"
     fi
 
-    out="$(nds_git_url_display "git@github.com:CodeAnthem/dps_swarm.git")"
-    if [[ "$out" == "github.com/CodeAnthem/dps_swarm" ]]; then
+    out="$(nds_git_url_display "git@github.com:CodeAnthem/dp_cluster.git")"
+    if [[ "$out" == "github.com/CodeAnthem/dp_cluster" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ url_display: host/owner/repo"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ url_display: expected github.com/CodeAnthem/dps_swarm got $out"
+        console "  ✗ url_display: expected github.com/CodeAnthem/dp_cluster got $out"
     fi
 
     tmpdir=$(mktemp -d)
@@ -193,7 +193,7 @@ suite_git() {
     fi
 
     CONFIG_DATA[FLAKE_HOST]="control-toolkit"
-    CONFIG_DATA[FLAKE_REPO_URL]="git@github.com:CodeAnthem/dps_swarm.git"
+    CONFIG_DATA[FLAKE_REPO_URL]="git@github.com:CodeAnthem/dp_cluster.git"
     if [[ "$(nds_git_owner_slug "${CONFIG_DATA[FLAKE_REPO_URL]}")" == "codeanthem" ]] \
        && [[ "$(nds_git_cfg_owner_slug)" == "codeanthem" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
@@ -230,14 +230,14 @@ suite_git() {
     fi
 
     if declare -f nds_git_deploy_key_basename &>/dev/null; then
-        if [[ "$(nds_git_deploy_key_basename CodeAnthem dps_swarm)" == "nds_deploy_codeanthem_dps_swarm" ]]; then
+        if [[ "$(nds_git_deploy_key_basename CodeAnthem dp_cluster)" == "nds_deploy_codeanthem_dp_cluster" ]]; then
             TEST_PASSED=$((TEST_PASSED + 1))
             console "  ✓ deploy_key_basename: nds_deploy_owner_repo"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
-            console "  ✗ deploy_key_basename: expected nds_deploy_codeanthem_dps_swarm"
+            console "  ✗ deploy_key_basename: expected nds_deploy_codeanthem_dp_cluster"
         fi
-        if [[ "$(nds_git_deploy_key_title CodeAnthem dps_swarm)" == "nds_control-toolkit" ]]; then
+        if [[ "$(nds_git_deploy_key_title CodeAnthem dp_cluster)" == "nds_control-toolkit" ]]; then
             TEST_PASSED=$((TEST_PASSED + 1))
             console "  ✓ deploy_key_title: nds_<hostname> on GitHub"
         else
@@ -308,8 +308,8 @@ LOCK
     fi
 
     if declare -f nds_git_deploy_key_register_url &>/dev/null; then
-        register_url="$(nds_git_deploy_key_register_url github.com CodeAnthem dps_swarm)"
-        if [[ "$register_url" == "https://github.com/CodeAnthem/dps_swarm/settings/keys" ]]; then
+        register_url="$(nds_git_deploy_key_register_url github.com CodeAnthem dp_cluster)"
+        if [[ "$register_url" == "https://github.com/CodeAnthem/dp_cluster/settings/keys" ]]; then
             TEST_PASSED=$((TEST_PASSED + 1))
             console "  ✓ deploy_key_register_url: GitHub repo settings"
         else
@@ -383,9 +383,9 @@ LOCK
     fi
     unset NDS_GIT_IMPORT_KEY NDS_GIT_SESSION_KEY_PATH
 
-    NDS_GIT_KEY_BODY['git@github.com:CodeAnthem/dps_swarm.git']="$(cat "$key_src")"
-    if nds_git_access_materialize_key "git@github.com:CodeAnthem/dps_swarm.git" \
-        && [[ -f "${tmpdir}/nds_imported_codeanthem_dps_swarm" ]]; then
+    NDS_GIT_KEY_BODY['git@github.com:CodeAnthem/dp_cluster.git']="$(cat "$key_src")"
+    if nds_git_access_materialize_key "git@github.com:CodeAnthem/dp_cluster.git" \
+        && [[ -f "${tmpdir}/nds_imported_codeanthem_dp_cluster" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ access_materialize_key: NDS_GIT_KEY_BODY → imported path"
     else
@@ -401,13 +401,13 @@ LOCK
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ export_maps: omits NDS_GIT_KEY_BODY"
     fi
-    unset 'NDS_GIT_KEY_BODY[git@github.com:CodeAnthem/dps_swarm.git]'
-    unset 'NDS_GIT_KEY_PATH[git@github.com:CodeAnthem/dps_swarm.git]'
+    unset 'NDS_GIT_KEY_BODY[git@github.com:CodeAnthem/dp_cluster.git]'
+    unset 'NDS_GIT_KEY_PATH[git@github.com:CodeAnthem/dp_cluster.git]'
 
-    dest="$(nds_git_key_dest_for_import "git@github.com:CodeAnthem/dps_swarm.git" "deploy-this")"
-    out="$(nds_git_key_dest_for_import "git@github.com:CodeAnthem/dps_swarm.git" "account-all")"
-    if [[ "$dest" == "${tmpdir}/nds_deploy_codeanthem_dps_swarm" \
-        && "$out" == "${tmpdir}/nds_imported_codeanthem_dps_swarm" ]]; then
+    dest="$(nds_git_key_dest_for_import "git@github.com:CodeAnthem/dp_cluster.git" "deploy-this")"
+    out="$(nds_git_key_dest_for_import "git@github.com:CodeAnthem/dp_cluster.git" "account-all")"
+    if [[ "$dest" == "${tmpdir}/nds_deploy_codeanthem_dp_cluster" \
+        && "$out" == "${tmpdir}/nds_imported_codeanthem_dp_cluster" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ key_dest_for_import: deploy vs imported paths"
     else
@@ -597,7 +597,7 @@ LOCK
     cp "$key_src" "$bundle_key"
     [[ -f "${key_src}.pub" ]] && cp "${key_src}.pub" "${bundle_key}.pub"
     nds_git_keys_register "$bundle_key" || true
-    NDS_GIT_KEY_PATH['git@github.com:CodeAnthem/dps_swarm.git']="$bundle_key"
+    NDS_GIT_KEY_PATH['git@github.com:CodeAnthem/dp_cluster.git']="$bundle_key"
 
     if nds_git_bundle_key_paths | grep -qxF "$bundle_key"; then
         TEST_PASSED=$((TEST_PASSED + 1))
@@ -643,7 +643,7 @@ LOCK
         nds_bundle_reset_contribs
     fi
 
-    unset 'NDS_GIT_KEY_PATH[git@github.com:CodeAnthem/dps_swarm.git]'
+    unset 'NDS_GIT_KEY_PATH[git@github.com:CodeAnthem/dp_cluster.git]'
     unset NDS_RUNTIME_DIR
 
     export NDS_GIT_DEPLOY_KEYS_DIR="$tmpdir"

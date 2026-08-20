@@ -7,7 +7,7 @@
 # ==================================================================================================
 
 remote_action_prepare() {
-    local default_url="git@github.com:CodeAnthem/dps_swarm.git"
+    local default_url=""
     if [[ -z "$(nds_cfg_get FLAKE_REPO_URL 2>/dev/null || true)" ]]; then
         if nds_mode_is_unattended; then
             return 0

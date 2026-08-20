@@ -3,4 +3,4 @@
 #   pre_install.sh    — after disk confirm, before nixos-install
 #   post_install.sh   — after nixos-install (ISO still; Swarm join belongs on first boot)
 #
-# Thundercast does not require Docker. Swarm/sops live in your leaf (see dps_swarm).
+# ThunderCast does not require Docker. Swarm/sops live on your private leaf.

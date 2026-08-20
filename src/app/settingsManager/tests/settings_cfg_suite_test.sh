@@ -313,11 +313,11 @@ suite_cfg() {
     fi
     unset NDS_MODE
 
-    NDS_GIT_METHOD['git@github.com:CodeAnthem/dps_swarm.git']='account'
+    NDS_GIT_METHOD['git@github.com:CodeAnthem/dp_cluster.git']='account'
     NDS_GIT_METHOD['git@github.com:CodeAnthem/thundercast.git']='account'
     NDS_GIT_METHOD['git@github.com:CodeAnthem/thundercore.git']='account'
     restore="$(nds_cfg_export_restore)"
-    if grep -q 'dps_swarm.git' <<<"$restore" \
+    if grep -q 'dp_cluster.git' <<<"$restore" \
        && grep -q 'thundercast.git' <<<"$restore" \
        && grep -q 'thundercore.git' <<<"$restore" \
        && ! grep -q ')# Runtime' <<<"$restore" \
@@ -328,7 +328,7 @@ suite_cfg() {
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ restore export: missing closure git URLs or maps glued to # Runtime"
     fi
-    unset 'NDS_GIT_METHOD[git@github.com:CodeAnthem/dps_swarm.git]'
+    unset 'NDS_GIT_METHOD[git@github.com:CodeAnthem/dp_cluster.git]'
     unset 'NDS_GIT_METHOD[git@github.com:CodeAnthem/thundercast.git]'
     unset 'NDS_GIT_METHOD[git@github.com:CodeAnthem/thundercore.git]'
 
