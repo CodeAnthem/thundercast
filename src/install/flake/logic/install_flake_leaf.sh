@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Leaf flake helpers for remoteAction (thundercast + .roles)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-17 | Modified: 2026-08-19
+# Date:          Created: 2026-08-17 | Modified: 2026-08-20
 # Description:   Resolve thundercast action, role NDS env, hooks, leaf commit/push
 # ==================================================================================================
 
@@ -174,7 +174,7 @@ nds_flake_write_host_nds_env() {
     dest="${flake_root}/.nds/hosts/${hostname}.env"
     mkdir -p "$(dirname "$dest")"
     {
-        echo "# NDS host restore for ${hostname} — no secrets. Written by remoteAction."
+        echo "# NDS host restore for ${hostname} — no secrets. Written by NDS compose."
         for key in "${_NDS_LEAF_HOST_ENV_KEYS[@]}"; do
             val="$(nds_cfg_get "$key" 2>/dev/null || true)"
             [[ -n "$val" ]] || continue
@@ -184,6 +184,9 @@ nds_flake_write_host_nds_env() {
         done
     } >"$dest"
     _nds_flake_write_host_inventory "$flake_root" "$hostname"
+    if declare -f nds_sm_export &>/dev/null; then
+        nds_sm_export --git "${flake_root}/.nds/hosts/${hostname}.recipe" || return 1
+    fi
     nds_install_log "leaf: wrote ${dest#"$flake_root"/}"
 }
 
@@ -223,6 +226,30 @@ nds_flake_load_host_nds_env() {
         nds_cfg_set "$key" "$val"
     done < "$env_file"
     info "Loaded NDS restore env from ${env_file}"
+}
+
+# Description: Restore a host session from the leaf. Prefers .recipe, then legacy .env.
+# Arguments:
+# - flake_root: <String> Leaf checkout
+# - hostname:   <String> Host name
+nds_flake_load_host_restore() {
+    local flake_root="$1"
+    local hostname="$2"
+    local recipe env_file
+    [[ -n "$hostname" ]] || return 1
+    recipe="${flake_root}/.nds/hosts/${hostname}.recipe"
+    env_file="${flake_root}/.nds/hosts/${hostname}.env"
+    if [[ -f "$recipe" ]] && declare -f nds_sm_load &>/dev/null; then
+        nds_sm_load "$recipe" || return 1
+        info "Loaded NDS recipe from ${recipe}"
+        return 0
+    fi
+    if [[ -f "$env_file" ]]; then
+        nds_flake_load_host_nds_env "$env_file"
+        return $?
+    fi
+    warn "No .nds/hosts/${hostname}.recipe or .env — using current NDS settings"
+    return 0
 }
 
 # Description: Source .roles/<role>/nds.sh or .nds/<role>/nds.sh when present.

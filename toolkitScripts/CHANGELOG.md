@@ -2,6 +2,11 @@
 
 Versions here are **tools only** (this tree). NixOS/comin is a separate channel.
 
+## 0.3.0 — 2026-08-20
+
+- `tc-sops` / `toolkit sops` — health, init, put, apply, encrypt (same ops as the menu)
+- Prefer `tc-git-ssh` for leaf git when it is on PATH
+
 ## 0.2.4 — 2026-08-20
 
 - Leaf stays at `/var/lib/nds-toolkit/leaf` (not `/etc/nixos` or comin)

@@ -13,8 +13,10 @@ sudo -E bash src/app/main.sh
 
 ## Suites
 
-Everything CI runs: structure, actions discover, settingsManager, validators,
-inputs, git, tools, bundle, nixWriter, classicConfig, install helpers, facter, …
+Everything CI runs: structure, actions discover, settingsManager (including sessions / recipes),
+validators, inputs, git, tools, bundle, nixWriter, classicConfig, install helpers, facter, …
+
+Live ISO / VM cases: [docs/testing.md](../../../docs/testing.md).
 
 ## Prompt walking
 

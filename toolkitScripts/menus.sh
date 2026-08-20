@@ -371,10 +371,6 @@ tcast_menu_leaf_sync() {
     tcast_leaf_require
     tcast_leaf_sync
     [[ "${TCAST_LEAF_SYNC_NEED_PROMPT:-0}" == 1 ]] || return 0
-    if tcast_ui_batch; then
-        tcast_info "leaf is ${TCAST_LEAF_BEHIND:-?} behind with unsaved changes — not auto-pulling"
-        return 0
-    fi
     tcast_menu_leaf_collision
 }
 

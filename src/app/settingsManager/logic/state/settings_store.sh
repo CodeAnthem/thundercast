@@ -68,7 +68,7 @@ nds_cfg_reset_for_action() {
         nds_cfg_preset_enable "$preset"
         unset "PRESET_META[${preset}__display]"
     done
-    for preset in installFlake remoteAction; do
+    for preset in installFlake remoteAction addRole toolkit; do
         nds_cfg_preset_disable "$preset"
         unset "PRESET_META[${preset}__display]"
         unset "PRESET_META[${preset}__priority]"

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Install from flake action
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-06-28 | Modified: 2026-08-14
+# Date:          Created: 2026-06-28 | Modified: 2026-08-20
 # Description:   Install a NixOS host from an existing flake via nixos-install --flake
 # ==================================================================================================
 
@@ -49,34 +49,17 @@ action_setup() {
     # URL → git access → host pick → target, before the full settings menu.
     nds_app_actionHandler_logic_callFeature nds_flake_install_gate || exit 11
 
-    if ! nds_cfg_validate_all; then
+    if ! nds_sm_validate; then
         if nds_mode_is_unattended; then
             error "Unattended mode: configuration incomplete"
             exit 11
         fi
         nds_cfg_prompt_errors
-        nds_cfg_validate_all || exit 11
+        nds_sm_validate || exit 11
     fi
 
-    nds_cfg_menu_or_skip || exit 12
+    nds_sm_menu || exit 12
 
-    # Auth already done in the early gate — export flake env + disko detect only.
-    nds_flake_install_prepare_and_verify || exit 11
-    nds_flake_install_confirm || exit 13
-
-    local install_mode
-    install_mode="$(nds_cfg_get INSTALL_MODE)"
-    install_mode="${install_mode:-local}"
-
-    nds_install_ui_section_nixos_install
-    nds_install_log "installFlake: action starting (mode=${install_mode})"
-    nds_nixos_install_flake || exit 15
-    export NDS_GIT_INSTALL_SUCCEEDED=true
-    nds_git_access_cleanup_success
-
-    if [[ "$install_mode" == "remote" ]]; then
-        nds_install_remote_finish || exit 16
-    else
-        nds_install_finish || exit 16
-    fi
+    nds_cfg_set INSTALL_KIND "flake"
+    nds_install_apply || exit $?
 }

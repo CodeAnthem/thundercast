@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Action discovery selfcheck
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-07 | Modified: 2026-08-15
+# Date:          Created: 2026-08-07 | Modified: 2026-08-20
 # ==================================================================================================
 
 _nds_test_import_action() {
@@ -45,17 +45,22 @@ suite_actions() {
     done
 
     local have_classic=0 have_flake=0 have_remote=0 have_test=0 have_smoke=0
+    local have_addrole=0 have_toolkit=0 have_apply=0
     for n in "${names[@]}"; do
         [[ "$n" == "classicInstall" ]] && have_classic=1
         [[ "$n" == "installFlake" ]] && have_flake=1
         [[ "$n" == "remoteAction" ]] && have_remote=1
+        [[ "$n" == "addRole" ]] && have_addrole=1
+        [[ "$n" == "toolkit" ]] && have_toolkit=1
+        [[ "$n" == "apply" ]] && have_apply=1
         [[ "$n" == "test" ]] && have_test=1
         [[ "$n" == "uiSmoke" ]] && have_smoke=1
     done
 
-    if [[ "$have_classic" -eq 1 && "$have_flake" -eq 1 && "$have_remote" -eq 1 ]]; then
+    if [[ "$have_classic" -eq 1 && "$have_flake" -eq 1 && "$have_remote" -eq 1 \
+        && "$have_addrole" -eq 1 && "$have_toolkit" -eq 1 && "$have_apply" -eq 1 ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ discover: classicInstall / installFlake / remoteAction"
+        console "  ✓ discover: classicInstall / installFlake / remoteAction / addRole / toolkit / apply"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ discover: missing production actions (${names[*]})"
@@ -103,6 +108,9 @@ suite_actions() {
     _nds_test_import_action classicInstall
     _nds_test_import_action installFlake
     _nds_test_import_action remoteAction
+    _nds_test_import_action addRole
+    _nds_test_import_action toolkit
+    _nds_test_import_action apply
     _nds_test_import_action test
     _nds_test_import_action uiSmoke
 
@@ -152,14 +160,77 @@ suite_actions() {
             /remote_action_config/ { cfg=1 }
             END { exit (n==1 && cfg && !early) ? 0 : 1 }
         ' "${SCRIPT_DIR}/actions/remoteAction/setup.sh" \
-        && grep -q 'nds_install_flake_probe_leaf_write' \
+        && grep -q 'nds_install_open_leaf' \
             "${SCRIPT_DIR}/actions/remoteAction/setup.sh" \
+        && grep -q 'nds_install_flake_probe_leaf_write' \
+            "${SCRIPT_DIR}/install/apply/logic/install_apply.sh" \
         && ! grep -q 'nds_cfg_prompt_errors' \
             "${SCRIPT_DIR}/actions/remoteAction/setup.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ remoteAction: one settings menu after role; no early required-fields FAIL"
+        console "  ✓ remoteAction: one settings menu after compose config; open_leaf write probe"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ remoteAction: settings menu count, write probe, or early prompt_errors"
+    fi
+
+    if awk '
+            /^action_setup\(\)/ { s=1 }
+            s && /nds_install_confirm/ { conf=1 }
+            s && /nds_addRole_compose \|\|/ { if (!conf) exit 1 }
+            END { exit (s && conf) ? 0 : 1 }
+        ' "${SCRIPT_DIR}/actions/addRole/setup.sh" \
+        && awk '
+            /^action_setup\(\)/ { s=1 }
+            s && /nds_install_confirm/ { conf=1 }
+            s && /nds_toolkit_compose \|\|/ { if (!conf) exit 1 }
+            END { exit (s && conf) ? 0 : 1 }
+        ' "${SCRIPT_DIR}/actions/toolkit/setup.sh" \
+        && awk '
+            /nds_install_confirm/ { conf=1 }
+            /remote_action_run \|\|/ { if (!conf) exit 1 }
+            END { exit conf ? 0 : 1 }
+        ' "${SCRIPT_DIR}/actions/remoteAction/setup.sh" \
+        && grep -q 'NDS_INSTALL_CONFIRMED' \
+            "${SCRIPT_DIR}/install/apply/logic/install_apply.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ composers confirm disk wipe before git-push compose"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ composers push/compose before disk confirm"
+    fi
+
+    if ! grep -q 'nds_cfg_set CAST_ACTION "addRole"' \
+            "${SCRIPT_DIR}/install/flake/ui/install_flake_cast.sh" \
+        && grep -q 'nds_cast_require_user_actions' \
+            "${SCRIPT_DIR}/install/flake/logic/install_flake_cast.sh" \
+        && grep -q 'addRole|toolkit) return 1' \
+            "${SCRIPT_DIR}/install/flake/logic/install_flake_cast.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ remoteAction: empty catalog does not default CAST_ACTION=addRole"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ remoteAction: empty catalog still defaults to addRole or stubs load"
+    fi
+
+    if grep -q '_nds_toolkit_refuse_remote' \
+            "${SCRIPT_DIR}/actions/toolkit/setup.sh" \
+        && grep -q 'toolkit is local-only' \
+            "${SCRIPT_DIR}/actions/toolkit/setup.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ toolkit: INSTALL_MODE=remote is refused"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ toolkit: remote install is not hard-blocked"
+    fi
+
+    if grep -q 'nds_sm_validate' "${SCRIPT_DIR}/actions/classicInstall/setup.sh" \
+        && grep -q 'nds_sm_menu' "${SCRIPT_DIR}/actions/classicInstall/setup.sh" \
+        && grep -q 'nds_sm_validate' "${SCRIPT_DIR}/actions/installFlake/setup.sh" \
+        && grep -q 'nds_sm_menu' "${SCRIPT_DIR}/actions/installFlake/setup.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ classicInstall/installFlake use nds_sm_validate/menu"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ classicInstall/installFlake still call nds_cfg_validate_all directly"
     fi
 }

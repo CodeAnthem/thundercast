@@ -46,6 +46,9 @@ _nds_install_gather_context() {
     NDS_CTX_ADMIN_PASSWORD_AUTO=$(nds_cfg_get "ACCESS_ADMIN_PASSWORD_AUTO")
     NDS_CTX_ADMIN_PASSWORD_LENGTH=$(nds_cfg_get "ACCESS_ADMIN_PASSWORD_LENGTH")
     NDS_CTX_ADMIN_PASSWORD=$(nds_cfg_get "ACCESS_ADMIN_PASSWORD")
+    if [[ -z "$NDS_CTX_ADMIN_PASSWORD" ]] && declare -f nds_sm_secret_read &>/dev/null; then
+        NDS_CTX_ADMIN_PASSWORD="$(nds_sm_secret_read ACCESS_ADMIN_PASSWORD)"
+    fi
     return 0
 }
 

@@ -684,6 +684,14 @@ LOCK
             TEST_FAILED=$((TEST_FAILED + 1))
             console "  ✗ SSH key target map/perms/hostkeys (got ${perms})"
         fi
+        if [[ -L "${tmpdir}/mnt/root/.nds/bin/tc-switch" ]] \
+            && [[ -L "${tmpdir}/mnt/root/.ssh/tc-git.map" ]]; then
+            TEST_PASSED=$((TEST_PASSED + 1))
+            console "  ✓ target: tc-switch + tc-git.map aliases"
+        else
+            TEST_FAILED=$((TEST_FAILED + 1))
+            console "  ✗ target: missing tc-switch or tc-git.map"
+        fi
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ SSH keys install on target"

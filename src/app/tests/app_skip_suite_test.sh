@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Menu skip env tests
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-06 | Modified: 2026-08-18
+# Date:          Created: 2026-07-06 | Modified: 2026-08-20
 # ==================================================================================================
 
 suite_skip() {
@@ -70,6 +70,16 @@ suite_skip() {
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ skip_all: must not skip git auth wizard"
+    fi
+    if grep -q 'nds_skip_menu NDS_INSTALL_CONFIRM_SKIP' \
+            "${SCRIPT_DIR}/install/disk/ui/install_disk_prompts.sh" \
+        && grep -q 'nds_skip_menu NDS_INSTALL_CONFIRM_SKIP' \
+            "${SCRIPT_DIR}/install/verify/ui/install_confirm.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ NDS_INSTALL_CONFIRM_SKIP covers format + remote confirm"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ NDS_INSTALL_CONFIRM_SKIP does not cover format/remote"
     fi
     local _skip_var
     for _skip_var in "${_NDS_SKIP_REGISTRY[@]}"; do

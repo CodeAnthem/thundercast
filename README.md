@@ -4,7 +4,7 @@
 
 # ThunderCast
 
-[![Version](https://img.shields.io/badge/version-5.24.21-0267c1?style=flat-square)](https://github.com/CodeAnthem/thundercast)
+[![Version](https://img.shields.io/badge/version-5.25.0-0267c1?style=flat-square)](https://github.com/CodeAnthem/thundercast)
 [![NixOS](https://img.shields.io/badge/NixOS-Live%20ISO-5277C3?style=flat-square&logo=nixos&logoColor=white)](https://nixos.org)
 [![ShellCheck](https://github.com/CodeAnthem/thundercast/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/CodeAnthem/thundercast/actions/workflows/shellcheck.yml)
 [![Self-test](https://github.com/CodeAnthem/thundercast/actions/workflows/selftest.yml/badge.svg)](https://github.com/CodeAnthem/thundercast/actions/workflows/selftest.yml)
@@ -18,20 +18,27 @@ ThunderCore → Thunderstorm (modules) → your private leaf
 ThunderCast  → ISO / NDS actions / toolkit scripts
 ```
 
+Public names after install: **`tc-nds`**, **`tc-switch`**, **`tc-clean`**, **`tc-status`**, **`tc-git-ssh`**, **`tc-sops`**. `nds-*` aliases remain.
+
 ---
 
 # Nix Deploy System (NDS)
 
 **NDS is the guided NixOS installer for the live ISO** — pick a path, answer the menu, and it handles disk prep, hardware facts, staging, and `nixos-install` in order.
 
+Wizards (**Part B**) fill a settings session with the same validators as **apply**. Composers that git-push also write a portable **recipe**, then **Part A** (`nds_install_apply`) partitions and installs. Secret **values** never go in git or printed recipes — only `*_FILE` paths.
+
 **NDS can:**
 
-- Install with **no flake** — generates `/etc/nixos/configuration.nix` (`classicInstall`)
-- Install from **your flake** — clone, place hardware facts, `nixos-install --flake` (`installFlake`)
-- Run a **remote action** — catalog repo `.nds/actions/` + your install flake (`remoteAction`)
+- Install with **no flake** — generates `/etc/nixos/configuration.nix` (`classicInstall`, **local only**)
+- Install from **your flake** — clone, place hardware facts, `nixos-install --flake` (`installFlake`; local or nixos-anywhere remote)
+- Scaffold a **new flake host** from `.roles/` (`addRole`), confirm disk wipe, then Part A
+- Create or restore the **toolkit** ops VM (`toolkit`) — first-class NDS action, **local only**
+- Apply a complete **recipe** with no wizard (`apply` / `--recipe FILE`)
+- Run a **user catalog** action — your repo’s `.nds/actions/` (`remoteAction`). ThunderCast itself has none.
 - Partition with NDS layouts, **Disko**, or defer to your flake
 - Optional **LUKS2 encryption**: passphrase, USB keyfile, or both — plus initrd SSH **remote unlock**
-- Print a **saved `NDS_*` config** you can reuse on the next machine
+- Export a **recipe** (`tc-recipe`) or `NDS_*` block you can reuse on the next machine
 
 **NDS does not:**
 
@@ -39,6 +46,8 @@ ThunderCast  → ISO / NDS actions / toolkit scripts
 - Replace your flake as the source of truth
 - Wrap your flake in another flake
 - Commit `hardware-configuration.nix` to your repo (it stays gitignored on disk)
+- Classic-install a remote machine (no nixos-anywhere for `classicInstall`)
+- Toolkit-install over nixos-anywhere (operator keys land on `/mnt` only)
 
 ---
 
@@ -46,9 +55,12 @@ ThunderCast  → ISO / NDS actions / toolkit scripts
 
 | Path | Action | You need |
 |------|--------|----------|
-| **A** — first install, no flake | `classicInstall` | Live ISO + `nixos` user (sudo) |
-| **B** — existing flake | `installFlake` | `nixosConfigurations.<host>`, Git SSH for private repos |
-| **C** — new host from a catalog action | `remoteAction` | Catalog with `.nds/actions/` (this repo) + your install flake ([API](src/actions/remoteAction/README.md)) |
+| **A** — first install, no flake | `classicInstall` | Live ISO + `nixos` user (sudo). Local disk only. |
+| **B** — existing flake host | `installFlake` | `nixosConfigurations.<host>`, Git SSH for private repos. Local or `INSTALL_MODE=remote`. |
+| **C** — new flake host from a role | `addRole` | Leaf with `.roles/`, **write** Git access. Confirm wipe **before** git-push. |
+| **D** — toolkit ops VM | `toolkit` | Leaf with `hosts/…/control-toolkit/` (create that host in git first). **Local only.** |
+| **E** — recipe only (no wizard) | `apply` | `--recipe FILE` or `NDS_RECIPE_FILE` |
+| **F** — custom catalog action | `remoteAction` | **Your** repo with `.nds/actions/` + install flake ([API](src/actions/remoteAction/README.md)). Not ThunderCast. |
 
 ---
 
@@ -93,6 +105,7 @@ Fork or offline? Set `NDS_REPO_URL` before the one-liner, or clone your fork in 
 Skip re-entering the menu by **exporting `NDS_*` variables** before step 3:
 
 - **From a previous install** — when you press **X** in the menu, NDS prints an `export NDS_…` block. Save it. Paste or `source` that file before running NDS again.
+- **Recipe file** — `--recipe FILE` / `NDS_RECIPE_FILE` loads a sectioned `tc-recipe` (or legacy `export NDS_*=`). Secret **values** are ignored; `*_FILE` paths are kept. Leaf restore prefers `.nds/hosts/<host>.recipe` over legacy `.env`.
 - The same export is included in the install backup zip, so you can recover it from there too.
 
 Any `NDS_<FIELD>` overrides the matching menu field (same names as the backup export). Example for a flake install:
@@ -105,9 +118,12 @@ sudo bash src/app/main.sh
 | Variable | Purpose |
 |----------|---------|
 | `NDS_<FIELD>` | Preset any menu field |
-| `NDS_AUTO_CONFIRM=true` | Skip yes/no prompts |
+| `NDS_AUTO_CONFIRM=true` | Skip yes/no prompts (does **not** skip git auth) |
+| `NDS_INSTALL_CONFIRM_SKIP=true` | Skip disk/remote wipe confirm (unattended already skips) |
 | `NDS_REPO_URL` / `NDS_REPO_NAME` | Point `start.sh` at a fork or different clone path |
 | `DEBUG=1` | Verbose logging |
+
+Full flag and field list: [docs/configuration.md](docs/configuration.md). Live ISO / VM cases: [docs/testing.md](docs/testing.md).
 
 ### 5. Pick an action
 
@@ -115,7 +131,10 @@ sudo bash src/app/main.sh
 |--------|------|-------|
 | **classicInstall** | First NixOS install, no flake yet | [classicInstall](src/actions/classicInstall/README.md) |
 | **installFlake** | Generic `nixos-install --flake` | [installFlake](src/actions/installFlake/README.md) |
-| **remoteAction** | Catalog `.nds/actions/` + install flake | [remoteAction](src/actions/remoteAction/README.md) |
+| **addRole** | New `nixosConfigurations` from `.roles/` | [addRole](src/actions/addRole/README.md) |
+| **toolkit** | Ops VM create/restore (local install) | [toolkit](src/actions/toolkit/README.md) |
+| **apply** | Part A only from a recipe | [apply](src/actions/apply/README.md) |
+| **remoteAction** | Your catalog `.nds/actions/` + install flake | [remoteAction](src/actions/remoteAction/README.md) |
 
 Then: walk the menu (or rely on your `NDS_*` imports) → press **X** → optionally save the export block (or get it in the final zip) → confirm the destructive step → install → back up the install package → reboot manually.
 
@@ -147,23 +166,36 @@ Every install produces a backup zip in `/home/nixos/` with a personalized
 remote unlock, all filled in for the machine you just built. Copy the zip off the box
 before rebooting, then follow that file.
 
+Flake installs copy helpers to `/root/.nds/bin` (and `/root/bin`) when git persist is on:
+
+| Command | What it does |
+|---------|----------------|
+| `tc-switch` | Pull flake + `nixos-rebuild switch` (`nds-switch`) |
+| `tc-clean` | Drop old generations / collect garbage (`nds-clean`) |
+| `tc-status` | Host / flake / comin snapshot (not the toolkit Status menu) |
+| `tc-git-ssh` | `GIT_SSH_COMMAND` + `init owner/repo /abs/key` (works without NDS) |
+| `tc-sops` | Toolkit sops ops without the menu (toolkit hosts) |
+
+Map lookup for git SSH: `NDS_GIT_SSH_MAP` / `TC_GIT_SSH_MAP`, then `~/.ssh/tc-git.map`, `~/.ssh/nds-git.map`, `/root/.ssh/tc-git.map`, `/root/.ssh/nds-git.map`.
+
 Post-install details live in each action's guide:
 
 - **classicInstall** — [first login & remote unlock](src/actions/classicInstall/README.md#after-install)
 - **installFlake** — your flake owns users, services and unlocking; see [installFlake](src/actions/installFlake/README.md)
+- **addRole** / **toolkit** / **apply** — same flake install finish as installFlake
 - **remoteAction** — see [remoteAction](src/actions/remoteAction/README.md)
 
-Topic guides live in [`docs/`](docs/) (e.g. [remote unlock](docs/remote-unlock.md)).
+Topic guides live in [`docs/`](docs/) ([configuration](docs/configuration.md), [remote unlock](docs/remote-unlock.md), [testing](docs/testing.md)).
 
 ---
 
 ## Toolkit (ops host)
 
-On a dedicated ops machine, NDS action **toolkit** seeds [`toolkitScripts/`](toolkitScripts/). Daily work is the `toolkit` menu (sops, nodes, git). `toolkit-update` refreshes those scripts from this repo; it does **not** ride `nixos-rebuild` / comin.
+On a dedicated ops machine, NDS action **toolkit** seeds [`toolkitScripts/`](toolkitScripts/). Daily work is the `toolkit` menu (sops, nodes, git) or `tc-sops` for the same sops ops without the menu. `toolkit-update` refreshes those scripts from this repo; it does **not** ride `nixos-rebuild` / comin.
 
 NixOS module: `nixosModules.toolkit` (enable from a leaf that already uses ThunderCore `my.lib`).
 
-Copy [`exampleRepo/`](exampleRepo/) to a **private** git remote for a cluster leaf skeleton. Point NDS `FLAKE_REPO_URL` at that remote. `CAST_REPO_URL` defaults to this repository (actions).
+Copy [`exampleRepo/`](exampleRepo/) to a **private** git remote for a cluster leaf skeleton. Point NDS `FLAKE_REPO_URL` at that remote. `addRole` and `toolkit` are built-in (`NDS_ACTION=addRole` / `NDS_ACTION=toolkit`). `CAST_REPO_URL` is only for **your** extra catalog scripts, not this repo.
 
 Do not commit age private keys, SSH private keys, or unencrypted `secrets/`. Banner: [`docs/assets/`](docs/assets/).
 
@@ -171,27 +203,32 @@ Do not commit age private keys, SSH private keys, or unencrypted `secrets/`. Ban
 
 ## What happens under the hood
 
-**Classic install (no flake):**
+**Part B** (classicInstall, installFlake, addRole, toolkit, remoteAction) fills a settings session, validates with the same hooks, and — when the flow git-pushes — confirms disk wipe **before** compose. **Part A** then installs.
+
+**Classic install (no flake, local):**
 
 ```
 Live ISO → menu → disk prep → configuration.nix + hardware-configuration.nix → nixos-install
 ```
 
-**Flake install:**
+**Flake install (local or remote):**
 
 ```
 Live ISO → menu → disk prep (or skip if flake owns disko)
          → nixos-generate-config → stage flake → hardware in host dir
-         → nixos-install --flake <path>#<host>
+         → local: nixos-install --flake <path>#<host>
+           remote: nixos-anywhere (installFlake / addRole / apply / remoteAction — not toolkit)
 ```
 
-NDS clones your flake **directly** — no wrapper flake. Install-time files (`hardware-configuration.nix`, optional `machine.nix` for LUKS) are gitignored on disk.
+**addRole / toolkit / remoteAction** also clone the leaf with **write** access, write `.nds/hosts/<host>.recipe` (and a legacy `.env`), then Part A.
+
+NDS clones your flake **directly** — no wrapper flake. Install-time files (`hardware-configuration.nix`, optional `machine.nix` for LUKS) are gitignored on disk. Committed `mounts.nix` + `boot.nix` are the structural files flake eval must see.
 
 ---
 
 ## For flake maintainers
 
-Link here from your leaf README for live-ISO installs. Copy `exampleRepo/` to a private remote, input **Thunderstorm** for modules and **ThunderCast** for NDS/toolkit, then pick **remoteAction** (or **installFlake** for an existing named host).
+Link here from your leaf README for live-ISO installs. Copy `exampleRepo/` to a private remote, input **Thunderstorm** for modules and **ThunderCast** for NDS/toolkit, then pick **toolkit** / **addRole** (or **installFlake** for an existing named host). Use **remoteAction** only when the leaf ships its own `.nds/actions/`.
 
 ---
 
@@ -199,7 +236,10 @@ Link here from your leaf README for live-ISO installs. Copy `exampleRepo/` to a 
 
 ```bash
 bash dev/shellcheck.sh              # lint (installs ShellCheck to ~/.cache if needed)
-bash dev/selftest.sh                # read-only self-tests
+bash dev/selftest.sh                # read-only NDS self-tests (CI gate)
+bash toolkitScripts/tests/run.sh    # toolkit + tc-sops (needs age-keygen + sops)
 DEBUG=1 sudo bash src/app/main.sh
-NDS_TEST=true sudo bash src/app/main.sh   # self-test action only
+NDS_TEST=true sudo bash src/app/main.sh   # live menu: test (selftest) or uiSmoke
 ```
+
+Live ISO and VM cases (partition, reboot, `/boot`, abort-before-push): [docs/testing.md](docs/testing.md).

@@ -6,32 +6,26 @@ Set variables before starting NDS, or paste the export lines printed at the end 
 
 ## Runtime flags (not stored in CONFIG_DATA)
 
+Interactive vs unattended is `NDS_AUTO_CONFIRM` / `--auto-confirm` (or `NDS_MODE=unattended`). Git auth is **never** skipped by that umbrella. The extra destructive flag is `NDS_INSTALL_CONFIRM_SKIP` (disk format, local install confirm, and remote confirm).
+
 | Variable | Description |
 |----------|-------------|
 | `NDS_AUTO_CONFIRM` | Umbrella — skip interactive menus and Y/n prompts (`true`) |
-| `NDS_ACTION` | Action name — skip action picker (e.g. `installFlake`) |
-| `NDS_ACTION_PREVIEW_SKIP` | Skip install preview screen (`true`) |
-| `NDS_CAST_WARN_SKIP` | Skip the one-time remote-action fetch warning (`true`) |
-| `NDS_SKIP_MENU` | Skip configuration category menu when validation passes (`true`) |
-| `NDS_CONFIG_CONFIRM_SKIP` | Skip “continue to installation review” (`true`) |
-| `NDS_INSTALL_CONFIRM_SKIP` | Skip local install confirmation (`true`) |
-| `NDS_REMOTE_CONFIRM_SKIP` | Skip remote install confirmation (`true`) |
+| `NDS_ACTION` | Action name — skip action picker (e.g. `installFlake`, `addRole`, `toolkit`, `apply`) |
+| `NDS_RECIPE_FILE` | Path to a sectioned `tc-recipe` or legacy `export NDS_*=` file (same as `--recipe`). Secret **values** are ignored; `*_FILE` paths are kept. |
+| `NDS_INSTALL_CONFIRM_SKIP` | Skip disk wipe confirms (format + local + remote). Unattended already skips these. |
 | `NDS_GIT_AUTH_SKIP` | Skip git SSH wizard **and fail** if access is missing (`true`). `NDS_AUTO_CONFIRM` does **not** skip git auth. |
-| `NDS_DISK_FORMAT_CONFIRM_SKIP` | Skip destructive disk format confirmation (`true`) |
-| `NDS_BACKUP_CONFIRM_SKIP` | Skip backup zip copy confirmation (`true`) |
 | `NDS_REBOOT_SKIP` | Interactive only — skip the “Reboot now?” prompt (`true`) |
 | `NDS_REBOOT_FORCE` | Unattended only — reboot after install (`true`). Unattended **never** reboots unless this is set (so you can copy the bundle). |
-| `NDS_SCAFFOLD_OVERWRITE_SKIP` | Skip scaffold host-dir overwrite prompt (`true`) |
-| `NDS_HARDWARE_OVERWRITE_SKIP` | Skip hardware file overwrite prompt (`true`) |
-| `NDS_PREFLIGHT_WARN_SKIP` | Auto-continue past preflight warnings (`true`) |
-| `NDS_PROMPTS_SKIP` | Skip generic Y/n prompts (`nds_ask_user_*`) (`true`) |
 | `NDS_SCOPED_CONFIG_FILE` | Path to a file of `export NDS_*=` lines (optional `declare -gA` git maps). Sourced at startup. Needed for git maps: arrays cannot ride `curl \| bash` or `sudo`. |
 | `NDS_GIT_IMPORT_KEY_PATH` | Path to a private SSH key to import before git auth (USB/scp) |
-| `NDS_GIT_IMPORT_KEY` | Private SSH key **text** (PEM / OpenSSH). One key for all URLs. Not stored in CONFIG_DATA. Prefer `NDS_GIT_KEY_BODY` for per-repo. Unencrypted keys for headless (a passphrase prompt needs a TTY). |
+| `NDS_GIT_IMPORT_KEY` | Private SSH key **text** (PEM / OpenSSH). ISO-env escape hatch for headless runs — **not** stored in CONFIG_DATA, recipes, or git. Prefer `NDS_GIT_IMPORT_KEY_PATH` or `NDS_GIT_KEY_BODY` for per-repo. Unencrypted keys for headless (a passphrase prompt needs a TTY). |
 | `NDS_DEPLOY_KEY_PATH` | Deprecated alias for `NDS_GIT_IMPORT_KEY_PATH` |
 | `NDS_GIT_SSH_KEY_USE_QR` | Skip QR prompt on manual path — `true` or `false` |
 | `NDS_GIT_SSH_KEY_DISPLAY` | Manual display mode: `qr` or `copy` |
 | `NDS_GIT_SESSION_KEY_PATH` | Session private key path (default `/root/.ssh/git-<owner>-key`) |
+
+Legacy skip vars still work (`NDS_SKIP_MENU`, `NDS_ACTION_PREVIEW_SKIP`, `NDS_CAST_WARN_SKIP`, `NDS_CONFIG_CONFIRM_SKIP`, `NDS_REMOTE_CONFIRM_SKIP`, `NDS_DISK_FORMAT_CONFIRM_SKIP`, `NDS_BACKUP_CONFIRM_SKIP`, `NDS_SCAFFOLD_OVERWRITE_SKIP`, `NDS_HARDWARE_OVERWRITE_SKIP`, `NDS_PREFLIGHT_WARN_SKIP`, `NDS_PROMPTS_SKIP`). `NDS_AUTO_CONFIRM` already covers them. `NDS_INSTALL_CONFIRM_SKIP` also covers format and remote confirms.
 
 ## CLI flags
 
@@ -39,7 +33,11 @@ Set variables before starting NDS, or paste the export lines printed at the end 
 |------|--------|
 | `--auto-confirm` | Sets `NDS_AUTO_CONFIRM` and all `NDS_*_SKIP` flags above. Does **not** reboot; set `NDS_REBOOT_FORCE=true` to reboot after unattended install. |
 | `--skip-menu` | Sets `NDS_SKIP_MENU` |
-| `--action NAME` | Sets `NDS_ACTION` (e.g. `--action installFlake`) |
+| `--action NAME` | Sets `NDS_ACTION` (e.g. `--action installFlake`, `--action addRole`, `--action toolkit`) |
+| `--recipe FILE` | Sets `NDS_RECIPE_FILE` — load a recipe into the settings session |
+| `apply [FILE]` | Sets `NDS_ACTION=apply` and optionally `NDS_RECIPE_FILE` |
+
+Leaf restore prefers `.nds/hosts/<host>.recipe` over legacy `export NDS_*=` `.env`. Registered secrets (`ACCESS_ADMIN_PASSWORD`, `ENCRYPTION_PASSPHRASE`, `TOOLKIT_AGE_KEY`, `TOOLKIT_SSH_KEY`) travel as `*_FILE` paths — never values in git or printed recipes.
 
 ---
 
@@ -47,7 +45,7 @@ Set variables before starting NDS, or paste the export lines printed at the end 
 
 | Key | Env | Export | Description |
 |-----|-----|--------|-------------|
-| `INSTALL_MODE` | `NDS_INSTALL_MODE` | when set | `local` (live ISO) or `remote` (nixos-anywhere) |
+| `INSTALL_MODE` | `NDS_INSTALL_MODE` | when set | `local` (live ISO) or `remote` (nixos-anywhere). **toolkit is local-only.** |
 | `REMOTE_TARGET_IP` | `NDS_REMOTE_TARGET_IP` | changed | Target IP when `INSTALL_MODE=remote` |
 | `FLAKE_REPO_URL` | `NDS_FLAKE_REPO_URL` | when set | Git SSH/HTTPS URL for remote flake |
 | `FLAKE_LOCAL_PATH` | `NDS_FLAKE_LOCAL_PATH` | when set | Local path to flake on live ISO |
@@ -57,18 +55,20 @@ Set variables before starting NDS, or paste the export lines printed at the end 
 | `FLAKE_INSTALL_PATH` | `NDS_FLAKE_INSTALL_PATH` | when set | Flake git root on target (default `/mnt/etc/nixos`) |
 | `FLAKE_HOST_DIR` | `NDS_FLAKE_HOST_DIR` | when set | Host directory under flake (default `hosts/x86_64-linux`) |
 | `FLAKE_HARDWARE_PLACEMENT` | `NDS_FLAKE_HARDWARE_PLACEMENT` | when set | `host-dir`, `flake-root`, or `skip` |
-| `CAST_REPO_URL` | `NDS_CAST_REPO_URL` | when set | Remote-action git URL (remoteAction; default Thundercast) |
-| `CAST_ACTION` | `NDS_CAST_ACTION` | when set | Remote action id (`.nds/actions/<id>.sh`) |
+| `CAST_REPO_URL` | `NDS_CAST_REPO_URL` | when set | User catalog git URL (remoteAction). Default Thundercast URL has **no user actions**. |
+| `CAST_ACTION` | `NDS_CAST_ACTION` | when set | Catalog action id (`.nds/actions/<id>.sh`). Unattended: required. addRole/toolkit are built-in, not catalog ids. |
 | `CAST_TOOLKIT_MODE` | `NDS_CAST_TOOLKIT_MODE` | when set | `new` or `restore` |
 | `SOPS_AGE_REUSE` | `NDS_SOPS_AGE_REUSE` | when set | `generate` or `file` |
 | `SOPS_AGE_KEY_FILE` | `NDS_SOPS_AGE_KEY_FILE` | when set | Existing machine age key path |
 
 After install, per-repo deploy keys land under `/root/.ssh/nds_deploy_<owner>_<repo>` with  
-`nds-git-ssh` + `nds-git.map` so stock `git+ssh://git@github.com/...` flake URLs keep working  
-via `GIT_SSH_COMMAND`. Session / account keys stay on the live ISO; only `nds_deploy_*` keys  
-are copied to the installed system. NDS also installs `/root/.nds/bin/nds-switch` and  
-`/root/.nds/bin/nds-clean` (legacy `/root/bin`). Use `nds-switch --self-update` during NDS  
-development to refresh scripts from ThunderCast without reinstalling. Install-time  
+`tc-git-ssh` (`nds-git-ssh`) + map file so stock `git+ssh://git@github.com/...` flake URLs keep working  
+via `GIT_SSH_COMMAND`. Map lookup: `NDS_GIT_SSH_MAP` / `TC_GIT_SSH_MAP`, then  
+`~/.ssh/tc-git.map`, `~/.ssh/nds-git.map`, `/root/.ssh/tc-git.map`, `/root/.ssh/nds-git.map`.  
+On the installed system NDS writes `nds-git.map` and symlinks `tc-git.map`.  
+Public names: `tc-switch`, `tc-clean`, `tc-status`, `tc-git-ssh` (`nds-*` aliases remain).  
+Toolkit hosts also get `tc-sops`. Use `tc-switch --self-update` (or `nds-switch --self-update`)  
+during NDS development to refresh scripts. Install-time  
 `facter.json` is unstaged and gitignored after the flake build so the checkout stays  
 pullable. Structural `mounts.nix` + `boot.nix` are committed (or git-added at install) so  
 flake eval always sees root/boot mounts and the bootloader device.
@@ -141,7 +141,8 @@ Set `export NDS_ENCRYPTION=false` (or any other `NDS_*` key) before start, or pu
 | `ACCESS_ADMIN_USER` | `NDS_ACCESS_ADMIN_USER` | Admin username |
 | `ACCESS_ADMIN_PASSWORD_AUTO` | `NDS_ACCESS_ADMIN_PASSWORD_AUTO` | Generate admin password |
 | `ACCESS_ADMIN_PASSWORD_LENGTH` | `NDS_ACCESS_ADMIN_PASSWORD_LENGTH` | Generated password length |
-| `ACCESS_ADMIN_PASSWORD` | `NDS_ACCESS_ADMIN_PASSWORD` | Manual password |
+| `ACCESS_ADMIN_PASSWORD` | `NDS_ACCESS_ADMIN_PASSWORD` | Manual password (materialized to `ACCESS_ADMIN_PASSWORD_FILE`) |
+| `ACCESS_ADMIN_PASSWORD_FILE` | `NDS_ACCESS_ADMIN_PASSWORD_FILE` | Path to admin password file (preferred) |
 | `ACCESS_ADMIN_SSH_KEY` | `NDS_ACCESS_ADMIN_SSH_KEY` | Admin SSH public key |
 | `ACCESS_SUDO_PASSWORD_REQUIRED` | `NDS_ACCESS_SUDO_PASSWORD_REQUIRED` | Require password for sudo |
 | `ACCESS_SSH_ENABLE` | `NDS_ACCESS_SSH_ENABLE` | Enable OpenSSH |

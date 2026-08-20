@@ -68,9 +68,18 @@ access_prompt_errors() {
 }
 
 access_validate() {
-    if nds_cfg_is ACCESS_ADMIN_PASSWORD_AUTO false && [[ -z "$(nds_cfg_get ACCESS_ADMIN_PASSWORD)" ]]; then
-        validation_error "Admin password is required when auto-generate is off"
-        return 1
+    local pw_file
+    pw_file="$(nds_cfg_get ACCESS_ADMIN_PASSWORD_FILE)"
+    if nds_cfg_is ACCESS_ADMIN_PASSWORD_AUTO false; then
+        if [[ -n "$pw_file" ]]; then
+            if declare -f validate_secret_file &>/dev/null && ! validate_secret_file "$pw_file"; then
+                validation_error "ACCESS_ADMIN_PASSWORD_FILE is missing or unreadable"
+                return 1
+            fi
+        elif [[ -z "$(nds_cfg_get ACCESS_ADMIN_PASSWORD)" ]]; then
+            validation_error "Admin password is required when auto-generate is off"
+            return 1
+        fi
     fi
     if nds_cfg_true ACCESS_SSH_ENABLE && nds_cfg_is ACCESS_SSH_PASSWORD_AUTH false && [[ -z "$(nds_cfg_get ACCESS_ADMIN_SSH_KEY)" ]]; then
         validation_error "SSH password login is off and no admin SSH key is set"

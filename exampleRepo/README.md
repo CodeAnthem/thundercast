@@ -1,9 +1,10 @@
 # exampleRepo — copy this to your private leaf
 
-NDS **remoteAction** clones **your** private git remote, not this folder in-tree. Copy `exampleRepo/` to a new private repository **before** the first toolkit ISO.
+NDS clones **your** private git remote as `FLAKE_REPO_URL`, not this folder in-tree. Copy `exampleRepo/` to a new private repository **before** the first toolkit ISO.
 
-- `CAST_REPO_URL` — ThunderCast (this public repo; default)
-- `FLAKE_REPO_URL` — your private leaf
+- `FLAKE_REPO_URL` — your private leaf (write access on the ISO)
+- `NDS_ACTION=toolkit` / `NDS_ACTION=addRole` — built-in NDS actions, not catalog scripts
+- `CAST_REPO_URL` — only if **you** ship extra `.nds/actions/` on the leaf (or another repo). ThunderCast has none.
 
 Do **not** install ThunderCast itself as the flake (no real `nixosConfigurations` here).
 
@@ -19,15 +20,16 @@ hosts/x86_64-linux/          # per-machine; add the toolkit host here before the
   worker/
   gateway/
 .nds/
-  hosts/                     # NDS writes <hostname>.env + .inventory
+  hosts/                     # NDS writes <hostname>.recipe + .env + .inventory
   hooks/                     # optional
+  actions/                   # optional user catalog (remoteAction); not addRole/toolkit
 ```
 
 ## Bootstrap order
 
 1. Copy this tree to a private GitHub repo and `nix flake lock`.
-2. ISO → **remoteAction** → ThunderCast → action **toolkit** → **new** → this leaf URL (write access). Toolkit installs `hosts/…/control-toolkit/` (create that host in git first).
-3. ISO → **addRole** → **manager** → first boot `swarm init`.
+2. ISO → **toolkit** (`NDS_ACTION=toolkit`) → **new** → this leaf URL (write access). Toolkit installs `hosts/…/control-toolkit/` (create that host in git first). Local install only.
+3. ISO → **addRole** (`NDS_ACTION=addRole`) → **manager** → first boot `swarm init`.
 4. On the toolkit: run `toolkit` (menu). Encrypt stubs, harvest tokens, enroll hosts from there. `toolkit-update` pulls a new tools VERSION.
 5. **addRole** gateway / workers (join from sops). Enroll each machine from the toolkit menu.
 

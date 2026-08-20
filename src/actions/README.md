@@ -44,3 +44,4 @@ The file header must include `# Description:` (discovery reads the first 20 line
 
 - `nds_flake_prepare`, `nds_flake_detect_disko`, … — `src/install/flake/logic/install_flake_helpers.sh`
 - `nds_flake_install_prepare_and_verify`, `nds_flake_install_confirm` — `src/install/flake/logic/install_flake_pipeline.sh`
+- `nds_install_confirm`, `nds_install_apply` — `src/install/apply/logic/install_apply.sh` (confirm before compose when the composer git-pushes)

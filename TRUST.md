@@ -20,7 +20,7 @@ This repository contains **no cluster secrets**, no private keys, and no org-spe
    ls /tmp/thundercast   # or /tmp/<NDS_REPO_NAME> when using a fork
    ```
 3. **Manual steps** — clone with git and run `sudo bash src/app/main.sh` yourself when you are satisfied.
-4. **CI** — on every push: [ShellCheck](.github/workflows/shellcheck.yml) (`bash dev/shellcheck.sh`) and [self-tests](.github/workflows/selftest.yml) (`bash dev/selftest.sh`). Run the same locally before opening a PR.
+4. **CI** — on every push: [ShellCheck](.github/workflows/shellcheck.yml) (`bash dev/shellcheck.sh`) and [self-tests](.github/workflows/selftest.yml) (`bash dev/selftest.sh`). Run the same locally before opening a PR. Live ISO / VM cases: [docs/testing.md](docs/testing.md).
 
 ## Forks and renamed repositories
 

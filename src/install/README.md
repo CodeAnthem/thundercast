@@ -12,6 +12,7 @@ install/
   disk/                Partition, Disko, encryption (logic + ui)
   flake/               Flake gate, hosts, scaffold, flake nixos-install
   classic/             Classic pipeline, hardware facts, boot, context
+  apply/               Part A — nds_install_apply (classic or flake, after confirm)
   nix/                 Store helpers, sops, classic nixos-install runner
   verify/              Preflight, confirm, logs, diagnostics
   nixcfg/              configuration.nix builders + blocks (classic and flake)
@@ -25,4 +26,4 @@ install/
 - `src/app/bundle/` — Post-install backup zip + hooks
 - `src/lib/` — Generic helpers (host IP, key-text markers)
 - `src/tools/` — Capability helpers (pkg, qr, gh, age, facter)
-- `src/scripts/` — Target-machine CLIs (`nds-switch`, `nds-clean`, `nds-git-ssh`)
+- `src/scripts/` — Target-machine CLIs (`tc-switch`, `tc-clean`, `tc-status`, `tc-git-ssh`, `tc-nds`, `tc-sops`; `nds-*` aliases)

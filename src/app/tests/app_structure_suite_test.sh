@@ -181,6 +181,9 @@ suite_structure() {
         "${SCRIPT_DIR}/actions/classicInstall/setup.sh" \
         "${SCRIPT_DIR}/actions/installFlake/setup.sh" \
         "${SCRIPT_DIR}/actions/remoteAction/setup.sh" \
+        "${SCRIPT_DIR}/actions/addRole/setup.sh" \
+        "${SCRIPT_DIR}/actions/toolkit/setup.sh" \
+        "${SCRIPT_DIR}/actions/apply/setup.sh" \
         "${SCRIPT_DIR}/actions/test/setup.sh" \
         "${SCRIPT_DIR}/actions/uiSmoke/setup.sh"
     do

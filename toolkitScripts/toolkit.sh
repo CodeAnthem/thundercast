@@ -25,20 +25,26 @@ source "${ROOT}/lib/nodes.sh"
 # shellcheck source=menus.sh
 source "${ROOT}/menus.sh"
 
-# Scripted keys/lines must never fall through to /dev/tty (SSH PTY loops).
-if [[ -n "${TCAST_UI_KEYS+x}" || -n "${TCAST_UI_LINES+x}" ]]; then
-    export TCAST_UI_BATCH=1
-fi
-
 if [[ $# -gt 0 ]]; then
     case "$1" in
         -h|--help|help)
             echo "toolkit — operator menu (no arguments)"
+            echo "toolkit --version — print VERSION"
+            echo "toolkit sops … — same as tc-sops (health, init, put, apply, …)"
             echo "toolkit-update — fetch a new tools VERSION"
             exit 0
             ;;
+        -V|--version|version)
+            tcast_toolkit_version
+            exit 0
+            ;;
+        sops)
+            shift
+            tcast_sops_cli "$@"
+            exit $?
+            ;;
         *)
-            echo "Run toolkit (no arguments) for the menu." >&2
+            echo "Run toolkit (no arguments) for the menu. Try: toolkit sops help" >&2
             exit 1
             ;;
     esac

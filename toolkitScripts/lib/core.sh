@@ -41,7 +41,9 @@ tcast_register_dir() {
 }
 
 tcast_git_ssh_env() {
-    if command -v nds-git-ssh >/dev/null 2>&1; then
+    if command -v tc-git-ssh >/dev/null 2>&1; then
+        export GIT_SSH_COMMAND="tc-git-ssh"
+    elif command -v nds-git-ssh >/dev/null 2>&1; then
         export GIT_SSH_COMMAND="nds-git-ssh"
     elif [[ -x /root/.ssh/nds-git-ssh ]]; then
         export GIT_SSH_COMMAND="/root/.ssh/nds-git-ssh"

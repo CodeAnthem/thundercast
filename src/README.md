@@ -13,7 +13,7 @@ Entry: `app/main.sh`. Shared UI: `ui/`. Generic helpers: `lib/`. Capability CLIs
 | `git/` | SSH keys, probe/clone, wizard; nested `access/`, `keys/`, `wizard/` |
 | `install/` | Install pipelines nested `disk/` `flake/` `classic/` `nix/` `verify/` + `nixcfg/` |
 | `actions/` | One `setup.sh` per action (not a logic/ui split) |
-| `scripts/` | Scripts copied onto the installed machine |
+| `scripts/` | Scripts copied onto the installed machine (`tc-*` / `nds-*`) |
 | `tests/` | Cross-feature runner only — suites live under features |
 
 Feature folders use `logic/` + `ui/` (+ colocated `tests/`). Actions are a single `setup.sh`. Pure **data** under `data/` is not auto-sourced.

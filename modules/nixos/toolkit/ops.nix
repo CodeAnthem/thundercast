@@ -31,6 +31,11 @@
     exec "$current" "$@"
   '';
 
+  tcSops = pkgs.writeShellScriptBin "tc-sops" ''
+    set -euo pipefail
+    exec ${wrapper}/bin/toolkit sops "$@"
+  '';
+
   updater = pkgs.writeShellScriptBin "toolkit-update" ''
     set -euo pipefail
     DEST='${scfg.dest}'
@@ -56,7 +61,9 @@
     CURRENT="$DEST/current"
     mkdir -p "$DEST"
 
-    if command -v nds-git-ssh >/dev/null 2>&1; then
+    if command -v tc-git-ssh >/dev/null 2>&1; then
+      export GIT_SSH_COMMAND="tc-git-ssh"
+    elif command -v nds-git-ssh >/dev/null 2>&1; then
       export GIT_SSH_COMMAND="nds-git-ssh"
     elif [[ -x /root/.ssh/nds-git-ssh ]]; then
       export GIT_SSH_COMMAND="/root/.ssh/nds-git-ssh"
@@ -175,7 +182,7 @@ in {
 # Config
 # ==================================================================================================
   config = lib.mkIf (cfg.enable or false) {
-    environment.systemPackages = [ wrapper updater ];
+    environment.systemPackages = [ wrapper updater tcSops ];
 
     systemd.tmpfiles.rules = [
       "d ${scfg.dest} 0750 root root -"

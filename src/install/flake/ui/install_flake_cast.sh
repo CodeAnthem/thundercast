@@ -27,8 +27,9 @@ nds_cast_ui_ask_catalog() {
     nds_cfg_set CAST_REPO_URL "$current"
     nds_ui_section_header "Remote actions"
     nds_ui_b ""
-    nds_ui_b "Git repo that contains .nds/actions (or .nds/action.sh)."
-    nds_ui_b "Default is ThunderCast (public HTTPS clone, no key)."
+    nds_ui_b "Git repo that contains YOUR .nds/actions (not ThunderCast builtins)."
+    nds_ui_b "addRole and toolkit are built-in NDS actions — pick them from the main menu."
+    nds_ui_b "Default URL is ThunderCast (public HTTPS). That repo has no user catalog actions."
     nds_ui_b "A public HTTPS remote-action repo clones with no key."
     nds_ui_b ""
     nds_cfg_ask_url CAST_REPO_URL "Remote-action Git URL" "$current" true
@@ -73,17 +74,13 @@ nds_cast_ui_confirm_fetch() {
 # Arguments:
 # - cast_root: <String> Catalog checkout
 # Returns:
-# - 0 with CAST_ACTION set; 1 on back/empty list
+# - 0 with CAST_ACTION set; 1 on back; 14 when the catalog has no user actions
 nds_cast_ui_pick_action() {
     local cast_root="$1"
     local actions labels id desc i choice max_choice prompt
     local -a ids=() label_arr=()
 
-    actions="$(nds_cast_list_actions "$cast_root")"
-    if [[ -z "$actions" ]]; then
-        nds_cfg_set CAST_ACTION "addRole"
-        return 0
-    fi
+    actions="$(nds_cast_require_user_actions "$cast_root")" || return 14
 
     labels="$(nds_cast_action_labels "$cast_root" "$actions")"
     IFS='|' read -ra ids <<< "$actions"

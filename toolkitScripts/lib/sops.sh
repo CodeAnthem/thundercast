@@ -267,3 +267,50 @@ tcast_sops_operator_rotate() {
     printf '%s\n' "$pub" > "$(tcast_leaf)/.nds/operator.age.pub"
     tcast_info "operator key rotated — keep the old private until nodes have comin'd"
 }
+
+# Description: Non-interactive sops CLI (tc-sops / toolkit sops).
+tcast_sops_cli() {
+    local cmd="${1:-health}"
+    shift || true
+    case "$cmd" in
+        -h|--help|help)
+            cat <<'EOF'
+tc-sops — encrypt / health / operator (paths relative to the toolkit leaf)
+
+  tc-sops health
+  tc-sops init
+  tc-sops rotate
+  tc-sops apply
+  tc-sops encrypt REL
+  tc-sops updatekeys REL
+  tc-sops put REL KEY VALUE
+  tc-sops rm REL
+
+Leaf: TCAST_LEAF_DIR (default /var/lib/nds-toolkit/leaf). Same as the toolkit menu.
+EOF
+            ;;
+        health) tcast_sops_health ;;
+        init) tcast_sops_operator_init ;;
+        rotate) tcast_sops_operator_rotate ;;
+        apply) tcast_sops_apply_recipients ;;
+        encrypt)
+            [[ -n "${1:-}" ]] || tcast_die "usage: tc-sops encrypt REL"
+            tcast_sops_encrypt_file "$1"
+            ;;
+        updatekeys)
+            [[ -n "${1:-}" ]] || tcast_die "usage: tc-sops updatekeys REL"
+            tcast_sops_updatekeys_file "$1"
+            ;;
+        put)
+            [[ -n "${1:-}" && -n "${2:-}" && -n "${3:-}" ]] || tcast_die "usage: tc-sops put REL KEY VALUE"
+            tcast_sops_put_value "$1" "$2" "$3"
+            ;;
+        rm|remove)
+            [[ -n "${1:-}" ]] || tcast_die "usage: tc-sops rm REL"
+            tcast_sops_remove_file "$1"
+            ;;
+        *)
+            tcast_die "unknown tc-sops command: ${cmd} (try: tc-sops help)"
+            ;;
+    esac
+}

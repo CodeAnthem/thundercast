@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Install pipeline tests (read-only / mocked)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-19
+# Date:          Created: 2026-07-07 | Modified: 2026-08-20
 # ==================================================================================================
 
 suite_install() {
@@ -377,21 +377,65 @@ suite_install() {
     mkdir -p "${leaf_tmp}/.nds/actions"
     printf '%s\n' 'remote_action_run() { :; }' > "${leaf_tmp}/.nds/actions/addRole.sh"
     printf '%s\n' 'remote_action_run() { :; }' > "${leaf_tmp}/.nds/actions/toolkit.sh"
-    printf '%s\n' 'addRole|Add a host' 'toolkit|Ops VM' > "${leaf_tmp}/.nds/actions/manifest"
-    if [[ "$(nds_cast_list_actions "$leaf_tmp")" == "addRole|toolkit" ]]; then
+    printf '%s\n' 'remote_action_run() { :; }' > "${leaf_tmp}/.nds/actions/siteHook.sh"
+    printf '%s\n' 'addRole|Add a host' 'toolkit|Ops VM' 'siteHook|Leaf custom' \
+        > "${leaf_tmp}/.nds/actions/manifest"
+    if [[ "$(nds_cast_list_actions "$leaf_tmp")" == "siteHook" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ cast_list_actions: addRole|toolkit"
+        console "  ✓ cast_list_actions: user actions only (skips addRole/toolkit)"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ cast_list_actions: $(nds_cast_list_actions "$leaf_tmp")"
     fi
-    if [[ "$(nds_cast_action_script "$leaf_tmp" addRole)" == "${leaf_tmp}/.nds/actions/addRole.sh" ]]; then
+    if ! nds_cast_action_script "$leaf_tmp" addRole >/dev/null 2>&1 \
+        && [[ "$(nds_cast_action_script "$leaf_tmp" siteHook)" == "${leaf_tmp}/.nds/actions/siteHook.sh" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ cast_action_script: addRole path"
+        console "  ✓ cast_action_script: skips addRole stub; resolves user action"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ cast_action_script: wrong path"
+        console "  ✗ cast_action_script: stub still loadable or siteHook missing"
     fi
+    local stub_only
+    stub_only=$(mktemp -d)
+    mkdir -p "${stub_only}/.nds/actions"
+    printf '%s\n' 'remote_action_run() { :; }' > "${stub_only}/.nds/actions/addRole.sh"
+    printf '%s\n' 'remote_action_run() { :; }' > "${stub_only}/.nds/actions/toolkit.sh"
+    if [[ -z "$(nds_cast_list_actions "$stub_only")" ]] \
+        && ! nds_cast_require_user_actions "$stub_only" >/dev/null 2>&1; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ empty catalog (Cast stubs only) fails closed"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ empty catalog: list or require_user_actions"
+    fi
+    rm -rf "$stub_only"
+
+    local restore_dir
+    restore_dir=$(mktemp -d)
+    mkdir -p "${restore_dir}/.nds/hosts"
+    printf 'export NDS_DISK_STRATEGY="nds"\n' > "${restore_dir}/.nds/hosts/lab.env"
+    printf '%s\n' '[disk]' 'DISK_STRATEGY="disko"' > "${restore_dir}/.nds/hosts/lab.recipe"
+    nds_cfg_set DISK_STRATEGY ""
+    nds_flake_load_host_restore "$restore_dir" lab
+    if [[ "$(nds_cfg_get DISK_STRATEGY)" == "disko" ]]; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ host restore: .recipe wins over legacy .env"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ host restore: recipe did not win ($(nds_cfg_get DISK_STRATEGY))"
+    fi
+    rm -f "${restore_dir}/.nds/hosts/lab.recipe"
+    nds_cfg_set DISK_STRATEGY ""
+    nds_flake_load_host_restore "$restore_dir" lab
+    if [[ "$(nds_cfg_get DISK_STRATEGY)" == "nds" ]]; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ host restore: falls back to .env"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ host restore: env fallback ($(nds_cfg_get DISK_STRATEGY))"
+    fi
+    rm -rf "$restore_dir"
+
     script_out="$(nds_flake_find_action_script "$leaf_tmp")"
     if [[ "$script_out" == "${leaf_tmp}/.nds/action.sh" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
@@ -436,21 +480,20 @@ suite_install() {
     local _saved_unattended
     _saved_unattended="$(declare -f nds_mode_is_unattended)"
     nds_mode_is_unattended() { return 0; }
-    if nds_cast_select_action "$leaf_tmp" \
-        && [[ "$(nds_cfg_get CAST_ACTION)" == "addRole" ]]; then
+    if ! nds_cast_select_action "$leaf_tmp" 2>/dev/null; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ cast_select_action: unattended default addRole"
+        console "  ✓ cast_select_action: unattended without NDS_CAST_ACTION fails"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ cast_select_action: unattended default"
+        console "  ✗ cast_select_action: should not default to addRole"
     fi
     eval "$_saved_unattended"
     nds_cfg_set CAST_ACTION ""
     nds_cfg_set FLAKE_REPO_URL ""
-    export NDS_CAST_ACTION="addRole"
+    export NDS_CAST_ACTION="siteHook"
     nds_mode_is_unattended() { return 0; }
     if nds_cast_select_action "$leaf_tmp" \
-        && [[ "$(nds_cfg_get CAST_ACTION)" == "addRole" ]]; then
+        && [[ "$(nds_cfg_get CAST_ACTION)" == "siteHook" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ cast_select_action: NDS_CAST_ACTION env before settings apply"
     else
@@ -657,11 +700,11 @@ suite_install() {
         fi
         rm -rf "$http_tmp"
         if _nds_cast_https_anonymous_ok "https://github.com/CodeAnthem/thundercast.git"; then
-            TEST_FAILED=$((TEST_FAILED + 1))
-            console "  ✗ cast clone: thundercast HTTPS is anonymous — ISO username bug would not apply"
-        else
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ cast clone: thundercast HTTPS is private (ISO Username prompt is expected)"
+            console "  ✓ cast clone: thundercast HTTPS is public (anonymous clone)"
+        else
+            TEST_FAILED=$((TEST_FAILED + 1))
+            console "  ✗ cast clone: thundercast HTTPS should be anonymously cloneable"
         fi
     else
         TEST_PASSED=$((TEST_PASSED + 1))
@@ -795,7 +838,8 @@ EOF
     seed_mnt=$(mktemp -d)
     mkdir -p "${seed_cast}/toolkitScripts"
     printf '%s\n' '#!/bin/sh' 'echo ok' > "${seed_cast}/toolkitScripts/toolkit.sh"
-    chmod +x "${seed_cast}/toolkitScripts/toolkit.sh"
+    printf '%s\n' '#!/bin/sh' 'echo sops' > "${seed_cast}/toolkitScripts/tc-sops.sh"
+    chmod +x "${seed_cast}/toolkitScripts/toolkit.sh" "${seed_cast}/toolkitScripts/tc-sops.sh"
     git -C "$seed_cast" init -q
     git -C "$seed_cast" -c user.email=nds@test -c user.name=nds add toolkitScripts
     git -C "$seed_cast" -c user.email=nds@test -c user.name=nds commit -q -m seed
@@ -804,12 +848,13 @@ EOF
     if nds_toolkit_seed_scripts_to_target "$seed_mnt" \
         && [[ -x "${seed_mnt}/var/lib/nds-toolkit/current/toolkit.sh" ]] \
         && [[ "$(readlink "${seed_mnt}/var/lib/nds-toolkit/current")" == "src/toolkitScripts" ]] \
-        && [[ "$(git -C "${seed_mnt}/var/lib/nds-toolkit/src" remote get-url origin 2>/dev/null)" == "$NDS_CAST_DEFAULT_URL" ]]; then
+        && [[ "$(git -C "${seed_mnt}/var/lib/nds-toolkit/src" remote get-url origin 2>/dev/null)" == "$NDS_CAST_DEFAULT_URL" ]] \
+        && [[ -L "${seed_mnt}/root/.nds/bin/tc-sops" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ toolkit seed: relative symlink to toolkitScripts"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ toolkit seed: missing current/toolkit.sh, absolute symlink, or stale origin"
+        console "  ✗ toolkit seed: missing current/toolkit.sh, tc-sops, or stale origin"
     fi
     unset NDS_CAST_DEFAULT_URL
     unset NDS_CAST_PROBE_DIR

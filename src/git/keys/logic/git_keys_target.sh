@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Install git SSH keys and nds-git-ssh onto the target
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-16
+# Date:          Created: 2026-07-07 | Modified: 2026-08-20
 # Description:   Copy deploy keys, known_hosts, and helper CLIs under /mnt
 # ==================================================================================================
 
@@ -119,7 +119,7 @@ _nds_git_write_deploy_map_lines() {
 # - mount_root: <String> Target mount (default /mnt)
 _nds_git_install_nds_helpers_to_target() {
     local mount_root="${1:-/mnt}"
-    local switch_src switch_dst wrap_src clean_src clean_dst
+    local switch_src switch_dst wrap_src clean_src clean_dst status_src
 
     mkdir -p "${mount_root}/root/bin" "${mount_root}/root/.nds/bin" \
         "${mount_root}/etc/profile.d"
@@ -143,6 +143,21 @@ _nds_git_install_nds_helpers_to_target() {
     fi
     cp -f "$switch_dst" "${mount_root}/root/bin/nds-switch"
     chmod 755 "${mount_root}/root/bin/nds-switch"
+    ln -sfn nds-switch "${mount_root}/root/.nds/bin/tc-switch"
+    ln -sfn nds-switch "${mount_root}/root/bin/tc-switch"
+    if [[ -f "$clean_dst" ]]; then
+        ln -sfn nds-clean "${mount_root}/root/.nds/bin/tc-clean"
+        ln -sfn nds-clean "${mount_root}/root/bin/tc-clean"
+    fi
+    if [[ -x "${mount_root}/root/.nds/bin/nds-git-ssh" ]]; then
+        ln -sfn nds-git-ssh "${mount_root}/root/.nds/bin/tc-git-ssh"
+    fi
+    status_src="$(_nds_git_tool_src tc-status.sh)"
+    if [[ -f "$status_src" ]]; then
+        _nds_git_install_exe "$status_src" "${mount_root}/root/.nds/bin/tc-status"
+        cp -f "${mount_root}/root/.nds/bin/tc-status" "${mount_root}/root/bin/tc-status"
+        chmod 755 "${mount_root}/root/bin/tc-status"
+    fi
     printf 'export PATH="/root/.nds/bin:/root/bin:${PATH}"\n' \
         >"${mount_root}/etc/profile.d/nds-root-bin.sh"
     chmod 644 "${mount_root}/etc/profile.d/nds-root-bin.sh"
@@ -187,6 +202,7 @@ _nds_git_install_ssh_wrapper_to_target() {
     installed_map="${installed_map%%$'\n'*}"
     installed_map="${installed_map:-0}"
     chmod 600 "$map_file"
+    ln -sfn nds-git.map "${ssh_dir}/tc-git.map"
 
     env_file="${mount_root}/etc/environment.d/50-nds-git-ssh.conf"
     printf 'GIT_SSH_COMMAND=/root/.ssh/nds-git-ssh\n' >"$env_file"

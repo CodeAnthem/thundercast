@@ -29,7 +29,12 @@ _nds_install_generate_encryption_secrets() {
 
     if [[ "$use_password" == "true" ]]; then
         local passphrase pw_file="$runtime_secrets/luks_password.txt"
-        if [[ "$password_auto" == "true" ]]; then
+        local given_file
+        given_file="$(nds_cfg_get ENCRYPTION_PASSPHRASE_FILE 2>/dev/null || true)"
+        if [[ -n "$given_file" && -f "$given_file" ]]; then
+            passphrase="$(cat "$given_file")"
+            [[ -n "$passphrase" ]] || { error "ENCRYPTION_PASSPHRASE_FILE is empty"; return 1; }
+        elif [[ "$password_auto" == "true" ]]; then
             log "Generating password (/dev/urandom, $password_length hex chars)"
             passphrase=$(_nds_install_urandom_chars "$password_length")
             if [[ -z "$passphrase" ]]; then
@@ -43,6 +48,9 @@ _nds_install_generate_encryption_secrets() {
         printf '%s' "$passphrase" > "$pw_file"
         chmod 600 "$pw_file"
         [[ -s "$pw_file" ]] || { error "Failed to write password file"; return 1; }
+        if declare -f nds_cfg_set &>/dev/null; then
+            nds_cfg_set ENCRYPTION_PASSPHRASE_FILE "$pw_file"
+        fi
         nds_install_log "Generated LUKS password (saved to secrets/luks_password.txt)"
     fi
 

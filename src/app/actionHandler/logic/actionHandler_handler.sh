@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Action handler (select, configure, execute)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-29 | Modified: 2026-08-18
+# Date:          Created: 2026-07-29 | Modified: 2026-08-20
 # Description:   Action selection, feature AA bridge, presets, execution
 # ==================================================================================================
 
@@ -82,6 +82,11 @@ _nds_app_actionHandler_configurePresets() {
     fi
 
     nds_cfg_seed_defaults
+
+    if [[ -n "${NDS_RECIPE_FILE:-}" && -f "${NDS_RECIPE_FILE}" ]]; then
+        nds_sm_load "$NDS_RECIPE_FILE" || return 1
+        info "Loaded recipe ${NDS_RECIPE_FILE}"
+    fi
     return 0
 }
 
@@ -119,6 +124,19 @@ nds_app_actionHandler_logic_execute() {
     local rc=0
 
     export NDS_CURRENT_ACTION="$action_name"
+
+    case "$action_name" in
+        remoteAction)
+            case "${NDS_CAST_ACTION:-}" in
+                toolkit|addRole)
+                    info "NDS_CAST_ACTION=${NDS_CAST_ACTION} is a built-in action — not a catalog script"
+                    nds_app_actionHandler_logic_execute "$NDS_CAST_ACTION"
+                    return $?
+                    ;;
+            esac
+            ;;
+    esac
+
     [[ -f "$setup_script" ]] || { error "Setup script not found: $setup_script"; return 1; }
 
     info "Loading $action_name action..."

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Remote action catalog (remoteAction)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-18 | Modified: 2026-08-18
+# Date:          Created: 2026-08-18 | Modified: 2026-08-20
 # Description:   Clone a catalog repo, list .nds/actions, load the selected script
 # ==================================================================================================
 
@@ -141,7 +141,8 @@ nds_cast_clone() {
     printf '%s\n' "$dest"
 }
 
-# Description: Pipe-joined action ids from .nds/actions/*.sh (basename without .sh).
+# Description: Pipe-joined user action ids from .nds/actions/*.sh.
+# Skips addRole and toolkit — those are built-in NDS actions, not catalog scripts.
 # Arguments:
 # - cast_root: <String> Catalog checkout
 # Returns:
@@ -156,10 +157,31 @@ nds_cast_list_actions() {
             [[ "$name" == *.sh ]] || continue
             name="${name%.sh}"
             [[ "$name" == "manifest" ]] && continue
+            case "$name" in
+                addRole|toolkit) continue ;;
+            esac
             names="${names:+$names|}${name}"
         done < <(find "$dir" -maxdepth 1 -type f -name '*.sh' -printf '%f\n' 2>/dev/null | sort)
     fi
     printf '%s\n' "$names"
+}
+
+# Description: Fail when the catalog has no user actions.
+# addRole and toolkit are built-in (NDS_ACTION=addRole / NDS_ACTION=toolkit).
+# Arguments:
+# - cast_root: <String> Catalog checkout
+# Returns:
+# - <String> Pipe-joined ids (stdout) when the catalog has at least one user action
+nds_cast_require_user_actions() {
+    local cast_root="$1"
+    local actions
+    actions="$(nds_cast_list_actions "$cast_root")"
+    if [[ -z "$actions" ]]; then
+        error "Catalog has no user actions — addRole and toolkit are built-in NDS actions (NDS_ACTION=addRole or NDS_ACTION=toolkit)"
+        return 1
+    fi
+    printf '%s\n' "$actions"
+    return 0
 }
 
 # Description: Labels for menus from .nds/actions/manifest (id|description).
@@ -204,6 +226,10 @@ nds_cast_action_script() {
     local action_id="$2"
     local candidate="${cast_root}/.nds/actions/${action_id}.sh"
 
+    case "$action_id" in
+        addRole|toolkit) return 1 ;;
+    esac
+
     if [[ -n "$action_id" && -f "$candidate" ]]; then
         printf '%s\n' "$candidate"
         return 0
@@ -216,20 +242,15 @@ nds_cast_action_script() {
 }
 
 # Description: Set CAST_ACTION from env/unattended (no TTY). Interactive uses
-# nds_cast_ui_pick_action. Empty CAST_ACTION + FLAKE_REPO_URL → addRole.
+# nds_cast_ui_pick_action. Requires NDS_CAST_ACTION when unattended.
 # Arguments:
 # - cast_root: <String> Catalog checkout
 nds_cast_select_action() {
     local cast_root="$1"
     local actions current
-    actions="$(nds_cast_list_actions "$cast_root")"
+    actions="$(nds_cast_require_user_actions "$cast_root")" || return 1
     current="$(nds_cfg_get CAST_ACTION 2>/dev/null || true)"
     [[ -n "$current" ]] || current="${NDS_CAST_ACTION:-}"
-
-    if [[ -z "$actions" ]]; then
-        nds_cfg_set CAST_ACTION "${current:-addRole}"
-        return 0
-    fi
 
     if [[ -n "$current" ]]; then
         nds_cfg_set CAST_ACTION "$current"
@@ -240,14 +261,7 @@ nds_cast_select_action() {
         return 1
     fi
 
-    if [[ -n "$(nds_cfg_get FLAKE_REPO_URL 2>/dev/null || true)" \
-        || -n "${NDS_FLAKE_REPO_URL:-}" ]]; then
-        nds_cfg_set CAST_ACTION "addRole"
-        info "CAST_ACTION unset — unattended default addRole"
-        return 0
-    fi
-
-    error "Unattended remoteAction needs NDS_CAST_ACTION"
+    error "Unattended remoteAction needs NDS_CAST_ACTION (user catalog action id)"
     return 1
 }
 
@@ -282,10 +296,18 @@ nds_cast_gate() {
     nds_step_complete "Remote actions cloned"
     export NDS_CAST_PROBE_DIR="$cast_root"
 
+    if ! nds_cast_require_user_actions "$cast_root" >/dev/null; then
+        return 14
+    fi
+
     if nds_mode_is_unattended; then
         nds_cast_select_action "$cast_root" || return 14
     else
-        nds_cast_ui_pick_action "$cast_root" || return "$NDS_ACTION_BACK"
+        nds_cast_ui_pick_action "$cast_root" || {
+            local rc=$?
+            [[ "$rc" -eq 1 ]] && return "$NDS_ACTION_BACK"
+            return "$rc"
+        }
     fi
 
     action_id="$(nds_cfg_get CAST_ACTION)"

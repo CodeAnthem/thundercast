@@ -35,6 +35,8 @@ source "${SCRIPT_DIR}/app/settingsManager/tests/settings_validators_test.sh"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/app/settingsManager/tests/settings_inputs_suite_test.sh"
 # shellcheck disable=SC1091
+source "${SCRIPT_DIR}/app/settingsManager/tests/settings_sm_suite_test.sh"
+# shellcheck disable=SC1091
 source "${SCRIPT_DIR}/app/tests/app_skip_suite_test.sh"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/app/tests/app_mode_suite_test.sh"
@@ -66,6 +68,7 @@ nds_run_self_tests() {
     nds_ui_section_title "NDS self-tests"
 
     run_named_suite "settingsManager" suite_settings_manager
+    run_named_suite "settings_sm" suite_settings_sm
     run_named_suite "skip" suite_skip
     run_named_suite "cfg" suite_cfg
     run_named_suite "presets" suite_presets

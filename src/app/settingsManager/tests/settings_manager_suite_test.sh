@@ -44,12 +44,14 @@ suite_settings_manager() {
     fi
 
     if [[ "${PRESET_REGISTRY[installFlake]:-}" == "disabled" ]] \
-       && [[ "${PRESET_REGISTRY[remoteAction]:-}" == "disabled" ]]; then
+       && [[ "${PRESET_REGISTRY[remoteAction]:-}" == "disabled" ]] \
+       && [[ "${PRESET_REGISTRY[addRole]:-}" == "disabled" ]] \
+       && [[ "${PRESET_REGISTRY[toolkit]:-}" == "disabled" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ catalog: action-only presets registered disabled"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ catalog: installFlake/remoteAction should be disabled"
+        console "  ✗ catalog: installFlake/remoteAction/addRole/toolkit should be disabled"
     fi
 
     nds_cfg_preset_disable "neverRegistered"

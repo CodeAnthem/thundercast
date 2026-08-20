@@ -30,10 +30,10 @@ ok() { echo "OK: $*"; PASS=$((PASS + 1)); }
 AGE="$(command -v age-keygen || true)"
 SOPS="$(command -v sops || true)"
 if [[ -z "$AGE" ]]; then
-    AGE="$(find /nix/store -maxdepth 2 -type f -name age-keygen 2>/dev/null | head -1)"
+    AGE="$(find /nix/store -maxdepth 4 -type f -name age-keygen 2>/dev/null | head -1)"
 fi
 if [[ -z "$SOPS" ]]; then
-    SOPS="$(find /nix/store -maxdepth 2 -type f -name sops 2>/dev/null | head -1)"
+    SOPS="$(find /nix/store -maxdepth 4 -type f -name sops 2>/dev/null | head -1)"
 fi
 [[ -n "$AGE" && -n "$SOPS" ]] || { echo "need age-keygen and sops"; exit 1; }
 export PATH="$(dirname "$AGE"):$(dirname "$SOPS"):$PATH"
@@ -65,12 +65,6 @@ if out="$(tcast_sops_health)"; then
 else
     fail "health without operator should pass"
 fi
-export TCAST_UI_BATCH=1
-unset TCAST_UI_KEYS || true
-tcast_ui_read_key 'x'
-[[ "$TCAST_UI_KEY" == q ]] && ok "batch exhausted keys is q" || fail "batch eof"
-unset TCAST_UI_BATCH
-
 mkdir -p "$LEAF/.nds"
 "$AGE" -o "$TCAST_TOOLKIT_OP_KEY" >/dev/null 2>&1
 "$AGE" -y "$TCAST_TOOLKIT_OP_KEY" > "$LEAF/.nds/operator.age.pub"
@@ -147,18 +141,21 @@ git -C "$LEAF" reset -q HEAD -- secrets/operator-plain.yaml 2>/dev/null || true
 tcast_sops_operator_rotate
 sops -d "$LEAF/secrets/operator.yaml" >/dev/null && ok "decrypt after operator rotate" || fail "rotate decrypt"
 
-export TCAST_UI_KEYS=q
-if "${ROOT}/toolkit.sh"; then
-    ok "main menu quit"
+if ver="$("${ROOT}/toolkit.sh" --version)" && [[ -n "$ver" ]]; then
+    ok "toolkit --version ($ver)"
 else
-    fail "main menu quit"
+    fail "toolkit --version"
 fi
 
-export TCAST_UI_KEYS=1q
-if "${ROOT}/toolkit.sh"; then
-    ok "status then quit (no tty fallback)"
+if "${ROOT}/toolkit.sh" sops help 2>/dev/null | grep -q 'tc-sops health'; then
+    ok "toolkit sops help"
 else
-    fail "status then quit"
+    fail "toolkit sops help"
+fi
+if out="$("${ROOT}/tc-sops.sh" health)" && echo "$out" | grep -q 'operator:'; then
+    ok "tc-sops health"
+else
+    fail "tc-sops health"
 fi
 
 SAVE_LEAF="$TCAST_LEAF_DIR"

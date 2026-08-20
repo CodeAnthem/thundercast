@@ -46,31 +46,11 @@ tcast_ui_blank() {
     printf '\n' >&2
 }
 
-# Description: True when keys/lines were supplied for automation (never use /dev/tty).
-tcast_ui_batch() {
-    [[ "${TCAST_UI_BATCH:-}" == "1" ]]
-}
-
-# Description: Pop one character from TCAST_UI_KEYS (tests) or read -n1.
-# Must be called as a statement (not $(...)): command substitution is a subshell
-# and would never advance TCAST_UI_KEYS. Result is TCAST_UI_KEY.
-# Batch mode never falls through to /dev/tty: exhausted keys act as q.
+# Description: Pop one character from /dev/tty (or stdin). Result is TCAST_UI_KEY.
 tcast_ui_read_key() {
     local prompt="${1:-Choice: }" choice=""
     tcast_ui_init
     TCAST_UI_KEY=""
-    if tcast_ui_batch || [[ -n "${TCAST_UI_KEYS:-}" ]]; then
-        if [[ -z "${TCAST_UI_KEYS:-}" ]]; then
-            printf '%sq\n' "$prompt" >&2
-            TCAST_UI_KEY=q
-            return 0
-        fi
-        choice="${TCAST_UI_KEYS:0:1}"
-        TCAST_UI_KEYS="${TCAST_UI_KEYS:1}"
-        printf '%s%s\n' "$prompt" "$choice" >&2
-        TCAST_UI_KEY="$choice"
-        return 0
-    fi
     if [[ -e /dev/tty ]]; then
         read -rsp "$prompt" -n 1 choice < /dev/tty || return 1
         printf '\n' >&2
@@ -85,21 +65,6 @@ tcast_ui_read_key() {
 tcast_ui_read_line() {
     local prompt="${1:-}" var
     TCAST_UI_LINE=""
-    if tcast_ui_batch || [[ -n "${TCAST_UI_LINES:-}" ]]; then
-        if [[ -z "${TCAST_UI_LINES:-}" ]]; then
-            printf '%s\n' "$prompt" >&2
-            return 0
-        fi
-        var="${TCAST_UI_LINES%%$'\n'*}"
-        if [[ "$TCAST_UI_LINES" == *$'\n'* ]]; then
-            TCAST_UI_LINES="${TCAST_UI_LINES#*$'\n'}"
-        else
-            TCAST_UI_LINES=""
-        fi
-        printf '%s%s\n' "$prompt" "$var" >&2
-        TCAST_UI_LINE="$var"
-        return 0
-    fi
     if [[ -e /dev/tty ]]; then
         read -rp "$prompt" var < /dev/tty || return 1
         TCAST_UI_LINE="$var"
@@ -111,10 +76,6 @@ tcast_ui_read_line() {
 
 tcast_ui_read_secret() {
     local prompt="${1:-Value: }" var
-    if tcast_ui_batch || [[ -n "${TCAST_UI_LINES:-}" ]]; then
-        tcast_ui_read_line "$prompt"
-        return 0
-    fi
     TCAST_UI_LINE=""
     if [[ -e /dev/tty ]]; then
         read -rsp "$prompt" var < /dev/tty || return 1
@@ -144,7 +105,7 @@ tcast_ui_yesno() {
 
 tcast_ui_pause() {
     local _x
-    if tcast_ui_batch || [[ -n "${TCAST_UI_KEYS:-}" || "${TCAST_UI_NO_PAUSE:-}" == "1" ]]; then
+    if [[ "${TCAST_UI_NO_PAUSE:-}" == "1" ]]; then
         return 0
     fi
     printf '  Press Enter… ' >&2

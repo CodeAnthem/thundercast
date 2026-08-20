@@ -154,7 +154,8 @@ nds_install_ui_confirm_remote() {
     local flake_host flake_path flake_source
 
     nds_mode_resolve || true
-    if nds_skip_menu NDS_REMOTE_CONFIRM_SKIP \
+    if nds_skip_menu NDS_INSTALL_CONFIRM_SKIP \
+        || nds_skip_menu NDS_REMOTE_CONFIRM_SKIP \
         || { declare -f nds_mode_is_unattended &>/dev/null && nds_mode_is_unattended; }; then
         nds_log_from_env "Remote install confirmation skipped (${target_ip})"
         return 0

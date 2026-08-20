@@ -62,6 +62,9 @@ _nds_switch_self_update() {
     mv -f "${dest}/nds-switch.tmp" "${dest}/nds-switch"
     mv -f "${dest}/nds-git-ssh.tmp" "${dest}/nds-git-ssh"
     mv -f "${dest}/nds-clean.tmp" "${dest}/nds-clean"
+    ln -sfn nds-switch "${dest}/tc-switch"
+    ln -sfn nds-clean "${dest}/tc-clean"
+    ln -sfn nds-git-ssh "${dest}/tc-git-ssh"
     # Keep ISO/install copy in sync when present
     if [[ -d /root/.ssh ]]; then
         cp -f "${dest}/nds-git-ssh" /root/.ssh/nds-git-ssh
@@ -74,6 +77,7 @@ _nds_switch_self_update() {
 _nds_switch_usage() {
     cat <<'EOF'
 nds-switch — pull /etc/nixos from origin and nixos-rebuild switch
+(tc-switch is the same command)
 
   nds-switch                 fetch, fast-forward, switch
   nds-switch --self-update   refresh nds-switch / nds-git-ssh / nds-clean

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Flake host scaffold prompts
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-18
+# Date:          Created: 2026-08-05 | Modified: 2026-08-20
 # Description:   Interactive existing/new host scaffold; writes AA via nds_aa_ask_*
 # ==================================================================================================
 
@@ -68,7 +68,7 @@ nds_flake_role_select() {
 _nds_flake_role_select_body() {
     local flake_root="$1"
     local system="${2:-x86_64-linux}"
-    local roles hosts_dir existing default_role env_file host role
+    local roles hosts_dir existing default_role host role
 
     roles="$(_nds_install_flake_discover_roles "$flake_root")"
     if [[ -z "$roles" ]]; then
@@ -104,12 +104,7 @@ _nds_flake_role_select_body() {
         nds_feat_cfg_set NETWORK_HOSTNAME "$host"
         NDS_FLAKE_HOST="$host"
         export NDS_FLAKE_HOST
-        env_file="${flake_root}/.nds/hosts/${host}.env"
-        if [[ -f "$env_file" ]]; then
-            nds_flake_load_host_nds_env "$env_file" || true
-        else
-            warn "No .nds/hosts/${host}.env — using current NDS settings"
-        fi
+        nds_flake_load_host_restore "$flake_root" "$host" || true
         return 0
     fi
 
