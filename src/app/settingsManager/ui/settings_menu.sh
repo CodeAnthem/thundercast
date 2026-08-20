@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Configuration menu
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-01 | Modified: 2026-08-14
+# Date:          Created: 2026-07-01 | Modified: 2026-08-20
 # Description:   Category menu — calls per-preset configure/summary/validate (no hook framework)
 # ==================================================================================================
 
@@ -36,7 +36,7 @@ nds_cfg_prompt_errors() {
 
 # Description: Interactive settings category menu.
 nds_cfg_menu() {
-    local presets=("$@") last_status=""
+    local presets=("$@") last_status="" sel=""
     if [[ ${#presets[@]} -eq 0 ]]; then
         readarray -t presets < <(nds_cfg_preset_get_all_enabled)
     fi
@@ -55,7 +55,7 @@ nds_cfg_menu() {
         done
 
         while true; do
-            read -sr -n 1 -p "${NDS_UI_INDENT_B}Select category (1-$i or X when ready): " sel < /dev/tty
+            nds_ui_tty_read -sr -n 1 -p "${NDS_UI_INDENT_B}Select category (1-$i or X when ready): " sel
             echo
             [[ -z "$sel" ]] && continue
 

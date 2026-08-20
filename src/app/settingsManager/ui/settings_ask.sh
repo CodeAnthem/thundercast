@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Configuration prompts
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-01 | Modified: 2026-08-19
+# Date:          Created: 2026-07-01 | Modified: 2026-08-20
 # Description:   Interactive field prompts — all types in one place
 # ==================================================================================================
 
@@ -139,14 +139,13 @@ _nds_settings_prompt_value() {
     local current value
 
     current=$(nds_cfg_get "$var")
-    declare -f _nds_ui_drain_tty &>/dev/null && _nds_ui_drain_tty
     while true; do
         if [[ -n "$hint" ]]; then
             printf "%s%-20s [%s] %s: " "$NDS_UI_INDENT_I" "$label" "$current" "$hint" >&2
         else
             printf "%s%-20s [%s]: " "$NDS_UI_INDENT_I" "$label" "$current" >&2
         fi
-        read -r value < /dev/tty
+        nds_ui_tty_read -r value
         if [[ -z "$value" ]]; then
             if [[ "$required" == true && -z "$current" ]]; then
                 validation_error "$label is required"
@@ -165,10 +164,9 @@ nds_cfg_ask_toggle() {
     [[ -n "$(nds_cfg_get "$var")" ]] || nds_cfg_set "$var" "$default"
     local current value normalized
     current=$(nds_cfg_get "$var")
-    declare -f _nds_ui_drain_tty &>/dev/null && _nds_ui_drain_tty
     while true; do
         printf "%s%-20s [%s] %s: " "$NDS_UI_INDENT_I" "$label" "$(nds_cfg_display_toggle "$current")" "$hint" >&2
-        read -r value < /dev/tty
+        nds_ui_tty_read -r value
         [[ -z "$value" ]] && return 0
         if validate_toggle "$value"; then
             normalized=$(nds_cfg_normalize_toggle "$value")
@@ -201,14 +199,13 @@ nds_cfg_ask_secret() {
     local var="$1" label="$2" minlen="${3:-8}" required="${4:-false}"
     local current value
     current=$(nds_cfg_get "$var")
-    declare -f _nds_ui_drain_tty &>/dev/null && _nds_ui_drain_tty
     while true; do
         if [[ -n "$current" ]]; then
             printf "%s%-20s [********]: " "$NDS_UI_INDENT_I" "$label" >&2
         else
             printf "%s%-20s: " "$NDS_UI_INDENT_I" "$label" >&2
         fi
-        read -r -s value < /dev/tty
+        nds_ui_tty_read -r -s value
         echo >&2
         if [[ -z "$value" ]]; then
             [[ "$required" == true && -z "$current" ]] && { validation_error "$label is required"; continue; }
@@ -344,10 +341,9 @@ nds_cfg_ask_disk() {
         done
     fi
     nds_ui_b ""
-    declare -f _nds_ui_drain_tty &>/dev/null && _nds_ui_drain_tty
     while true; do
         printf "%s%-20s [%s]: " "$NDS_UI_INDENT_I" "$label" "$current" >&2
-        read -r value < /dev/tty
+        nds_ui_tty_read -r value
         [[ -z "$value" ]] && return 0
         if [[ "$value" =~ ^[0-9]+$ ]] && (( value >= 1 && value <= ${#available_disks[@]} )); then
             value="${available_disks[$((value-1))]%% *}"
@@ -367,10 +363,9 @@ nds_cfg_ask_mask() {
     [[ -n "$(nds_cfg_get "$var")" ]] || nds_cfg_set "$var" "$default"
     local current value
     current=$(nds_cfg_get "$var")
-    declare -f _nds_ui_drain_tty &>/dev/null && _nds_ui_drain_tty
     while true; do
         printf "%s%-20s [%s] (CIDR or dotted): " "$NDS_UI_INDENT_I" "$label" "$current" >&2
-        read -r value < /dev/tty
+        nds_ui_tty_read -r value
         [[ -z "$value" ]] && return 0
         if [[ "$value" =~ ^[0-9]+$ ]]; then
             if (( value >= 0 && value <= 32 )); then
@@ -396,10 +391,9 @@ nds_cfg_ask_timezone() {
     [[ -n "$(nds_cfg_get "$var")" ]] || nds_cfg_set "$var" "$default"
     local current value matched_tz match_count
     current=$(nds_cfg_get "$var")
-    declare -f _nds_ui_drain_tty &>/dev/null && _nds_ui_drain_tty
     while true; do
         printf "%s%-20s [%s] (e.g. Europe/Zurich): " "$NDS_UI_INDENT_I" "$label" "$current" >&2
-        read -r value < /dev/tty
+        nds_ui_tty_read -r value
         [[ -z "$value" ]] && return 0
         if command -v timedatectl &>/dev/null; then
             if timedatectl list-timezones | grep -qxi "$value"; then

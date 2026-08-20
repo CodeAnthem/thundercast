@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git slug + install helper smoke (no TTY)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-28 | Modified: 2026-08-16
+# Date:          Created: 2026-07-28 | Modified: 2026-08-20
 # ==================================================================================================
 
 suite_standalone() {
@@ -122,4 +122,14 @@ suite_standalone() {
         console "  ✗ nds_install_write_admin_password: failed"
     fi
     rm -rf "$tmpdir"
+
+    if declare -f nds_ui_input_guard_enable >/dev/null \
+        && declare -f nds_ui_tty_read >/dev/null; then
+        nds_ui_input_guard_disable
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ nds_ui_input_guard: disable is a no-op without enable"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ nds_ui_input_guard: missing input.sh functions"
+    fi
 }

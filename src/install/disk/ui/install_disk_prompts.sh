@@ -47,9 +47,9 @@ nds_encryption_prompts_password() {
     local pw1="" pw2="" confirm
     while true; do
         printf 'Enter LUKS password: ' > /dev/tty
-        read -rs pw1 < /dev/tty; printf '\n' > /dev/tty
+        nds_ui_tty_read -rs pw1; printf '\n' > /dev/tty
         printf 'Confirm LUKS password: ' > /dev/tty
-        read -rs pw2 < /dev/tty; printf '\n' > /dev/tty
+        nds_ui_tty_read -rs pw2; printf '\n' > /dev/tty
         if [[ -z "$pw1" ]]; then
             printf 'Password cannot be empty — try again.\n' > /dev/tty; continue
         fi
@@ -59,7 +59,7 @@ nds_encryption_prompts_password() {
         if [[ ${#pw1} -lt 12 ]]; then
             printf 'Password is short (%s chars) — consider a longer one.\n' "${#pw1}" > /dev/tty
             printf 'Use this password anyway? [y/N]: ' > /dev/tty
-            read -r confirm < /dev/tty
+            nds_ui_tty_read -r confirm
             [[ "${confirm,,}" == "y" ]] || continue
         fi
         break
@@ -72,7 +72,7 @@ nds_encryption_prompts_keyfile_path() {
     local src_path
     while true; do
         printf 'Enter path to existing keyfile on the live system: ' > /dev/tty
-        read -r src_path < /dev/tty
+        nds_ui_tty_read -r src_path
         if [[ -n "$src_path" && -f "$src_path" ]]; then
             printf '%s' "$src_path"
             return 0

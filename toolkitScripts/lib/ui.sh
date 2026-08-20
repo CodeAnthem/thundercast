@@ -4,8 +4,87 @@
 # Date:          Created: 2026-08-19 | Modified: 2026-08-20
 # ==================================================================================================
 
+declare -g _TCAST_UI_INPUT_GUARD=0
+declare -g _TCAST_UI_INPUT_STTY=""
+declare -g _TCAST_UI_PROMPT_DEPTH=0
+
 tcast_ui_init() {
     TCAST_UI_INDENT="${TCAST_UI_INDENT:-  }"
+}
+
+_tcast_ui_tty_ok() {
+    [[ -c /dev/tty && -r /dev/tty && -w /dev/tty ]]
+}
+
+_tcast_ui_drain_tty() {
+    local _chunk
+    _tcast_ui_tty_ok || return 0
+    {
+        while IFS= read -r -t 0 -n 256 _chunk; do
+            :
+        done
+    } </dev/tty 2>/dev/null || true
+}
+
+_tcast_ui_input_restore_stty() {
+    [[ -n "${_TCAST_UI_INPUT_STTY:-}" ]] || return 0
+    stty "$_TCAST_UI_INPUT_STTY" </dev/tty 2>/dev/null || true
+}
+
+_tcast_ui_input_idle_stty() {
+    _tcast_ui_tty_ok || return 0
+    stty -echo isig -icanon min 0 time 0 </dev/tty 2>/dev/null || true
+    _tcast_ui_drain_tty
+}
+
+tcast_ui_input_guard_enable() {
+    [[ "${_TCAST_UI_INPUT_GUARD:-0}" == "1" ]] && return 0
+    _tcast_ui_tty_ok || return 0
+    _TCAST_UI_INPUT_STTY="$(stty -g </dev/tty 2>/dev/null || true)"
+    [[ -n "${_TCAST_UI_INPUT_STTY}" ]] || return 0
+    _TCAST_UI_INPUT_GUARD=1
+    _TCAST_UI_PROMPT_DEPTH=0
+    _tcast_ui_input_idle_stty
+}
+
+tcast_ui_input_guard_disable() {
+    _tcast_ui_input_restore_stty
+    _TCAST_UI_INPUT_GUARD=0
+    _TCAST_UI_PROMPT_DEPTH=0
+}
+
+_tcast_ui_session_sigint() {
+    tcast_ui_input_guard_disable
+    exit 130
+}
+
+tcast_ui_prompt_enter() {
+    _TCAST_UI_PROMPT_DEPTH=$((${_TCAST_UI_PROMPT_DEPTH:-0} + 1))
+    if [[ "${_TCAST_UI_PROMPT_DEPTH}" -eq 1 && "${_TCAST_UI_INPUT_GUARD:-0}" == "1" ]]; then
+        _tcast_ui_input_restore_stty
+    fi
+    _tcast_ui_drain_tty
+}
+
+tcast_ui_prompt_leave() {
+    local depth="${_TCAST_UI_PROMPT_DEPTH:-0}"
+    if (( depth > 0 )); then
+        _TCAST_UI_PROMPT_DEPTH=$((depth - 1))
+    fi
+    if [[ "${_TCAST_UI_PROMPT_DEPTH}" -eq 0 && "${_TCAST_UI_INPUT_GUARD:-0}" == "1" ]]; then
+        _tcast_ui_input_idle_stty
+    fi
+}
+
+# Description: bash read from /dev/tty with the input guard lifted.
+tcast_ui_tty_read() {
+    local rc=0
+    tcast_ui_prompt_enter
+    # shellcheck disable=SC2162
+    read "$@" </dev/tty
+    rc=$?
+    tcast_ui_prompt_leave
+    return "$rc"
 }
 
 tcast_ui_clear() {
@@ -48,11 +127,12 @@ tcast_ui_blank() {
 
 # Description: Pop one character from /dev/tty (or stdin). Result is TCAST_UI_KEY.
 tcast_ui_read_key() {
-    local prompt="${1:-Choice: }" choice=""
+    local prompt="${1:-Choice: }" choice="" rc=0
     tcast_ui_init
     TCAST_UI_KEY=""
     if [[ -e /dev/tty ]]; then
-        read -rsp "$prompt" -n 1 choice < /dev/tty || return 1
+        tcast_ui_tty_read -rsp "$prompt" -n 1 choice || rc=$?
+        [[ "$rc" -eq 0 ]] || return "$rc"
         printf '\n' >&2
         TCAST_UI_KEY="$choice"
         return 0
@@ -63,10 +143,11 @@ tcast_ui_read_key() {
 
 # Description: Read a line. Result is TCAST_UI_LINE (do not use $(...)).
 tcast_ui_read_line() {
-    local prompt="${1:-}" var
+    local prompt="${1:-}" var rc=0
     TCAST_UI_LINE=""
     if [[ -e /dev/tty ]]; then
-        read -rp "$prompt" var < /dev/tty || return 1
+        tcast_ui_tty_read -rp "$prompt" var || rc=$?
+        [[ "$rc" -eq 0 ]] || return "$rc"
         TCAST_UI_LINE="$var"
         return 0
     fi
@@ -75,10 +156,11 @@ tcast_ui_read_line() {
 }
 
 tcast_ui_read_secret() {
-    local prompt="${1:-Value: }" var
+    local prompt="${1:-Value: }" var rc=0
     TCAST_UI_LINE=""
     if [[ -e /dev/tty ]]; then
-        read -rsp "$prompt" var < /dev/tty || return 1
+        tcast_ui_tty_read -rsp "$prompt" var || rc=$?
+        [[ "$rc" -eq 0 ]] || return "$rc"
         printf '\n' >&2
         TCAST_UI_LINE="$var"
         return 0
@@ -110,7 +192,7 @@ tcast_ui_pause() {
     fi
     printf '  Press Enter… ' >&2
     if [[ -e /dev/tty ]]; then
-        read -r _x < /dev/tty || true
+        tcast_ui_tty_read -r _x || true
     else
         read -r _x || true
     fi

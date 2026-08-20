@@ -2,7 +2,7 @@
 # ==================================================================================================
 # DPS Project - Bootstrap NixOS - App entry point
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-12 | Modified: 2026-08-18
+# Date:          Created: 2025-10-12 | Modified: 2026-08-20
 # ==================================================================================================
 # shellcheck disable=SC2162
 set -euo pipefail
@@ -110,6 +110,7 @@ nds_app_bootstrap() {
     nds_import_tree "${script_dir}/tools" || return 1
 
     nds_import_file "${script_dir}/ui/terminal.sh" || return 1
+    nds_import_file "${script_dir}/ui/input.sh" || return 1
     nds_import_file "${script_dir}/ui/logger.sh" || return 1
     nds_import_file "${script_dir}/ui/section.sh" || return 1
     nds_import_file "${script_dir}/ui/prompts.sh" || return 1
@@ -126,8 +127,9 @@ nds_app_run() {
         nds_skip_all
     fi
 
-    trap 'newline; exit 130' SIGINT
+    trap _nds_ui_session_sigint SIGINT
     trap _nds_app_session_onExit EXIT
+    nds_ui_input_guard_enable
 
     nds_runtime_init || crash "Failed to setup runtime directory"
     nds_install_log "NDS session started (v$SCRIPT_VERSION)"

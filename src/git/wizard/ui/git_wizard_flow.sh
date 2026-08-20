@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git auth wizard flow (menu state machine)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-18
+# Date:          Created: 2026-07-07 | Modified: 2026-08-20
 # Description:   Per-repo conversation: existing-key y/n, then paste/path or gh/generate
 # ==================================================================================================
 
@@ -61,12 +61,11 @@ nds_git_wizard_ask_key_source() {
     if nds_mode_is_unattended; then
         nds_feat_cfg_set GIT_EXISTING_KEY "$default"
     else
-        declare -f _nds_ui_drain_tty &>/dev/null && _nds_ui_drain_tty
         while true; do
             if [[ "$default" == "true" ]]; then
-                read -rsn1 -p "${NDS_UI_INDENT_I}Have an existing private key? [y] (y/n): " confirm < /dev/tty
+                nds_ui_tty_read -rsn1 -p "${NDS_UI_INDENT_I}Have an existing private key? [y] (y/n): " confirm
             else
-                read -rsn1 -p "${NDS_UI_INDENT_I}Have an existing private key? [n] (y/n): " confirm < /dev/tty
+                nds_ui_tty_read -rsn1 -p "${NDS_UI_INDENT_I}Have an existing private key? [n] (y/n): " confirm
             fi
             echo >&2
             case "${confirm,,}" in

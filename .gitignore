@@ -19,3 +19,4 @@ keys.txt
 id_ed25519
 id_rsa
 id_ecdsa
+restoreBundles/*

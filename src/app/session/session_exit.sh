@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - App exit and trap helpers
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-29 | Modified: 2026-08-16
+# Date:          Created: 2026-07-29 | Modified: 2026-08-20
 # Description:   Exit hooks, fatal handling, and trap-safe shutdown output
 # ==================================================================================================
 
@@ -28,6 +28,7 @@ _nds_app_session_callHook() {
 _nds_app_session_onExit() {
     local exit_code=$?
     local exit_msg=""
+    declare -f nds_ui_input_guard_disable &>/dev/null && nds_ui_input_guard_disable
     NDS_UI_QUIET=false
     exit_msg=$(_nds_app_session_callHook "exit_msg" "$exit_code" || true)
 

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git auth wizard manual registration menu
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-18
+# Date:          Created: 2026-07-07 | Modified: 2026-08-20
 # ==================================================================================================
 
 # Description: Resolve QR vs printed copy (env or one-time prompt).
@@ -23,9 +23,8 @@ nds_git_wizard_resolve_key_display() {
         return 0
     fi
     local confirm=""
-    declare -f _nds_ui_drain_tty &>/dev/null && _nds_ui_drain_tty
     while true; do
-        read -rsn1 -p "${NDS_UI_INDENT_I}Generate QR codes for URL and public key? [n] (y/n): " confirm < /dev/tty
+        nds_ui_tty_read -rsn1 -p "${NDS_UI_INDENT_I}Generate QR codes for URL and public key? [n] (y/n): " confirm
         echo >&2
         case "${confirm,,}" in
             y) printf 'qr\n'; return 0 ;;

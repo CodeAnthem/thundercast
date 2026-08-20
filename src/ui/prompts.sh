@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - UI - User prompts and menu input
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-21 | Modified: 2026-08-18
+# Date:          Created: 2025-10-21 | Modified: 2026-08-20
 # Description:   Interactive yes/no/back and numbered-menu prompts
 # ==================================================================================================
 
@@ -13,30 +13,18 @@ nds_env_is_true() {
     nds_lib_env_is_true "$1"
 }
 
-# Description: Discard typeahead so a missed paste cannot answer the next prompt.
-# No-op when there is no controlling TTY (unattended / ssh without -t).
-_nds_ui_drain_tty() {
-    local _chunk
-    {
-        while IFS= read -r -t 0 -n 256 _chunk; do
-            :
-        done
-    } </dev/tty 2>/dev/null || true
-    return 0
-}
-
 # Description: Yes/no/back confirm; skippable via NDS_PROMPTS_SKIP.
 nds_ask_user_continue() {
     local prompt="${1:-Do you want to proceed?}"
+    local confirm=""
 
     if nds_skip_menu NDS_PROMPTS_SKIP; then
         printf '%s%s [y/n/b]: y (skipped)\n' "$NDS_UI_INDENT_B" "$prompt" >&2
         return 0
     fi
 
-    _nds_ui_drain_tty
     while true; do
-        read -rsp "${NDS_UI_INDENT_B}${prompt} [y/n/b]: " -n 1 confirm < /dev/tty
+        nds_ui_tty_read -rsp "${NDS_UI_INDENT_B}${prompt} [y/n/b]: " -n 1 confirm
         case "${confirm,,}" in
             y)
                 printf 'Yes\n' >&2
@@ -61,15 +49,15 @@ nds_ask_user_continue() {
 # Description: Yes/no confirm without a back option; skippable via NDS_PROMPTS_SKIP.
 nds_ask_user_to_proceed() {
     local prompt="${1:-Do you want to proceed?}"
+    local confirm=""
 
     if nds_skip_menu NDS_PROMPTS_SKIP; then
         printf '%s%s (y/n): y (skipped)\n' "$NDS_UI_INDENT_B" "$prompt" >&2
         return 0
     fi
 
-    _nds_ui_drain_tty
     while true; do
-        read -rsp "${NDS_UI_INDENT_B}${prompt} (y/n): " -n 1 confirm < /dev/tty
+        nds_ui_tty_read -rsp "${NDS_UI_INDENT_B}${prompt} (y/n): " -n 1 confirm
         case "${confirm,,}" in
             y)
                 printf 'Yes\n' >&2
@@ -126,9 +114,8 @@ nds_ui_read_menu_digit() {
     local choice=""
 
     nds_ui_init
-    _nds_ui_drain_tty
     while true; do
-        if ! read -rsn1 -p "$prompt" choice < /dev/tty 2>/dev/null; then
+        if ! nds_ui_tty_read -rsn1 -p "$prompt" choice 2>/dev/null; then
             return 1
         fi
         echo >&2
@@ -154,6 +141,19 @@ _nds_ui_hidden_block_restore() {
     unset _NDS_UI_STTY_ORIG
 }
 
+_nds_ui_hidden_block_abort() {
+    _nds_ui_hidden_block_restore
+    nds_ui_prompt_leave
+    _nds_ui_session_sigint
+}
+
+_nds_ui_hidden_block_finish() {
+    _nds_ui_hidden_block_restore
+    trap _nds_ui_session_sigint SIGINT
+    trap - TERM
+    nds_ui_prompt_leave
+}
+
 # Description: Read a hidden multiline block from the TTY until an end marker.
 # Input is not echoed (password-style). Does not write to CONFIG_DATA.
 # Git auth paste uses this under NDS_AUTO_CONFIRM when a TTY exists.
@@ -172,20 +172,21 @@ nds_ui_read_hidden_block() {
     nds_ui_b "$prompt"
     nds_ui_i "Finish with the -----END ... PRIVATE KEY----- line, or a lone period."
 
-    _nds_ui_drain_tty
-    _NDS_UI_STTY_ORIG="$(stty -g <"$tty" 2>/dev/null)" || return 1
-    trap '_nds_ui_hidden_block_restore; trap - INT TERM' INT TERM
+    nds_ui_prompt_enter
+    _NDS_UI_STTY_ORIG="$(stty -g <"$tty" 2>/dev/null)" || {
+        nds_ui_prompt_leave
+        return 1
+    }
+    trap _nds_ui_hidden_block_abort INT TERM
     stty -echo <"$tty" 2>/dev/null || {
-        _nds_ui_hidden_block_restore
-        trap - INT TERM
+        _nds_ui_hidden_block_finish
         return 1
     }
 
     while IFS= read -r line; do
         n=$((n + 1))
         if (( n > 200 )); then
-            _nds_ui_hidden_block_restore
-            trap - INT TERM
+            _nds_ui_hidden_block_finish
             nds_ui_b "Paste too long (stopped after 200 lines)."
             return 1
         fi
@@ -196,8 +197,7 @@ nds_ui_read_hidden_block() {
         [[ "$line" =~ ^-----END\ .*PRIVATE\ KEY-----[[:space:]]*$ ]] && break
     done <"$tty"
 
-    _nds_ui_hidden_block_restore
-    trap - INT TERM
+    _nds_ui_hidden_block_finish
     printf '\n' >&2
 
     [[ -n "$block" ]] || return 1

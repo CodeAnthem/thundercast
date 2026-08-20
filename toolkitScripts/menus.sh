@@ -376,6 +376,9 @@ tcast_menu_leaf_sync() {
 
 tcast_menu_main() {
     local choice sops_label
+    tcast_ui_input_guard_enable
+    trap 'tcast_ui_input_guard_disable' EXIT
+    trap '_tcast_ui_session_sigint' SIGINT
     tcast_leaf_require
     tcast_menu_leaf_sync
     tcast_register_ensure_defaults

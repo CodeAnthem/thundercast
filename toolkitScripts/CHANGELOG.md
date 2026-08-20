@@ -2,6 +2,10 @@
 
 Versions here are **tools only** (this tree). NixOS/comin is a separate channel.
 
+## 0.3.1 — 2026-08-20
+
+- TTY idle: discard keystrokes except Ctrl+C until a prompt is active
+
 ## 0.3.0 — 2026-08-20
 
 - `tc-sops` / `toolkit sops` — health, init, put, apply, encrypt (same ops as the menu)

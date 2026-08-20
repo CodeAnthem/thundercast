@@ -477,13 +477,13 @@ LOCK
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ wizard: QR prompt still uses aa toggle"
     fi
-    if grep -q '_nds_ui_drain_tty' "${SCRIPT_DIR}/ui/prompts.sh" \
-        && grep -q '_nds_ui_drain_tty' "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh"; then
+    if grep -q '_nds_ui_drain_tty' "${SCRIPT_DIR}/ui/input.sh" \
+        && grep -q 'nds_ui_tty_read' "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ wizard: TTY drain before existing-key and prompts"
+        console "  ✓ wizard: TTY drain + guarded read before existing-key prompt"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ wizard: missing TTY drain"
+        console "  ✗ wizard: missing TTY drain / guarded read"
     fi
     if grep -q 'nested=true' "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
         && grep -q '_nds_git_wizard_ensure_aa' \

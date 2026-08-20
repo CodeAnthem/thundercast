@@ -210,6 +210,14 @@ else
 fi
 export TCAST_LEAF_DIR="$SAVE_LEAF"
 
+if declare -f tcast_ui_input_guard_enable >/dev/null \
+    && declare -f tcast_ui_tty_read >/dev/null; then
+    tcast_ui_input_guard_disable
+    ok "input guard disable is a no-op without enable"
+else
+    fail "input guard functions missing"
+fi
+
 echo
 echo "Passed: ${PASS}  Failed: ${FAIL}"
 [[ "$FAIL" == 0 ]]
