@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="assets/banner.png" alt="ThunderCast" width="700">
+  <img src="docs/assets/banner.png" alt="ThunderCast" width="700">
 </p>
 
 # ThunderCast
 
-[![Version](https://img.shields.io/badge/version-5.24.19-0267c1?style=flat-square)](https://github.com/CodeAnthem/thundercast)
+[![Version](https://img.shields.io/badge/version-5.24.20-0267c1?style=flat-square)](https://github.com/CodeAnthem/thundercast)
 [![NixOS](https://img.shields.io/badge/NixOS-Live%20ISO-5277C3?style=flat-square&logo=nixos&logoColor=white)](https://nixos.org)
 [![ShellCheck](https://github.com/CodeAnthem/thundercast/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/CodeAnthem/thundercast/actions/workflows/shellcheck.yml)
 [![Self-test](https://github.com/CodeAnthem/thundercast/actions/workflows/selftest.yml/badge.svg)](https://github.com/CodeAnthem/thundercast/actions/workflows/selftest.yml)
@@ -165,7 +165,7 @@ NixOS module: `nixosModules.toolkit` (enable from a leaf that already uses Thund
 
 Copy [`exampleRepo/`](exampleRepo/) to a **private** git remote for a cluster leaf skeleton. Point NDS `FLAKE_REPO_URL` at that remote. `CAST_REPO_URL` defaults to this repository (actions).
 
-Do not commit age private keys, SSH private keys, or unencrypted `secrets/`.
+Do not commit age private keys, SSH private keys, or unencrypted `secrets/`. Banner: [`docs/assets/`](docs/assets/).
 
 ---
 

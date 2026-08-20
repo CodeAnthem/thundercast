@@ -10,7 +10,7 @@ Pick **remoteAction**, then NDS asks for an **action catalog** (any git repo wit
 
 1. Main menu → **remoteAction**
 2. Catalog Git URL (default Thundercast, or your own repo)
-3. Catalog clones over **HTTPS when the repo is public**. Thundercast is **private**, so the default URL runs the **git SSH wizard**.
+3. Catalog clones over **HTTPS when the repo is public**. ThunderCast is public, so the default URL clones with no key.
 4. Pick an action from `.nds/actions/`
 5. **Confirm before load** (orange warning — the catalog script is not sourced yet)
 6. Preview (orange warning) → settings (install flake URL, Network hostname, disk, …)

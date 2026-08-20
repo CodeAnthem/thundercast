@@ -640,7 +640,7 @@ suite_install() {
         "https://raw.githubusercontent.com/CodeAnthem/thundercast/main/src/app/VERSION"; then
         if _nds_cast_https_anonymous_ok "https://github.com/CodeAnthem/thundercast.git"; then
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ cast clone: public HTTPS ls-remote works (dps_bootstrap)"
+            console "  ✓ cast clone: public HTTPS ls-remote works (thundercast)"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
             console "  ✗ cast clone: public HTTPS ls-remote failed (would break public catalogs)"
@@ -650,7 +650,7 @@ suite_install() {
             "${http_tmp}/boot" 2>/dev/null \
             && [[ -f "${http_tmp}/boot/start.sh" ]]; then
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ cast clone: live public HTTPS clone (dps_bootstrap)"
+            console "  ✓ cast clone: live public HTTPS clone (thundercast)"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
             console "  ✗ cast clone: live public HTTPS clone failed"

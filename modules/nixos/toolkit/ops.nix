@@ -1,7 +1,7 @@
 # ==================================================================================================
-# Thundercast - A powerful ThunderCore extension framework by CodeAnthem
+# ThunderCast - NixOS installer and operator toolkit by CodeAnthem
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date: Created: 2026-08-19 | Modified: 2026-08-19
+# Date: Created: 2026-08-19 | Modified: 2026-08-20
 # Description: toolkit menu wrapper + VERSION-aware tools updater — opts.nixos.toolkit.ops
 # ==================================================================================================
 

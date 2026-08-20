@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Catalog gate UI (remoteAction)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-18 | Modified: 2026-08-18
+# Date:          Created: 2026-08-18 | Modified: 2026-08-20
 # Description:   Ask catalog Git URL; list and pick .nds/actions
 # ==================================================================================================
 
@@ -28,7 +28,7 @@ nds_cast_ui_ask_catalog() {
     nds_ui_section_header "Remote actions"
     nds_ui_b ""
     nds_ui_b "Git repo that contains .nds/actions (or .nds/action.sh)."
-    nds_ui_b "Default is Thundercast (private — git SSH wizard if HTTPS cannot clone)."
+    nds_ui_b "Default is ThunderCast (public HTTPS clone, no key)."
     nds_ui_b "A public HTTPS remote-action repo clones with no key."
     nds_ui_b ""
     nds_cfg_ask_url CAST_REPO_URL "Remote-action Git URL" "$current" true

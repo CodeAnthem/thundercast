@@ -6,7 +6,7 @@
 # Description:   Fetch origin, fast-forward, nixos-rebuild switch.
 #                Stops comin for the rebuild (runtime mask) so it cannot race;
 #                starts it again on EXIT even if the rebuild failed.
-#                --self-update refreshes this script + nds-git-ssh + nds-clean from dps_bootstrap main
+#                --self-update refreshes this script + nds-git-ssh + nds-clean from thundercast main
 #                into /root/.nds/bin (no full reinstall).
 # Env:
 #   NDS_FLAKE_ROOT   Flake root (default /etc/nixos)
@@ -47,7 +47,7 @@ _nds_switch_resolve_wrap() {
     fi
 }
 
-# Description: Download latest helpers from dps_bootstrap into /root/.nds/bin.
+# Description: Download latest helpers from ThunderCast into /root/.nds/bin.
 _nds_switch_self_update() {
     local dest="$NDS_BIN_DIR"
     mkdir -p "$dest"

@@ -19,7 +19,7 @@ tcast_ui_banner() {
     local ver title_line sub_line inner border margin
     tcast_ui_init
     ver="$(tcast_toolkit_version)"
-    title_line=" === Thundercast toolkit  v${ver} === "
+    title_line=" === ThunderCast toolkit  v${ver} === "
     sub_line="  ${subtitle}"
     inner=${#title_line}
     (( ${#sub_line} > inner )) && inner=${#sub_line}

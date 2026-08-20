@@ -186,7 +186,7 @@ nds_toolkit_seed_scripts_to_target() {
     rm -rf "${dest}/src"
 
     repo="$(nds_cfg_get CAST_REPO_URL 2>/dev/null || true)"
-    repo="${repo:-${NDS_CAST_DEFAULT_URL:-git@github.com:CodeAnthem/thundercast.git}}"
+    repo="${repo:-${NDS_CAST_DEFAULT_URL:-https://github.com/CodeAnthem/thundercast.git}}"
 
     src_git="${NDS_CAST_PROBE_DIR:-}"
     if [[ -f "${src_git}/toolkitScripts/toolkit.sh" && -d "${src_git}/.git" ]]; then

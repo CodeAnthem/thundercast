@@ -1,8 +1,11 @@
 # exampleRepo — copy this to your private leaf
 
-Thunderstorm (modules) / ThunderCast (NDS)’s **remoteAction** clones **your** private git remote, not this folder in-tree. Copy `exampleRepo/` to a new private repository **before** the first toolkit ISO. Point NDS `CAST_REPO_URL` at Thunderstorm (modules) / ThunderCast (NDS) (default) and `FLAKE_REPO_URL` at that private remote.
+NDS **remoteAction** clones **your** private git remote, not this folder in-tree. Copy `exampleRepo/` to a new private repository **before** the first toolkit ISO.
 
-Do **not** install thundercast itself as the flake (no real `nixosConfigurations` here).
+- `CAST_REPO_URL` — ThunderCast (this public repo; default)
+- `FLAKE_REPO_URL` — your private leaf
+
+Do **not** install ThunderCast itself as the flake (no real `nixosConfigurations` here).
 
 ## Layout
 
@@ -23,7 +26,7 @@ hosts/x86_64-linux/          # per-machine; add the toolkit host here before the
 ## Bootstrap order
 
 1. Copy this tree to a private GitHub repo and `nix flake lock`.
-2. ISO → **remoteAction** → Thunderstorm (modules) / ThunderCast (NDS) → action **toolkit** → **new** → this leaf URL (write access). Toolkit installs `hosts/…/control-toolkit/` (create that host in git first).
+2. ISO → **remoteAction** → ThunderCast → action **toolkit** → **new** → this leaf URL (write access). Toolkit installs `hosts/…/control-toolkit/` (create that host in git first).
 3. ISO → **addRole** → **manager** → first boot `swarm init`.
 4. On the toolkit: run `toolkit` (menu). Encrypt stubs, harvest tokens, enroll hosts from there. `toolkit-update` pulls a new tools VERSION.
 5. **addRole** gateway / workers (join from sops). Enroll each machine from the toolkit menu.

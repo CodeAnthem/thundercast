@@ -68,7 +68,7 @@ After install, per-repo deploy keys land under `/root/.ssh/nds_deploy_<owner>_<r
 via `GIT_SSH_COMMAND`. Session / account keys stay on the live ISO; only `nds_deploy_*` keys  
 are copied to the installed system. NDS also installs `/root/.nds/bin/nds-switch` and  
 `/root/.nds/bin/nds-clean` (legacy `/root/bin`). Use `nds-switch --self-update` during NDS  
-development to refresh scripts from dps_bootstrap without reinstalling. Install-time  
+development to refresh scripts from ThunderCast without reinstalling. Install-time  
 `facter.json` is unstaged and gitignored after the flake build so the checkout stays  
 pullable. Structural `mounts.nix` + `boot.nix` are committed (or git-added at install) so  
 flake eval always sees root/boot mounts and the bootloader device.
