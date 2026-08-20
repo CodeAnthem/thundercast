@@ -18,7 +18,7 @@ bash toolkitScripts/tests/run.sh # toolkit + tc-sops — needs age-keygen and so
 
 `bash src/tests/run.sh` is the same NDS suite as `dev/selftest.sh`.
 
-On the live ISO, `NDS_TEST=true sudo -E bash src/app/main.sh` and pick **test** (same suite) or **uiSmoke** (prompt walk, no install).
+On the live ISO, `export NDS_TEST=true` then the `curl | bash` line below, and pick **test** (same suite) or **uiSmoke** (prompt walk, no install).
 
 CI on `main`: ShellCheck + selftest. Toolkit tests are local until `age`/`sops` are in the workflow image.
 
@@ -32,15 +32,23 @@ Firmware: match the VM to what NDS detects (`BOOT_UEFI_MODE`). BIOS + GPT with a
 
 Prefer a **fresh disk** per case that installs. Abort cases (V3, V6, V8) must not leave a new origin commit.
 
-Clone this repo on the ISO (or `curl …/start.sh`) after the push you are testing:
+### Start NDS (`start.sh`)
+
+Same one-liner every time. [`start.sh`](../start.sh) still exists: it clones to `/tmp/thundercast` on the first run, then `git fetch` + `reset --hard origin/main` on later runs. You do **not** `git clone` again when Cast has a new version.
+
+Read [TRUST.md](../TRUST.md) before piping into bash.
 
 ```bash
-git clone https://github.com/CodeAnthem/thundercast.git /tmp/thundercast
-cd /tmp/thundercast
-# optional: git checkout <sha>
-sudo bash src/app/main.sh
-# same binary: sudo bash src/scripts/tc-nds.sh
+curl -sSL https://raw.githubusercontent.com/CodeAnthem/thundercast/main/start.sh | bash
 ```
+
+Flags after `--` go to NDS (`--action`, `--recipe`, `apply FILE`, `--auto-confirm`):
+
+```bash
+curl -sSL https://raw.githubusercontent.com/CodeAnthem/thundercast/main/start.sh | bash -s -- --action addRole
+```
+
+Env vars (`NDS_ACTION`, `NDS_FLAKE_REPO_URL`, `NDS_TEST`, …) are picked up the same way — export them, then curl. Fork: `NDS_REPO_URL` + curl that fork’s `start.sh`. Pin a branch: `| bash -s -- --branch:name`. Fetch without running: `| bash -s -- --no-exec`.
 
 ---
 
@@ -73,7 +81,7 @@ export NDS_FLAKE_HOST="worker-lab"
 export NDS_INSTALL_MODE=local
 export NDS_DISK_TARGET=/dev/vda
 export NDS_GIT_IMPORT_KEY_PATH=/tmp/nds-ssh-key
-sudo -E bash src/app/main.sh --auto-confirm
+curl -sSL https://raw.githubusercontent.com/CodeAnthem/thundercast/main/start.sh | bash -s -- --auto-confirm
 ```
 
 ---
@@ -128,7 +136,7 @@ Take a `.recipe` from V2/V4 (or export after a menu **X**). Point `*_FILE` at fi
 
 | | |
 |--|--|
-| **Do** | Wipe or use a new disk. `sudo bash src/app/main.sh apply /path/to/host.recipe` (or `--action apply --recipe FILE`). |
+| **Do** | Wipe or use a new disk. `curl …/start.sh \| bash -s -- apply /path/to/host.recipe` (or `--action apply --recipe FILE`). |
 | **Pass** | No settings menu. Part A installs. Same boot checks as V2 if it was a flake recipe. |
 | **Fail** | Wizard opens, or apply ignores `FLAKE_*` and does a classic install by mistake. |
 

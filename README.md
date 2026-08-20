@@ -238,8 +238,7 @@ Link here from your leaf README for live-ISO installs. Copy `exampleRepo/` to a 
 bash dev/shellcheck.sh              # lint (installs ShellCheck to ~/.cache if needed)
 bash dev/selftest.sh                # read-only NDS self-tests (CI gate)
 bash toolkitScripts/tests/run.sh    # toolkit + tc-sops (needs age-keygen + sops)
-DEBUG=1 sudo bash src/app/main.sh
-NDS_TEST=true sudo bash src/app/main.sh   # live menu: test (selftest) or uiSmoke
+DEBUG=1 sudo bash src/app/main.sh   # from a checkout
 ```
 
-Live ISO and VM cases (partition, reboot, `/boot`, abort-before-push): [docs/testing.md](docs/testing.md).
+Live ISO: `curl …/start.sh | bash` (refreshes `/tmp/thundercast`). `NDS_TEST=true` then the same curl — pick **test** or **uiSmoke**. Cases: [docs/testing.md](docs/testing.md).

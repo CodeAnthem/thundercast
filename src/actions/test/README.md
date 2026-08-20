@@ -7,7 +7,7 @@ Shown only when:
 
 ```bash
 export NDS_TEST=true
-sudo -E bash src/app/main.sh
+curl -sSL https://raw.githubusercontent.com/CodeAnthem/thundercast/main/start.sh | bash
 # pick action: test
 ```
 

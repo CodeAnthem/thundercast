@@ -20,7 +20,7 @@ bash dev/selftest.sh          # CI gate
 bash src/tests/run.sh         # same suite, direct
 bash dev/shellcheck.sh
 bash toolkitScripts/tests/run.sh
-# or NDS_TEST=true and pick the `test` action
+# live ISO: export NDS_TEST=true; curl …/start.sh | bash  → pick test
 ```
 
 Interactive prompt walk (`uiSmoke`) and real VM installs are not commit gates. Operator cases: [docs/testing.md](../../docs/testing.md).
