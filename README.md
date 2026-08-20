@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/banner.png" alt="ThunderCast" width="700">
+  <img src="docs/assets/banner_thundercast.png" alt="Thundercast" width="800">
 </p>
 
 # ThunderCast
