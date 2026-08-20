@@ -1,0 +1,16 @@
+{
+  "nodes": {
+    "git+ssh://github.com/org/thundercore": {
+      "locked": {
+        "type": "git",
+        "url": "git+ssh://github.com/org/thundercore"
+      }
+    },
+    "git+ssh://github.com/org/thundercast": {
+      "locked": {
+        "type": "git",
+        "url": "git+ssh://github.com/org/thundercast"
+      }
+    }
+  }
+}

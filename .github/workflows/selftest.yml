@@ -1,0 +1,16 @@
+name: Self-test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Run NDS self-tests
+        run: bash dev/selftest.sh

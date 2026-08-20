@@ -1,0 +1,2 @@
+# Framework globals (PRESET_CONTEXT, NDS_ACTION_CONFIG_*, test fixtures)
+disable=SC2034

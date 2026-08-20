@@ -1,0 +1,56 @@
+{ ... }:
+let
+  device = "__DEVICE__";
+  fsType = "__FSTYPE__";
+  swapSizeMi = __SWAPMIB__;
+  encrypt = __ENCRYPT__;
+
+  espSize = "512M";
+  bootSize = "512M";
+
+  mkFsMnt = type: mnt: {
+    type = "filesystem";
+    format = type;
+    mountpoint = mnt;
+  };
+in {
+  disko.devices.disk.main = {
+    inherit device;
+    type = "disk";
+    content = {
+      type = "gpt";
+      partitions =
+        let
+          base = {
+            esp = {
+              size = espSize;
+              type = "EF00";
+              content = mkFsMnt "vfat" "/boot/efi";
+            };
+            boot = {
+              size = bootSize;
+              type = "8300";
+              content = mkFsMnt "ext4" "/boot";
+            };
+          };
+
+          withSwap = if swapSizeMi > 0 then base // {
+            swap = {
+              size = toString swapSizeMi + "M";
+              type = "8200";
+              content = { type = "swap"; };
+            };
+          } else base;
+
+          rootPart = {
+            size = "100%";
+            content = if encrypt then {
+              type = "luks";
+              name = "cryptroot";
+              content = mkFsMnt fsType "/";
+            } else (mkFsMnt fsType "/");
+          };
+        in withSwap // { root = rootPart; };
+    };
+  };
+}

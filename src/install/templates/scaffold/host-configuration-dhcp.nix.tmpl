@@ -1,0 +1,17 @@
+{ config, lib, pkgs, inputs, ... }: {
+  imports = [
+    ./mounts.nix
+    ./boot.nix
+    ./opts.nix
+    (import ../../../host-lib/mkHardware.nix ./.)
+    ../../../host-lib/sops-base.nix
+  ];
+
+  networking = {
+    hostName = "__HOSTNAME__";
+    networkmanager.enable = true;
+    nameservers = [ __NAMESERVERS__ ];
+  };
+
+  system.stateVersion = "__STATE_VERSION__";
+}

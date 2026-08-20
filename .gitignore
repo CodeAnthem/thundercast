@@ -1,0 +1,16 @@
+internal-context/
+.bundleBackups/
+PLAN.md
+ARCHITECTURE.md
+LIMITATIONS.md
+MISSING_IMPLEMENTATIONS.md
+BATTLEPLAN.md
+NDS_CONTEXT.md
+after_holyDay_todo.md
+result
+result-*
+secrets/
+*.age
+id_ed25519
+id_rsa
+id_ecdsa

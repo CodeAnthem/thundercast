@@ -1,0 +1,20 @@
+# ==================================================================================================
+# dps_swarm - __HOSTNAME__
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Date:          Created: __DATE__ | Modified: __DATE__
+# Description:   Standard NDS disk labels (boot / nixos) - committed for flake eval
+# ==================================================================================================
+
+{ ... }: {
+  fileSystems."/" = {
+    device = "/dev/disk/by-label/nixos";
+    fsType = "ext4";
+  };
+
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-label/boot";
+    fsType = "vfat";
+    neededForBoot = true;
+    options = [ "fmask=0077" "dmask=0077" ];
+  };
+}

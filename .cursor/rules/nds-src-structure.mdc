@@ -1,0 +1,52 @@
+---
+description: NDS src structure, naming, lib vs tools, git subfeatures — catch layout smells
+alwaysApply: true
+---
+
+# NDS `src` conventions (dps_bootstrap)
+
+**Source of truth:** `internal-context/nds-src-conventions.md` (gitignored; whole `src/` tree, not git-only). Do not dump agent rules into `src/README.md`.
+
+## Before any src change
+
+Audit like a reviewer: **one concern per file/folder**, no duplicate capability. Prefer MCP graph, then fix structure — no aliases forever.
+
+## Layout
+
+| Area | Role |
+|------|------|
+| `lib/` | Generic helpers (host IP, PEM markers) — no domain policy |
+| `app/` | Backbone + core features: `actionHandler/`, `settingsManager/`, `session/`, `bundle/` |
+| `ui/` | Shared terminal chrome only |
+| `tools/` | CLI capability (`nds_pkg_*`, `nds_gh_*`, …) — no domain policy |
+| `git/` | Nested: `lib/`, `access/`, `keys/`, `wizard/` |
+| `install/` | Nested: `disk/` `flake/` `classic/` `nix/` `verify/` + `nixcfg/` |
+| `actions/<name>/` | Single `setup.sh` — not logic/ui |
+| `tests/` (src root) | Runner only |
+
+`bundle/` lives under `app/`, not `src/bundle/`.
+
+## File names (not actions)
+
+Basename starts with the feature: `git_host.sh`, `bundle_paths.sh`. Forbidden: `hosts.sh`, `key.sh`, `store.sh`, `init.sh`. Exceptions: `app/main.sh`, `app/import.sh`, `app/mode.sh`, `ui/*.sh`, `settingsManager/data/builtin/<preset>.sh` (basename is the preset id), `tests/run.sh`, `tests/framework.sh`.
+
+## Function names
+
+`nds_<feature>_<subfeature>_<purpose>` (private: `_nds_…`, never `_git_*` / `_install_*`). App: `nds_app_<feature>_<layer>_<camelAction>`. Store: `nds_cfg_*`. Validators: `validate_<type>_<action>`. Preset hooks: `<preset>_defaults|_configure|_validate|_summary`. Logger wrappers stay `info`/`warn`/`error`.
+
+Generic helpers live in `lib/` (`nds_lib_getHostIP`, `nds_lib_key_bodyLooksValid`, `nds_lib_env_is_true`, `nds_lib_urandom_chars`). App backbone uses `nds_app_*`; domain features keep `nds_git_*` / `nds_install_*`. Bound-AA wrappers: `nds_feat_cfg_*` / `nds_aa_ask_*`. Indent via `nds_ui_indent_push` / `pop` — never assign `NDS_UI_INDENT_*` in a feature.
+
+## Logic vs UI
+
+TTY in `ui/`, work in `logic/`. Combine UI helpers used by a single sibling into that sibling file.
+
+## Loading
+
+`nds_import_tree`: `lib` → `logic` → `state` → `ui`, then other dirs; skip `tests/`, `data/`, `load.sh`. No nested `load.sh`.
+
+## Tests / commit gate
+
+```bash
+bash dev/selftest.sh
+bash dev/shellcheck.sh
+```

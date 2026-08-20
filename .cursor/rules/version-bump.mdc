@@ -1,0 +1,23 @@
+---
+description: Bump src/app/VERSION on every commit
+alwaysApply: true
+---
+
+# Version bump on commit
+
+Every git commit that changes shipped code **must** bump `src/app/VERSION`.
+
+## Rules
+
+- File: `src/app/VERSION` (single line, semver `MAJOR.MINOR.PATCH`)
+- Include the VERSION change in the same commit as the code change
+- Default increment: **PATCH** (`x.y.Z` → `x.y.Z+1`) for fixes and small changes
+- Use **MINOR** for user-visible features / new actions
+- Use **MAJOR** only for breaking CLI/API changes
+- Do not leave VERSION unchanged across consecutive commits on `main`
+
+## Checklist before `git commit`
+
+1. Read current `src/app/VERSION`
+2. Bump appropriately
+3. Stage `src/app/VERSION` with the other files
