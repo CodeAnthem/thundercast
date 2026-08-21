@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Flake install pipeline (local + remote nixos-anywhere)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-06 | Modified: 2026-08-19
+# Date:          Created: 2026-07-06 | Modified: 2026-08-21
 # ==================================================================================================
 
 # Description: Full flake-based NixOS install.
@@ -37,6 +37,9 @@ nds_nixos_install_flake() {
             nds_step_exec "Prefetching flake git inputs" \
                 nds_git_prefetch_flake_closure "$flake_root" || return 1
         fi
+
+        nds_step_exec "Checking flake" \
+            _nds_install_flake_check "$flake_root" || return 1
 
         nds_step_exec_nixos "Installing via nixos-anywhere" \
             _nds_install_via_nixos_anywhere "$flake_root" "$hostname" "$NDS_CTX_REMOTE_TARGET_IP" || return 1
@@ -99,7 +102,7 @@ nds_nixos_install_flake() {
     nds_step_exec "Writing hypervisor guest tools" \
         _nds_install_flake_write_guest_nix "$host_dir" || return 1
 
-    nds_step_exec "Patching host configuration imports" \
+    nds_step_exec "Verifying host structural files" \
         _nds_install_ensure_host_imports "$host_dir" || return 1
 
     nds_step_exec "Staging committed host structure in git" \
@@ -109,6 +112,9 @@ nds_nixos_install_flake() {
         nds_step_exec "Prefetching flake git inputs" \
             nds_git_prefetch_flake_closure "$flake_root" || return 1
     fi
+
+    nds_step_exec "Checking flake" \
+        _nds_install_flake_check "$flake_root" || return 1
 
     nds_step_exec_nixos "Installing NixOS from flake" \
         _nds_install_nixos_flake "$flake_root" "$hostname" "$NDS_CTX_HW_PLACEMENT" || return 1

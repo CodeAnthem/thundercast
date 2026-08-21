@@ -1,7 +1,7 @@
 # ==================================================================================================
 # Thundercast - cluster nodes (roles as templates; domain hooks stay on the leaf)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-19 | Modified: 2026-08-19
+# Date:          Created: 2026-08-19 | Modified: 2026-08-21
 # ==================================================================================================
 
 tcast_nodes_roles() {
@@ -79,9 +79,6 @@ EOF
 
 { config, lib, pkgs, inputs, ... }: {
   imports = [
-    ./mounts.nix
-    ./boot.nix
-    ./opts.nix
     (import ../../../host-lib/mkHardware.nix ./.)
   ];
 

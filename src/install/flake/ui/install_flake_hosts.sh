@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Flake host picker prompts
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-05
+# Date:          Created: 2026-08-05 | Modified: 2026-08-21
 # Description:   Interactive host selection; writes FLAKE_HOST via bound nds_cfg_*
 # ==================================================================================================
 
@@ -15,7 +15,7 @@
 nds_flake_pick_host() {
     local flake_root="${1:-}"
     local -a hosts=()
-    local options labels host default rc existing
+    local options labels host default rc existing list_rc=0 hosts_out=""
 
     if [[ -z "$flake_root" ]]; then
         flake_root="$(nds_flake_resolve_root)" || {
@@ -30,26 +30,32 @@ nds_flake_pick_host() {
 
     if declare -f nds_step_start &>/dev/null; then
         nds_step_start "Listing nixosConfigurations"
-        mapfile -t hosts < <(nds_flake_list_hosts "$flake_root")
-        if [[ ${#hosts[@]} -gt 0 ]]; then
+        hosts_out="$(nds_flake_list_hosts "$flake_root")" || list_rc=$?
+        if [[ -n "$hosts_out" ]]; then
+            mapfile -t hosts <<< "$hosts_out"
+        fi
+        if [[ "$list_rc" -eq 0 ]]; then
             nds_step_complete "Listing nixosConfigurations (${#hosts[@]} hosts)"
         else
             nds_step_fail "Listing nixosConfigurations"
         fi
     else
-        mapfile -t hosts < <(nds_flake_list_hosts "$flake_root")
+        hosts_out="$(nds_flake_list_hosts "$flake_root")" || list_rc=$?
+        if [[ -n "$hosts_out" ]]; then
+            mapfile -t hosts <<< "$hosts_out"
+        fi
     fi
 
     existing="$(nds_feat_cfg_get FLAKE_HOST 2>/dev/null || true)"
     [[ -z "$existing" ]] && existing="${NDS_FLAKE_HOST:-}"
 
+    if [[ "$list_rc" -ne 0 ]]; then
+        error "Could not eval nixosConfigurations — fix the flake (host folders are not attrs)"
+        return 1
+    fi
     if [[ ${#hosts[@]} -eq 0 ]]; then
-        warn "Could not list nixosConfigurations — enter host name manually."
-        nds_aa_ask_hostname FLAKE_HOST "nixosConfigurations host name" "$existing" true
-        host="$(nds_feat_cfg_get FLAKE_HOST)"
-        [[ -n "$host" ]] || return 1
-        nds_feat_cfg_set NETWORK_HOSTNAME "$host"
-        return 0
+        error "Flake has 0 nixosConfigurations — a host folder is not a flake attr"
+        return 1
     fi
 
     if [[ -n "$existing" ]]; then

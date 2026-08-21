@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Install from flake preset
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-01 | Modified: 2026-08-18
+# Date:          Created: 2026-07-01 | Modified: 2026-08-21
 # ==================================================================================================
 
 installFlake_defaults() {
@@ -81,7 +81,7 @@ installFlake_configure() {
             _nds_settings_installFlake_ask_location
             nds_cfg_set FLAKE_HOST ""
             if declare -f nds_flake_pick_host &>/dev/null; then
-                nds_flake_pick_host || true
+                nds_flake_pick_host || return 1
             else
                 nds_cfg_ask_hostname FLAKE_HOST "nixosConfigurations host name" "" true
             fi
@@ -90,7 +90,7 @@ installFlake_configure() {
     nds_cfg_ask_path FLAKE_INSTALL_PATH "Flake path on installed disk" "/mnt/etc/nixos" true
     if [[ -z "$(nds_cfg_get FLAKE_HOST)" ]]; then
         if declare -f nds_flake_pick_host &>/dev/null; then
-            nds_flake_pick_host || true
+            nds_flake_pick_host || return 1
         else
             nds_cfg_ask_hostname FLAKE_HOST "nixosConfigurations host name" "" true
         fi
@@ -119,7 +119,7 @@ installFlake_summary() {
 }
 
 installFlake_prompt_errors() {
-    local root host
+    local root host hosts_out
     local -a hosts=()
 
     nds_ui_section_header "Configuration — required fields"
@@ -144,7 +144,7 @@ installFlake_prompt_errors() {
         fi
         if [[ -z "$(nds_cfg_get FLAKE_HOST)" ]] || ! validate_hostname "$(nds_cfg_get FLAKE_HOST)" 2>/dev/null; then
             if declare -f nds_flake_pick_host &>/dev/null; then
-                nds_flake_pick_host || true
+                nds_flake_pick_host || return 1
             else
                 nds_cfg_ask_hostname FLAKE_HOST "nixosConfigurations host name" "" true
             fi
@@ -154,12 +154,17 @@ installFlake_prompt_errors() {
         if declare -f nds_flake_resolve_root &>/dev/null && declare -f nds_flake_list_hosts &>/dev/null; then
             root="$(nds_flake_resolve_root 2>/dev/null || true)"
             if [[ -n "$root" ]]; then
-                mapfile -t hosts < <(nds_flake_list_hosts "$root" 2>/dev/null || true)
+                hosts_out="$(nds_flake_list_hosts "$root" 2>/dev/null || true)"
                 host="$(nds_cfg_get FLAKE_HOST)"
-                if [[ ${#hosts[@]} -gt 0 ]] && ! nds_flake_host_in_list "$host" "${hosts[@]}"; then
+                if [[ -z "$hosts_out" ]]; then
+                    error "Flake has 0 nixosConfigurations — a host folder is not a flake attr"
+                    return 1
+                fi
+                mapfile -t hosts <<< "$hosts_out"
+                if ! nds_flake_host_in_list "$host" "${hosts[@]}"; then
                     warn "FLAKE_HOST='${host}' is not in nixosConfigurations — pick from the list."
                     nds_cfg_set FLAKE_HOST ""
-                    nds_flake_pick_host "$root" || true
+                    nds_flake_pick_host "$root" || return 1
                     continue
                 fi
             fi
@@ -169,7 +174,7 @@ installFlake_prompt_errors() {
 }
 
 installFlake_validate() {
-    local root host
+    local root host hosts_out
     local -a hosts=()
 
     if nds_cfg_is INSTALL_MODE remote && [[ -z "$(nds_cfg_get REMOTE_TARGET_IP)" ]]; then
@@ -189,8 +194,16 @@ installFlake_validate() {
         root="$(nds_flake_resolve_root 2>/dev/null || true)"
         host="$(nds_cfg_get FLAKE_HOST)"
         if [[ -n "$root" ]]; then
-            mapfile -t hosts < <(nds_flake_list_hosts "$root" 2>/dev/null || true)
-            if [[ ${#hosts[@]} -gt 0 ]] && ! nds_flake_host_in_list "$host" "${hosts[@]}"; then
+            if ! hosts_out="$(nds_flake_list_hosts "$root" 2>/dev/null)"; then
+                validation_error "Could not eval nixosConfigurations from the flake"
+                return 1
+            fi
+            if [[ -z "$hosts_out" ]]; then
+                validation_error "Flake has 0 nixosConfigurations"
+                return 1
+            fi
+            mapfile -t hosts <<< "$hosts_out"
+            if ! nds_flake_host_in_list "$host" "${hosts[@]}"; then
                 validation_error "FLAKE_HOST '${host}' is not in nixosConfigurations"
                 return 1
             fi

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git tools tests (read-only / temp dirs)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-05 | Modified: 2026-08-18
+# Date:          Created: 2026-07-05 | Modified: 2026-08-21
 # ==================================================================================================
 
 suite_git() {
@@ -975,12 +975,14 @@ LOCK
             "${flake_tmp}/hosts/x86_64-linux/worker-01"
         printf '{ outputs = _: {}; }\n' >"${flake_tmp}/flake.nix"
         hosts_out="$(nds_flake_list_hosts "$flake_tmp" 2>/dev/null || true)"
-        if grep -q 'control-toolkit' <<<"$hosts_out" && grep -q 'worker-01' <<<"$hosts_out"; then
+        if [[ -z "$hosts_out" ]] \
+            && ! grep -q 'control-toolkit' <<<"$hosts_out" \
+            && ! grep -q 'worker-01' <<<"$hosts_out"; then
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ flake_list_hosts: host-dir filesystem fallback"
+            console "  ✓ flake_list_hosts: no host-dir fallback when flake has no nixosConfigurations"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
-            console "  ✗ flake_list_hosts: fallback got: ${hosts_out:-empty}"
+            console "  ✗ flake_list_hosts: unexpected names: ${hosts_out:-empty}"
         fi
         rm -rf "$flake_tmp"
     fi

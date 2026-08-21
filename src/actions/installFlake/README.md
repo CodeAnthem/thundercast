@@ -22,8 +22,10 @@ Installs `nixosConfigurations.<host>` from your flake. NDS handles disk prep, ha
 
 installFlake exposes **Your flake**, **Boot**, **Disk**, **Encryption**, and **Platform**.
 Boot uses the same **nixcfg** path as classicInstall: at install time NDS writes
-`boot.nix` next to the host and ensures `configuration.nix` imports `./mounts.nix` and
-`./boot.nix`. Scaffolded hosts get by-label `mounts.nix`; install may rewrite to by-uuid.
+`boot.nix` next to the host. Sibling `.nix` files (mounts, boot, opts, guest) are
+auto-imported by fileStore `method = "host"` — do not list them in `configuration.nix`.
+Scaffolded hosts get by-label `mounts.nix`; install may rewrite to by-uuid. After clone
+and git-input prefetch, NDS runs `nix flake check`.
 
 ### Boot
 

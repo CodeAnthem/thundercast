@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Flake host discovery (nixosConfigurations)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-31 | Modified: 2026-08-16
+# Date:          Created: 2026-07-31 | Modified: 2026-08-21
 # Description:   List nixosConfigurations attrs from a flake root (no pick UI)
 # ==================================================================================================
 
@@ -25,21 +25,6 @@ nds_flake_resolve_root() {
     fi
     [[ -n "$root" && -f "${root}/flake.nix" ]] || return 1
     readlink -f "$root" 2>/dev/null || printf '%s\n' "$root"
-}
-
-# Description: List host names from flake host directory layout (filesystem fallback).
-# Arguments:
-# - flake_root: <String> Flake path
-# Returns:
-# - <String> directory names one per line
-_nds_install_flake_list_hosts_from_dir() {
-    local flake_root="$1"
-    local host_dir rel
-    rel="$(nds_cfg_get FLAKE_HOST_DIR 2>/dev/null || true)"
-    rel="${rel:-hosts/x86_64-linux}"
-    host_dir="${flake_root}/${rel}"
-    [[ -d "$host_dir" ]] || return 1
-    find "$host_dir" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | sort
 }
 
 # Description: Split nix eval host listing into one name per line.
@@ -69,7 +54,6 @@ _nds_install_flake_normalize_eval_hosts() {
 nds_flake_list_hosts() {
     local flake_root="$1"
     local out errfile flake_ref
-    local -a from_dir=()
 
     [[ -d "$flake_root" && -f "${flake_root}/flake.nix" ]] || return 1
     flake_root="$(readlink -f "$flake_root" 2>/dev/null || printf '%s' "$flake_root")"
@@ -78,6 +62,7 @@ nds_flake_list_hosts() {
     mkdir -p "$(dirname "$errfile")"
     : >"$errfile"
 
+    # Successful eval of an empty attrset is 0 hosts — never invent names from folders.
     # 1) Eval from inside the flake (most reliable for locked inputs).
     # --raw is required: default nix eval prints "a\nb" as one quoted string.
     if out=$(
@@ -87,10 +72,8 @@ nds_flake_list_hosts() {
             2>>"$errfile"
     ); then
         out="$(_nds_install_flake_normalize_eval_hosts "$out")"
-        if [[ -n "$out" ]]; then
-            printf '%s\n' "$out"
-            return 0
-        fi
+        [[ -n "$out" ]] && printf '%s\n' "$out"
+        return 0
     fi
 
     # 2) path: flake URI + apply
@@ -100,10 +83,8 @@ nds_flake_list_hosts() {
         --apply 'c: builtins.attrNames c' 2>>"$errfile"); then
         out="$(printf '%s\n' "$out" | tr -d '[]"' | tr ',' '\n' \
             | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | awk 'NF')"
-        if [[ -n "$out" ]]; then
-            printf '%s\n' "$out"
-            return 0
-        fi
+        [[ -n "$out" ]] && printf '%s\n' "$out"
+        return 0
     fi
 
     # 3) nix flake show --json (lazy; needs jq when present)
@@ -111,19 +92,9 @@ nds_flake_list_hosts() {
         if out=$(nix flake show --json --all-systems "$flake_ref" 2>>"$errfile" \
             | jq -r '.nixosConfigurations // {} | keys[]' 2>>"$errfile"); then
             out="$(printf '%s\n' "$out" | awk 'NF')"
-            if [[ -n "$out" ]]; then
-                printf '%s\n' "$out"
-                return 0
-            fi
+            [[ -n "$out" ]] && printf '%s\n' "$out"
+            return 0
         fi
-    fi
-
-    # 4) Filesystem fallback: FLAKE_HOST_DIR entries (common Thunderstorm layout)
-    mapfile -t from_dir < <(_nds_install_flake_list_hosts_from_dir "$flake_root")
-    if [[ ${#from_dir[@]} -gt 0 ]]; then
-        debug "nixosConfigurations eval failed — using host dir names (${#from_dir[@]})"
-        printf '%s\n' "${from_dir[@]}"
-        return 0
     fi
 
     debug "nixosConfigurations listing failed (see ${errfile})"

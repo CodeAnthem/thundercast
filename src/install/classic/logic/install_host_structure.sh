@@ -2,8 +2,8 @@
 # ==================================================================================================
 # NDS - Committed host structure (mounts.nix / boot.nix)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-09 | Modified: 2026-08-19
-# Description:   Patch configuration.nix imports; stage committed structural modules for flake eval
+# Date:          Created: 2026-07-09 | Modified: 2026-08-21
+# Description:   Verify host structural files; stage committed modules for flake eval
 # ==================================================================================================
 
 # Description: Filenames that must stay in the flake Git tree (not gitignored).
@@ -11,38 +11,29 @@ _nds_install_flake_committed_host_names() {
     printf '%s\n' mounts.nix boot.nix guest.nix opts.nix
 }
 
-# Description: Ensure configuration.nix imports committed mounts.nix and boot.nix.
+# Description: Confirm mounts.nix and boot.nix exist. Sibling .nix files are
+#              auto-imported by fileStore method=host — do not patch configuration.nix.
 # Arguments:
 # - host_dir: <String> Host directory (…/hosts/…/hostname)
 _nds_install_ensure_host_imports() {
     local host_dir="$1"
-    local cfg="${host_dir}/configuration.nix"
-    local tmp
 
-    [[ -f "$cfg" ]] || {
-        warn "No configuration.nix in ${host_dir} — skip import patch"
+    [[ -d "$host_dir" ]] || {
+        error "Host directory missing: ${host_dir}"
+        return 1
+    }
+    [[ -f "${host_dir}/configuration.nix" ]] || {
+        warn "No configuration.nix in ${host_dir} — skip structural check"
         return 0
     }
-
-    if grep -q './mounts.nix' "$cfg" && grep -q './boot.nix' "$cfg" \
-        && ! grep -qE 'mkNdsBoot\.nix|mkRootFs\.nix' "$cfg"; then
-        return 0
-    fi
-
-    tmp=$(mktemp)
-    awk '
-        /mkNdsBoot\.nix/ { next }
-        /mkRootFs\.nix/ { next }
-        /imports = \[/ {
-            print
-            if (!seen_mounts) { print "    ./mounts.nix"; seen_mounts = 1 }
-            if (!seen_boot) { print "    ./boot.nix"; seen_boot = 1 }
-            next
-        }
-        { print }
-    ' "$cfg" >"$tmp"
-    mv -f "$tmp" "$cfg"
-    nds_install_log "host: patched ${cfg} -> ./mounts.nix + ./boot.nix"
+    [[ -f "${host_dir}/mounts.nix" ]] || {
+        error "mounts.nix missing: ${host_dir}/mounts.nix"
+        return 1
+    }
+    [[ -f "${host_dir}/boot.nix" ]] || {
+        error "boot.nix missing: ${host_dir}/boot.nix"
+        return 1
+    }
     return 0
 }
 

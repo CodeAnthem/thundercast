@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Flake checkout and flake nixos-install
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-28 | Modified: 2026-08-16
+# Date:          Created: 2025-10-28 | Modified: 2026-08-21
 # Description:   Stage flake, git-add install facts, build+activate flake system
 # ==================================================================================================
 
@@ -152,6 +152,31 @@ _nds_install_ensure_flake_checkout() {
     fi
 
     error "Failed to stage $repo_url to $install_path"
+}
+
+# Description: Run nix flake check after clone/prefetch (needs private git inputs).
+# Arguments:
+# - flake_root: <String> Flake checkout
+_nds_install_flake_check() {
+    local flake_root="$1"
+    local log="${NDS_NIXOS_INSTALL_LOG:-/tmp/nds_nixosInstallation.log}"
+
+    [[ -f "${flake_root}/flake.nix" ]] || {
+        error "Flake missing at ${flake_root}"
+        return 1
+    }
+    {
+        printf '\n=== nix flake check ===\n'
+    } >>"$log"
+    if ! (
+        cd "$flake_root" || exit 1
+        nix flake check --impure --extra-experimental-features 'nix-command flakes'
+    ) >>"$log" 2>&1; then
+        error "nix flake check failed — see ${log}"
+        return 1
+    fi
+    nds_install_log "flake: nix flake check ok (${flake_root})"
+    return 0
 }
 
 # Description: Flake attr for nixosConfigurations.<host>.config.system.build.toplevel.

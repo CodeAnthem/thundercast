@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Post-install verification
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-19
+# Date:          Created: 2026-07-07 | Modified: 2026-08-21
 # Description:   Verify partition mounts, hardware artifacts, bootloader, and system profile
 # ==================================================================================================
 
@@ -129,10 +129,6 @@ _nds_install_verify_flake_hardware() {
         _nds_install_verify_fail "mounts.nix missing (root/boot mounts): ${host_dir}/mounts.nix"
     elif ! grep -qE 'fileSystems|by-uuid|by-label' "${host_dir}/mounts.nix" 2>/dev/null; then
         _nds_install_verify_fail "mounts.nix missing fileSystems mounts: ${host_dir}/mounts.nix"
-    fi
-    if [[ -f "${host_dir}/configuration.nix" ]] \
-        && ! grep -q './mounts.nix' "${host_dir}/configuration.nix" 2>/dev/null; then
-        _nds_install_verify_fail "configuration.nix must import ./mounts.nix"
     fi
 }
 
