@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git auth wizard new-key and registration menus
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-05
+# Date:          Created: 2026-07-07 | Modified: 2026-08-26
 # ==================================================================================================
 
 # Description: Ask gh CLI vs manual registration.
@@ -40,21 +40,21 @@ nds_git_wizard_ask_register_method() {
     [[ "$existing" == "gh" ]] && _choice=gh || _choice=manual
 }
 
-# Description: Register read-only deploy key for one repo (gh or manual).
+# Description: Register a deploy key for one repo (gh or manual).
 # Arguments:
-# - owner: <String> Repository owner
-# - repo:  <String> Repository name
-# - host:  <String> Git host
+# - owner:     <String> Repository owner
+# - repo:      <String> Repository name
+# - host:      <String> Git host
+# - read_only: <String> true (default) or false
 # Returns:
 # - <Bool> 0 on success
 nds_git_wizard_register_deploy() {
-    local owner="$1" repo="$2" host="${3:-github.com}"
+    local owner="$1" repo="$2" host="${3:-github.com}" read_only="${4:-true}"
     local method="" pub register_url
 
     nds_git_wizard_ask_register_method method || return 1
     if [[ "$method" == "gh" ]]; then
-        # prepare (download + login) happens inside menu_gh_deploy before keygen
-        nds_git_wizard_menu_gh_deploy "$owner" "$repo" || return 1
+        nds_git_wizard_menu_gh_deploy "$owner" "$repo" "$read_only" || return 1
         return 0
     fi
 
@@ -62,7 +62,7 @@ nds_git_wizard_register_deploy() {
     pub="$(nds_git_deploy_key_pubkey_path "$owner" "$repo")"
     register_url="$(nds_git_deploy_key_register_url "$host" "$owner" "$repo")"
     NDS_GIT_AUTH_REGISTER_URLS=("$register_url")
-    nds_git_wizard_menu_manual_deploy "$owner" "$repo" "$host" || return 1
+    nds_git_wizard_menu_manual_deploy "$owner" "$repo" "$host" "$read_only" || return 1
     return 0
 }
 
@@ -99,11 +99,14 @@ nds_git_wizard_register_account() {
 
 # Description: Register deploy keys only for repositories still missing access.
 # Arguments:
+# - need: <String> read or write (this call)
 # - urls: <String...> Failed git URLs
 # Returns:
 # - <Bool> 0 on success
 nds_git_wizard_register_deploy_for_urls() {
-    local url ssh_url parsed host owner repo
+    local need="$1"
+    shift
+    local url ssh_url parsed host owner repo read_only
     declare -A seen=()
 
     for url in "$@"; do
@@ -112,7 +115,11 @@ nds_git_wizard_register_deploy_for_urls() {
         IFS=$'\t' read -r host owner repo <<< "$parsed"
         [[ -n "${seen[${owner}/${repo}]:-}" ]] && continue
         seen["${owner}/${repo}"]=1
-        nds_git_wizard_register_deploy "$owner" "$repo" "$host" || return 1
+        read_only="true"
+        if declare -f nds_git_access_deploy_read_only &>/dev/null; then
+            read_only="$(nds_git_access_deploy_read_only "$owner" "$repo" "$need")"
+        fi
+        nds_git_wizard_register_deploy "$owner" "$repo" "$host" "$read_only" || return 1
     done
     return 0
 }

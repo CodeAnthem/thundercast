@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Part A: apply a complete settings session (classic or flake, local or remote)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-20 | Modified: 2026-08-20
+# Date:          Created: 2026-08-20 | Modified: 2026-08-26
 # Description:   Disk/install only. Composers (Part B) must validate, then call this.
 # ==================================================================================================
 
@@ -17,14 +17,10 @@ nds_install_open_leaf() {
     fi
 
     nds_flake_prepare remote
-    if ! nds_mode_is_unattended; then
-        nds_ui_warn "This flow git-pushes host files to the install flake."
-        nds_ui_warn "GitHub deploy keys are read-only unless \"Allow write access\" is enabled."
-        nds_ui_warn "Use an account key, or a write-enabled deploy key — not a read-only backup."
-        nds_ui_b ""
-    fi
     nds_app_actionHandler_logic_callFeature nds_git_access_run \
-        "FLAKE_REPO_URL=$(nds_cfg_get FLAKE_REPO_URL)" || return 1
+        "FLAKE_REPO_URL=$(nds_cfg_get FLAKE_REPO_URL)" \
+        write \
+        "This action git-pushes host files to the install flake." || return 1
 
     host_dir="${NDS_FLAKE_HOST_DIR:-hosts/x86_64-linux}"
 

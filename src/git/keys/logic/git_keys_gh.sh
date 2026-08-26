@@ -2,18 +2,25 @@
 # ==================================================================================================
 # NDS - Git ↔ GitHub orchestration (uses tools nds_gh_*)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-17
+# Date:          Created: 2026-08-05 | Modified: 2026-08-26
 # Description:   Git owns key paths / titles; collision UI in git/keys/ui; GH API in tools/
 # ==================================================================================================
 
 # Description: Register deploy key via gh, prompting on title collision (rc 41).
+# Arguments:
+# - pub_file:  <String> Public key path
+# - owner:     <String> Repository owner
+# - repo:      <String> Repository name
+# - title:     <String> Key title on GitHub
+# - read_only: <String> true (default) or false
 nds_git_register_deploy_key() {
     local pub_file="$1" owner="$2" repo="$3" title="$4"
+    local read_only="${5:-true}"
     local collision rc
 
     while true; do
         collision="${NDS_GH_KEY_TITLE_COLLISION:-${NDS_GIT_SSH_KEY_TITLE_COLLISION:-}}"
-        nds_gh_register_deploy_key "$pub_file" "$owner" "$repo" "$title" "$collision"
+        nds_gh_register_deploy_key "$pub_file" "$owner" "$repo" "$title" "$collision" "$read_only"
         rc=$?
         if [[ "$rc" -eq "${NDS_GH_RC_TITLE_COLLISION:-41}" ]]; then
             nds_git_ui_ask_gh_title_collision \
@@ -29,8 +36,12 @@ nds_git_register_deploy_key() {
 }
 
 # Description: Generate (if needed) deploy key path and register via gh API.
+# Arguments:
+# - owner:     <String> Repository owner
+# - repo:      <String> Repository name
+# - read_only: <String> true (default) or false
 nds_git_register_deploy_for_repo() {
-    local owner="$1" repo="$2"
+    local owner="$1" repo="$2" read_only="${3:-true}"
     local pub title key_path
 
     key_path="$(nds_git_deploy_key_path "$owner" "$repo")"
@@ -41,16 +52,7 @@ nds_git_register_deploy_for_repo() {
         nds_git_keys_register "$key_path" || true
     fi
     title="$(nds_git_deploy_key_title "$owner" "$repo")"
-    if declare -f _nds_git_is_install_leaf &>/dev/null && _nds_git_is_install_leaf "$owner" "$repo" \
-        && [[ "${NDS_CURRENT_ACTION:-}" == "remoteAction" ]]; then
-        NDS_GH_DEPLOY_READ_ONLY=false
-        export NDS_GH_DEPLOY_READ_ONLY
-    else
-        NDS_GH_DEPLOY_READ_ONLY=true
-        export NDS_GH_DEPLOY_READ_ONLY
-    fi
-    nds_git_register_deploy_key "$pub" "$owner" "$repo" "$title" || return 1
-    unset NDS_GH_DEPLOY_READ_ONLY
+    nds_git_register_deploy_key "$pub" "$owner" "$repo" "$title" "$read_only" || return 1
     return 0
 }
 

@@ -2,9 +2,72 @@
 # ==================================================================================================
 # NDS - Git access logic + feature entry (no TTY in logic_*)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-15
+# Date:          Created: 2026-08-05 | Modified: 2026-08-26
 # Description:   Normalize/probe from config AA; entry may call prompts then verify
 # ==================================================================================================
+
+# Description: Read a git-access cfg key from the bound AA, store, or empty.
+_nds_git_access_cfg_get() {
+    local key="$1" val=""
+    declare -f nds_feat_cfg_get &>/dev/null && val="$(nds_feat_cfg_get "$key" 2>/dev/null || true)"
+    [[ -z "$val" ]] && declare -f nds_cfg_get &>/dev/null && val="$(nds_cfg_get "$key" 2>/dev/null || true)"
+    printf '%s\n' "$val"
+}
+
+# Description: Normalize a per-call access need (read or write).
+# Arguments:
+# - need: <String> write|rw|push, or anything else for read
+# Returns:
+# - <String> write or read (stdout)
+nds_git_access_normalize_need() {
+    case "${1,,}" in
+        write|rw|push) printf 'write\n' ;;
+        *) printf 'read\n' ;;
+    esac
+}
+
+# Description: True when owner/repo is the install flake (FLAKE_REPO_URL).
+# Related flake inputs are not the write target.
+# Arguments:
+# - owner: <String> Repository owner
+# - repo:  <String> Repository name
+nds_git_access_is_need_target() {
+    local owner="$1" repo="$2"
+    local lo lr url parsed leaf_owner leaf_repo
+    if declare -f _nds_git_is_install_leaf &>/dev/null && _nds_git_is_install_leaf "$owner" "$repo"; then
+        return 0
+    fi
+    lo="$(_nds_git_access_cfg_get GIT_ACCESS_OWNER)"
+    lr="$(_nds_git_access_cfg_get GIT_ACCESS_REPO)"
+    if [[ -n "$lo" && -n "$lr" && "${owner,,}" == "${lo,,}" && "${repo,,}" == "${lr,,}" ]]; then
+        return 0
+    fi
+    url="${NDS_FLAKE_REPO_URL:-}"
+    [[ -z "$url" ]] && url="$(_nds_git_access_cfg_get FLAKE_REPO_URL)"
+    [[ -n "$url" ]] || return 1
+    declare -f _nds_git_url_toSsh &>/dev/null && declare -f _nds_git_url_parse &>/dev/null || return 1
+    url="$(_nds_git_url_toSsh "$url")"
+    parsed="$(_nds_git_url_parse "$url")" || return 1
+    IFS=$'\t' read -r _ leaf_owner leaf_repo <<< "$parsed"
+    [[ "${owner,,}" == "${leaf_owner,,}" && "${repo,,}" == "${leaf_repo,,}" ]]
+}
+
+# Description: GitHub deploy-key read_only flag for this call (write only on the need target).
+# Arguments:
+# - owner: <String> Repository owner
+# - repo:  <String> Repository name
+# - need:  <String> Per-call need (read or write)
+# Returns:
+# - <String> true or false (stdout)
+nds_git_access_deploy_read_only() {
+    local owner="$1" repo="$2" need="$3"
+    if [[ "$(nds_git_access_normalize_need "$need")" == "write" ]] \
+        && nds_git_access_is_need_target "$owner" "$repo"; then
+        printf 'false\n'
+    else
+        printf 'true\n'
+    fi
+}
 
 # Description: Normalize repo URL into cfg AA (SSH form when parseable).
 nds_git_access_logic_normalize() {
@@ -98,13 +161,21 @@ nds_git_access_wants_gh_ui() {
         || "${kind,,}" == "gh" || "${kind,,}" == "account" ]]
 }
 
-# Description: Feature entry — mode + config AA (mutates AA).
+# Description: Feature entry — mode + config AA + per-call need/reason (mutates AA).
 # UI uses nds_aa_ask_* / nds_feat_cfg_* while bound to this AA.
+# Arguments:
+# - mode:   <String> interactive|unattended
+# - cfg:    <Nameref> Config AA (FLAKE_REPO_URL)
+# - need:   <String|optional> read (default) or write
+# - reason: <String|optional> Shown in the wizard (why this access is required)
 nds_git_access_run() {
     local mode="${1:-interactive}"
     local -n _g_run=$2
-    local owner repo rc
+    local need reason owner repo rc
     local prev_aa="${NDS_CFG_AA_NAME:-}"
+
+    need="$(nds_git_access_normalize_need "${3:-read}")"
+    reason="${4:-}"
 
     nds_git_access_logic_normalize _g_run || return 0
     owner="${_g_run[GIT_ACCESS_OWNER]:-}"
@@ -117,7 +188,11 @@ nds_git_access_run() {
     fi
 
     if nds_mode_env_true "${NDS_GIT_AUTH_SKIP:-false}"; then
-        error "Private repo ${owner}/${repo} needs SSH access (unset NDS_GIT_AUTH_SKIP and configure a key)"
+        if [[ "$need" == "write" ]]; then
+            error "Private repo ${owner}/${repo} needs write SSH access (unset NDS_GIT_AUTH_SKIP and configure a key)"
+        else
+            error "Private repo ${owner}/${repo} needs SSH access (unset NDS_GIT_AUTH_SKIP and configure a key)"
+        fi
         return 1
     fi
 
@@ -131,7 +206,7 @@ nds_git_access_run() {
     while true; do
         export NDS_FLAKE_REPO_URL="${_g_run[FLAKE_REPO_URL]:-}"
         export NDS_FLAKE_SOURCE="${_g_run[FLAKE_SOURCE]:-remote}"
-        nds_git_auth_prompts _g_run
+        nds_git_auth_prompts _g_run "$need" "$reason"
         rc=$?
         [[ "$rc" -eq "${NDS_ACTION_BACK:-10}" ]] && continue
         [[ "$rc" -ne 0 ]] && continue

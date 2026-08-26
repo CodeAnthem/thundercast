@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git tools tests (read-only / temp dirs)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-05 | Modified: 2026-08-21
+# Date:          Created: 2026-07-05 | Modified: 2026-08-26
 # ==================================================================================================
 
 suite_git() {
@@ -12,7 +12,7 @@ suite_git() {
         nds_import_file "${SCRIPT_DIR}/git/tests/git_access_test.sh" 2>/dev/null; then
         if nds_git_access_logic_selfcheck; then
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ git_access_logic: normalize + wants_gh"
+            console "  ✓ git_access_logic: normalize + wants_gh + write need"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
             console "  ✗ git_access_logic: normalize + wants_gh"
@@ -427,43 +427,69 @@ LOCK
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ wizard: missing y/n existing-key or paste/path/gh/generate menus"
     fi
-    if grep -q 'paste|path|import' \
+    if grep -q 'GIT_ACCESS_STRATEGY "deploy-this"' \
         "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
-        && grep -q 'GIT_ACCESS_STRATEGY "deploy-this"' \
+        && grep -q 'nds_git_wizard_ask_closure_coverage' \
             "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
-        && grep -q 'nds_git_wizard_ask_access_strategy' \
+        && ! grep -q 'nds_git_wizard_ask_access_strategy' \
+            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+        && ! grep -q 'Deploy key: read-only' \
             "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ wizard: paste/path skip strategy; gh/generate still ask"
+        console "  ✓ wizard: first repo is this-repo only; related coverage asked at closure"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ wizard: paste/path should skip SSH key strategy"
+        console "  ✗ wizard: early SSH key strategy menu still present"
     fi
     if grep -q 'nds_ui_section_header "Git access"' \
         "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
-        && grep -q 'This repository is private. NDS needs an SSH key' \
+        && grep -q 'This repository is private. NDS needs' \
+        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
+        && grep -q 'nds_git_access_normalize_need' \
+        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
+        && grep -q 'Related private repositories still need SSH access' \
         "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
         && ! grep -q 'Private repositories' \
             "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
         && ! grep -q 'NDS already probes keys' \
             "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ wizard: Git access section header; short intro"
+        console "  ✓ wizard: Git access section header; need/reason intro"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ wizard: missing Git access header or stale private-repo copy"
     fi
-    if grep -F -q 'enable \"Allow write access\"' \
+    if grep -q 'nds_git_access_deploy_read_only' \
+        "${SCRIPT_DIR}/git/keys/ui/git_keys_new.sh" \
+        && grep -F -q 'enable \"Allow write access\"' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
-        && grep -q 'addRole|toolkit|remoteAction' \
-        "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
-        && grep -q 'CAST_ACTION' \
-        "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh"; then
+        && grep -q 'nds_gh_register_deploy_key' \
+        "${SCRIPT_DIR}/git/keys/logic/git_keys_gh.sh" \
+        && grep -q 'read_only' \
+        "${SCRIPT_DIR}/git/keys/logic/git_keys_gh.sh" \
+        && ! grep -q 'NDS_GH_DEPLOY_READ_ONLY' \
+            "${SCRIPT_DIR}/git/keys/logic/git_keys_gh.sh" \
+        && ! grep -q 'NDS_CURRENT_ACTION.*remoteAction' \
+            "${SCRIPT_DIR}/git/keys/logic/git_keys_gh.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ wizard: leaf write hint for addRole/toolkit, not remoteAction-only"
+        console "  ✓ wizard: write deploy keys follow per-call need, not env or remoteAction"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ wizard: write-access hint still keyed on remoteAction only"
+        console "  ✗ wizard: write-access still keyed on env, remoteAction, or missing read_only"
+    fi
+    if grep -q 'nds_app_actionHandler_logic_callFeature nds_git_access_run' \
+        "${SCRIPT_DIR}/install/apply/logic/install_apply.sh" \
+        && grep -q 'write \\' \
+        "${SCRIPT_DIR}/install/apply/logic/install_apply.sh" \
+        && grep -q 'This action git-pushes host files to the install flake.' \
+        "${SCRIPT_DIR}/install/apply/logic/install_apply.sh" \
+        && ! grep -q 'GIT_ACCESS_NEED' \
+        "${SCRIPT_DIR}/install/apply/logic/install_apply.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ install: open_leaf passes write + reason as git access args"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ install: open_leaf missing write/reason args on git access"
     fi
     if grep -q 'read -rsn1' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \

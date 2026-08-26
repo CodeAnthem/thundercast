@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git SSH auth gate + exit cleanup
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-05 | Modified: 2026-08-16
+# Date:          Created: 2026-07-05 | Modified: 2026-08-26
 # Description:   Exit cleanup + flake-input closure access gate
 # ==================================================================================================
 
@@ -160,7 +160,7 @@ _nds_git_closure_preapply_strategy() {
             else
                 info "Creating deploy keys for ${#pending[@]} related repositories..."
                 if declare -f nds_git_wizard_register_deploy_for_urls &>/dev/null; then
-                    nds_git_wizard_register_deploy_for_urls "${pending[@]}" || return 1
+                    nds_git_wizard_register_deploy_for_urls "read" "${pending[@]}" || return 1
                 fi
             fi
             nds_git_keys_load_all || true

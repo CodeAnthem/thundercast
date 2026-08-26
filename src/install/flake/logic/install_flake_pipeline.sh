@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Flake install pipeline (action-level workflow)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-06 | Modified: 2026-08-15
+# Date:          Created: 2026-07-06 | Modified: 2026-08-26
 # Description:   installFlake action steps — uses install/flake helpers + git
 # ==================================================================================================
 
@@ -23,7 +23,10 @@ nds_flake_install_prepare_and_verify() {
         nds_install_log "git: access already verified this session — skip re-probe"
     else
         if [[ -n "$repo_url" ]]; then
-            nds_app_actionHandler_logic_callFeature nds_git_access_run "FLAKE_REPO_URL=$repo_url" || return 1
+            nds_app_actionHandler_logic_callFeature nds_git_access_run \
+                "FLAKE_REPO_URL=$repo_url" \
+                read \
+                "Clone the install flake and its private inputs." || return 1
         fi
 
         nds_install_ui_section_flake_access

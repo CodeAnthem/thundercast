@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git auth wizard manual registration menu
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-20
+# Date:          Created: 2026-07-07 | Modified: 2026-08-26
 # ==================================================================================================
 
 # Description: Resolve QR vs printed copy (env or one-time prompt).
@@ -55,6 +55,7 @@ nds_git_wizard_show_manual_key_at() {
     nds_ui_b ""
     console "$(cat "$pub_path")"
     nds_ui_b ""
+    nds_ui_i "Add it at: ${register_url}"
 
     if [[ "$display" == "qr" ]]; then
         local pub
@@ -77,26 +78,16 @@ nds_git_wizard_show_manual_key_at() {
 
 # Description: Wait until user confirms manual deploy key registration.
 # Arguments:
-# - owner: <String> Repository owner
-# - repo:  <String> Repository name
+# - owner:     <String> Repository owner
+# - repo:      <String> Repository name
+# - read_only: <String> true (default) or false
 # Returns:
 # - <Bool> 0 when user confirms
 nds_git_wizard_confirm_manual_deploy() {
     local owner="$1" repo="$2"
-    local action="${NDS_CURRENT_ACTION:-}"
-    local cast_action=""
-    local needs_write=false
+    local read_only="${3:-true}"
 
-    declare -f nds_cfg_get &>/dev/null && cast_action="$(nds_cfg_get CAST_ACTION 2>/dev/null || true)"
-    case "$action" in
-        addRole|toolkit|remoteAction) needs_write=true ;;
-    esac
-    case "$cast_action" in
-        addRole|toolkit) needs_write=true ;;
-    esac
-
-    if declare -f _nds_git_is_install_leaf &>/dev/null && _nds_git_is_install_leaf "$owner" "$repo" \
-        && [[ "$needs_write" == "true" ]]; then
+    if [[ "$read_only" == "false" ]]; then
         nds_ui_b "Add this deploy key on GitHub — enable \"Allow write access\" (this action pushes the host)."
     else
         nds_ui_b "Add this deploy key on GitHub — leave \"Allow write access\" unchecked."
@@ -124,13 +115,14 @@ nds_git_wizard_confirm_manual_account() {
 
 # Description: Manual deploy key registration for one repository.
 # Arguments:
-# - owner: <String> Repository owner
-# - repo:  <String> Repository name
-# - host:  <String> Git host
+# - owner:     <String> Repository owner
+# - repo:      <String> Repository name
+# - host:      <String> Git host
+# - read_only: <String> true (default) or false
 # Returns:
 # - <Bool> 0 on success
 nds_git_wizard_menu_manual_deploy() {
-    local owner="$1" repo="$2" host="${3:-github.com}"
+    local owner="$1" repo="$2" host="${3:-github.com}" read_only="${4:-true}"
     local display pub_path register_url title
 
     nds_git_deploy_key_generate "$owner" "$repo" || return 1
@@ -140,7 +132,7 @@ nds_git_wizard_menu_manual_deploy() {
 
     display="$(nds_git_wizard_resolve_key_display)" || return 1
     nds_git_wizard_show_manual_key_at "$display" "$pub_path" "$title" "$register_url" || return 1
-    nds_git_wizard_confirm_manual_deploy "$owner" "$repo" || return 1
+    nds_git_wizard_confirm_manual_deploy "$owner" "$repo" "$read_only" || return 1
     return 0
 }
 

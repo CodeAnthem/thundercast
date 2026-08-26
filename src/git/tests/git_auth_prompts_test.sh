@@ -2,14 +2,14 @@
 # ==================================================================================================
 # NDS - Git auth prompts selfcheck (stubbed wizard)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-05
+# Date:          Created: 2026-08-05 | Modified: 2026-08-26
 # Description:   AA key gate + prompts dispatch without TTY
 # ==================================================================================================
 
 # Description: Assert prompts require AA keys and call wizard with host/owner/repo.
 nds_git_auth_prompts_selfcheck() {
     local -A cfg=()
-    local got_host="" got_owner="" got_repo=""
+    local got_host="" got_owner="" got_repo="" got_need="" got_reason=""
     local saved_wizard=""
 
     if nds_git_auth_prompts cfg 2>/dev/null; then
@@ -24,16 +24,20 @@ nds_git_auth_prompts_selfcheck() {
         got_host="$1"
         got_owner="$2"
         got_repo="$3"
+        got_need="$4"
+        got_reason="$5"
         return 0
     }
 
     cfg[GIT_ACCESS_HOST]="github.com"
     cfg[GIT_ACCESS_OWNER]="CodeAnthem"
     cfg[GIT_ACCESS_REPO]="dp_cluster"
-    if ! nds_git_auth_prompts cfg \
+    if ! nds_git_auth_prompts cfg write "This action git-pushes host files." \
         || [[ "$got_host" != "github.com" ]] \
         || [[ "$got_owner" != "CodeAnthem" ]] \
-        || [[ "$got_repo" != "dp_cluster" ]]; then
+        || [[ "$got_repo" != "dp_cluster" ]] \
+        || [[ "$got_need" != "write" ]] \
+        || [[ "$got_reason" != "This action git-pushes host files." ]]; then
         unset -f nds_git_auth_wizard_step_repo 2>/dev/null || true
         [[ -n "$saved_wizard" ]] && eval "$saved_wizard"
         return 1

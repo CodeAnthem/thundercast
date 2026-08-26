@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git auth wizard GitHub CLI menu
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-17
+# Date:          Created: 2026-07-07 | Modified: 2026-08-26
 # ==================================================================================================
 
 # Description: Print one device-login line with optional color on code/URL.
@@ -177,24 +177,25 @@ nds_git_wizard_gh_prepare() {
     return 0
 }
 
-# Description: gh path — register read-only deploy key on one repository.
+# Description: gh path — register a deploy key on one repository.
 # Arguments:
-# - owner: <String> Repository owner
-# - repo:  <String> Repository name
+# - owner:     <String> Repository owner
+# - repo:      <String> Repository name
+# - read_only: <String> true (default) or false
 # Returns:
 # - <Bool> 0 on success
 nds_git_wizard_menu_gh_deploy() {
-    local owner="$1" repo="$2"
+    local owner="$1" repo="$2" read_only="${3:-true}"
     local label="Registering deploy key on ${owner}/${repo}"
 
     nds_git_wizard_gh_prepare || return 1
     nds_step_start "$label"
-    if ! nds_git_register_deploy_for_repo "$owner" "$repo"; then
+    if ! nds_git_register_deploy_for_repo "$owner" "$repo" "$read_only"; then
         nds_step_fail "$label"
         return 1
     fi
     nds_step_complete "$label"
-    if [[ "${NDS_GH_DEPLOY_READ_ONLY:-true}" == "false" ]]; then
+    if [[ "$read_only" == "false" ]]; then
         success "Write deploy key registered on ${owner}/${repo}"
     else
         success "Read-only deploy key registered on ${owner}/${repo}"

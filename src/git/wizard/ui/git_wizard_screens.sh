@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git auth wizard screens (menu output)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-18
+# Date:          Created: 2026-07-07 | Modified: 2026-08-26
 # ==================================================================================================
 
 declare -ga NDS_GIT_AUTH_REGISTER_URLS=()
@@ -18,10 +18,29 @@ nds_git_ui_ask_clear_gh_session() {
 }
 
 # Description: Intro for a private-repo SSH wizard (boxed header, then this repo).
+# Arguments:
+# - need:   <String|optional> read (default) or write
+# - reason: <String|optional> Why this access is required
+nds_git_wizard_screen_need_blurb() {
+    local need="${1:-read}"
+    local reason="${2:-}"
+
+    need="$(nds_git_access_normalize_need "$need")"
+    if [[ "$need" == "write" ]]; then
+        nds_ui_b "This repository is private. NDS needs write access (clone and push)."
+    else
+        nds_ui_b "This repository is private. NDS needs an SSH key that can clone it."
+    fi
+    [[ -n "$reason" ]] && nds_ui_b "Reason: ${reason}"
+}
+
 nds_git_wizard_screen_intro() {
+    local need="${1:-read}"
+    local reason="${2:-}"
+
     nds_ui_section_header "Git access"
     nds_ui_b ""
-    nds_ui_b "This repository is private. NDS needs an SSH key that can clone it."
+    nds_git_wizard_screen_need_blurb "$need" "$reason"
     nds_ui_b ""
 }
 
@@ -99,13 +118,17 @@ nds_git_wizard_screen_list_repos() {
 
 # Description: Screen for a single root flake repo.
 # Arguments:
-# - host:  <String> Git host
-# - owner: <String> Repo owner
-# - repo:  <String> Repo name
+# - host:   <String> Git host
+# - owner:  <String> Repo owner
+# - repo:   <String> Repo name
+# - need:   <String|optional> read (default) or write
+# - reason: <String|optional> Why this access is required
 nds_git_wizard_screen_single() {
     local host="$1" owner="$2" repo="$3"
+    local need="${4:-read}"
+    local reason="${5:-}"
 
-    nds_git_wizard_screen_intro
+    nds_git_wizard_screen_intro "$need" "$reason"
     nds_git_wizard_collect_register_urls "$(_nds_git_url_formatSsh "$host" "$owner" "$repo")"
     nds_ui_h "Repository"
     nds_ui_i "  ${host}/${owner}/${repo}"
@@ -120,7 +143,11 @@ nds_git_wizard_screen_closure() {
     local -a all_urls=()
     local url
 
-    nds_git_wizard_screen_intro
+    nds_ui_section_header "Git access"
+    nds_ui_b ""
+    nds_ui_b "Related private repositories still need SSH access (flake inputs)."
+    nds_ui_b "These were not known until the flake lock was read."
+    nds_ui_b ""
     nds_git_wizard_collect_register_urls "${failed[@]}"
 
     if [[ -n "${NDS_GIT_CLOSURE_URLS:-}" ]]; then

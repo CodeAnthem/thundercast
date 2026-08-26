@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Mode + AA bridge / unattended contract tests
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-14
+# Date:          Created: 2026-08-05 | Modified: 2026-08-26
 # ==================================================================================================
 
 suite_mode() {
@@ -83,8 +83,29 @@ suite_mode() {
     fi
 
     if declare -f nds_app_actionHandler_logic_callFeature &>/dev/null; then
-        TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ action_call_feature: present"
+        local _cf_need="" _cf_reason="" _cf_saved_url
+        _cf_saved_url="$(nds_cfg_get FLAKE_REPO_URL 2>/dev/null || true)"
+        _nds_test_call_feature() {
+            local _mode="$1"
+            local -n _c=$2
+            _cf_need="${3:-}"
+            _cf_reason="${4:-}"
+            return 0
+        }
+        if nds_app_actionHandler_logic_callFeature _nds_test_call_feature \
+            "FLAKE_REPO_URL=git@example.com:o/r.git" \
+            write \
+            "This action git-pushes host files." \
+            && [[ "$_cf_need" == "write" ]] \
+            && [[ "$_cf_reason" == "This action git-pushes host files." ]]; then
+            TEST_PASSED=$((TEST_PASSED + 1))
+            console "  ✓ action_call_feature: KEY=value vs extra positionals"
+        else
+            TEST_FAILED=$((TEST_FAILED + 1))
+            console "  ✗ action_call_feature: extra args not passed through"
+        fi
+        unset -f _nds_test_call_feature
+        nds_cfg_set FLAKE_REPO_URL "$_cf_saved_url"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ action_call_feature: missing"

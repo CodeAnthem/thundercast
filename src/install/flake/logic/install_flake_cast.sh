@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Remote action catalog (remoteAction)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-18 | Modified: 2026-08-20
+# Date:          Created: 2026-08-18 | Modified: 2026-08-26
 # Description:   Clone a catalog repo, list .nds/actions, load the selected script
 # ==================================================================================================
 
@@ -81,7 +81,7 @@ nds_cast_ensure_access() {
     mode="${NDS_MODE:-interactive}"
     nds_cfg_aa_from_store cfg
     cfg[FLAKE_REPO_URL]="$repo_url"
-    nds_git_access_run "$mode" cfg || rc=$?
+    nds_git_access_run "$mode" cfg read "Clone a private action catalog." || rc=$?
     nds_cfg_aa_to_store cfg
     NDS_CFG_AA_NAME="$saved_aa"
     nds_cfg_set FLAKE_REPO_URL "$saved_flake"

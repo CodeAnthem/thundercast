@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Flake gate logic (no TTY; AA via nds_cfg_* bind or store)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-05
+# Date:          Created: 2026-08-05 | Modified: 2026-08-26
 # Description:   Normalize flake location, unattended target checks, ensure access
 # ==================================================================================================
 
@@ -78,7 +78,8 @@ nds_flake_gate_logic_ensure_access() {
     fi
 
     if [[ -n "$repo_url" ]]; then
-        nds_git_access_run "$mode" _fg_cfg || return 1
+        nds_git_access_run "$mode" _fg_cfg read \
+            "Clone the install flake and its private inputs." || return 1
         nds_install_ui_section_flake_access
         nds_git_ensure_flake_closure_access "" "$repo_url" || return 1
         probe="${NDS_FLAKE_PROBE_REPO:-}"

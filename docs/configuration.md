@@ -240,15 +240,29 @@ before the settings manager. Each private repository is its own conversation
 
 | Step | Options |
 |------|---------|
+| Need (from the action) | `read` (clone) or `write` (clone and push), plus a reason |
 | Have an existing private key? | yes / no (default **no**) |
 | Yes | `paste` (hidden) / `path` |
-| No (GitHub) | `gh` CLI / `generate` |
+| No (GitHub) | `gh` CLI (existing login or device login) / `generate` (print or QR + add link) |
 | No (other forges) | `generate` |
-| Strategy (root repo) | `deploy-this` / `account-this` / `deploy-all` / `account-all` |
 
-Missing flake.lock inputs repeat the same per-repo conversation (never a lumped
-“missing repositories” prompt). `deploy-all` with a **new** key still auto-registers
-same-owner deploy keys (gh or generate).
+The first repository is **this repo only**. NDS does not ask about deploy keys for
+related repos until the flake lock is read.
+
+When related private inputs under the same owner still lack access:
+
+| Coverage | When |
+|----------|------|
+| `gh` | Register deploy keys for those repos via gh (offered if gh was used or a session is active) |
+| `generate` | Create a key per remaining repo (print or QR) |
+| `existing` | Paste or path a key for each remaining repo |
+
+Actions that must push the install flake (toolkit / addRole / user remote
+actions) pass **write** plus a reason into `nds_git_access_run`. That registers a
+**write** deploy key on the install flake via gh, and tells you to enable
+"Allow write access" on the generate path. Related flake inputs stay read-only.
+
+Missing flake.lock inputs on a different owner still get a per-repo conversation.
 
 Per-URL maps (restore / unattended):
 

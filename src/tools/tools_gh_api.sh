@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - GitHub CLI API helpers (keys / deploy / content)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-17
+# Date:          Created: 2026-07-07 | Modified: 2026-08-26
 # Description:   gh api operations — no git key paths, no settings menus.
 #                Title collision: pass overwrite|alternate|cancel (or NDS_GH_KEY_TITLE_COLLISION).
 #                Empty collision when a title clash exists → return 41 (caller asks, then retries).
@@ -255,21 +255,23 @@ nds_gh_deploy_pubkey_on_repo() {
 }
 
 # Description: Add a deploy key to a repository via gh API.
-# read_only comes from NDS_GH_DEPLOY_READ_ONLY (default true). The install leaf
-# uses false so remoteAction can push new hosts.
 # Arguments:
 # - pub_file:  <String> Public key path
 # - owner:     <String> Repository owner
 # - repo:      <String> Repository name
 # - title:     <String> Key title on GitHub
 # - collision: <String|optional> overwrite|alternate|cancel
+# - read_only: <String|optional> true (default) or false
 # Returns:
 # - 0 success; 41 title collision needs policy; 1 failure
 nds_gh_register_deploy_key() {
     local pub_file="$1" owner="$2" repo="$3" title="$4"
     local collision="${5:-}"
+    local read_only="${6:-true}"
     local key_body payload err rc=0 id
     local -a gh_cmd=()
+
+    [[ "$read_only" == "false" ]] || read_only="true"
 
     [[ -f "$pub_file" ]] || return 1
     [[ -n "$owner" && -n "$repo" && -n "$title" ]] || return 1
@@ -310,7 +312,7 @@ nds_gh_register_deploy_key() {
     fi
 
     key_body="$(tr -d '\n' < "$pub_file")"
-    payload=$(printf '{"title":"%s","key":"%s","read_only":%s}' "$title" "$key_body" "${NDS_GH_DEPLOY_READ_ONLY:-true}")
+    payload=$(printf '{"title":"%s","key":"%s","read_only":%s}' "$title" "$key_body" "$read_only")
 
     debug "Creating deploy key \"${title}\" on ${owner}/${repo}..."
     err=$(nds_gh_api_with_timeout 30 "${gh_cmd[@]}" api --method POST "repos/${owner}/${repo}/keys" \
@@ -333,7 +335,7 @@ nds_gh_register_deploy_key() {
         return 1
     fi
     declare -f nds_install_log &>/dev/null \
-        && nds_install_log "gh: deploy key added (read_only=${NDS_GH_DEPLOY_READ_ONLY:-true}) on ${owner}/${repo} (${title})"
+        && nds_install_log "gh: deploy key added (read_only=${read_only}) on ${owner}/${repo} (${title})"
     nds_gh_session_mark_scopes_ok
     return 0
 }
