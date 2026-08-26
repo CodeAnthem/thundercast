@@ -72,7 +72,8 @@ nds_uismoke_walk() {
     nds_ui_choice_row "2" "beta" "second option"
     nds_ui_b ""
     prompt="$(nds_ui_numbered_prompt 1 2 "" "Pick a demo option" true)"
-    if choice=$(nds_ui_read_menu_digit "$prompt" 1 2 true); then
+    choice=""
+    if nds_ui_read_menu_digit choice "$prompt" 1 2 true; then
         nds_ui_b "You chose: ${choice}"
     fi
     _nds_uismoke_step_ok "nds_ui_numbered_prompt + nds_ui_read_menu_digit"

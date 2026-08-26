@@ -19,6 +19,8 @@ nds_git_wizard_ask_persist_access() {
         return 0
     fi
 
+    nds_ui_section_header "Git access"
+    nds_ui_b ""
     nds_ui_b "Keep SSH access on the installed machine?"
     nds_ui_b ""
     nds_aa_ask_numbered_choice GIT_PERSIST_ACCESS \
@@ -38,43 +40,26 @@ nds_git_wizard_ask_persist_access() {
 }
 
 # Description: Ask whether this repository already has a private key (y/n, default n).
+# Uses nds_ask_user_to_proceed so Yes/No is echoed like other confirms.
 # Does not inherit GIT_EXISTING_KEY from a previous repo in this session.
 nds_git_wizard_ask_key_source() {
-    local default="false" confirm
+    local default="n"
 
     if [[ -n "${NDS_GIT_IMPORT_KEY:-}" || -n "${NDS_GIT_IMPORT_KEY_PATH:-}" \
         || -n "${NDS_DEPLOY_KEY_PATH:-}" ]]; then
-        default="true"
+        default="y"
     fi
 
     if nds_mode_is_unattended; then
-        nds_feat_cfg_set GIT_EXISTING_KEY "$default"
+        if [[ "$default" == "y" ]]; then
+            nds_feat_cfg_set GIT_EXISTING_KEY true
+        else
+            nds_feat_cfg_set GIT_EXISTING_KEY false
+        fi
+    elif nds_ask_user_to_proceed "Have an existing private key?" "$default"; then
+        nds_feat_cfg_set GIT_EXISTING_KEY true
     else
-        while true; do
-            if [[ "$default" == "true" ]]; then
-                nds_ui_tty_read -rsn1 -p "${NDS_UI_INDENT_I}Have an existing private key? [y] (y/n): " confirm
-            else
-                nds_ui_tty_read -rsn1 -p "${NDS_UI_INDENT_I}Have an existing private key? [n] (y/n): " confirm
-            fi
-            echo >&2
-            case "${confirm,,}" in
-                y)
-                    nds_feat_cfg_set GIT_EXISTING_KEY true
-                    break
-                    ;;
-                n)
-                    nds_feat_cfg_set GIT_EXISTING_KEY false
-                    break
-                    ;;
-                "")
-                    nds_feat_cfg_set GIT_EXISTING_KEY "$default"
-                    break
-                    ;;
-                *)
-                    nds_ui_b "Press y or n"
-                    ;;
-            esac
-        done
+        nds_feat_cfg_set GIT_EXISTING_KEY false
     fi
     if nds_feat_cfg_true GIT_EXISTING_KEY; then
         nds_feat_cfg_set GIT_KEY_SOURCE have
@@ -95,8 +80,14 @@ nds_git_wizard_ask_auth_method() {
 
     existing="$(nds_feat_cfg_get GIT_EXISTING_KEY 2>/dev/null || true)"
     default="$(nds_feat_cfg_get GIT_AUTH_ROUTE 2>/dev/null || true)"
+
+    nds_ui_section_header "Git access"
+    nds_ui_b ""
+
     if [[ "$existing" == "true" ]]; then
         [[ "$default" == "path" ]] || default="paste"
+        nds_ui_b "How do you want to provide the key?"
+        nds_ui_b ""
         nds_aa_ask_numbered_choice GIT_AUTH_ROUTE \
             "paste|path" \
             "paste=Paste a private SSH key (hidden)|path=Path to a private SSH key" \
@@ -104,6 +95,8 @@ nds_git_wizard_ask_auth_method() {
             true
     elif [[ "$is_gh" == "true" ]]; then
         [[ "$default" == "generate" ]] || default="gh"
+        nds_ui_b "How do you want to create the key?"
+        nds_ui_b ""
         nds_aa_ask_numbered_choice GIT_AUTH_ROUTE \
             "gh|generate" \
             "gh=Use gh CLI|generate=Create a key and add it on GitHub yourself" \
@@ -324,7 +317,7 @@ _nds_git_wizard_record_url_choice() {
     nds_git_access_set existing_key "$url" "$existing"
 }
 
-# Description: One-repo conversation: section title is the repo; then existing-key / method / apply.
+# Description: One-repo conversation: jump to Git access, name the repo once, then key/method.
 # Uses NDS_GIT_KEY_MODE[url] when set (unattended paste/path/gh/generate).
 # Arguments:
 # - url: <String> Git URL
@@ -336,7 +329,10 @@ nds_git_wizard_converse_url() {
     disp="$(nds_git_url_display "$ssh_url")"
     host="$(_nds_git_url_parse "$ssh_url" 2>/dev/null | cut -f1)" || host=""
     nds_git_host_is_github "$host" 2>/dev/null && is_gh=true
-    nds_cfg_section_title "$disp"
+    nds_ui_section_header "Git access"
+    nds_ui_b ""
+    nds_ui_b "${disp} is private."
+    nds_ui_b ""
 
     mapped_mode="$(nds_git_access_get key_mode "$ssh_url" 2>/dev/null || true)"
     mapped_existing="$(nds_git_access_get existing_key "$ssh_url" 2>/dev/null || true)"

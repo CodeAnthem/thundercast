@@ -16,32 +16,30 @@ _nds_git_wizard_kv() {
 }
 
 # Description: Resolve QR vs printed copy (env or one-time prompt).
-# Returns:
-# - <String> qr or copy (stdout)
+# Do not call from command substitution — TTY read must stay in the current shell.
+# Arguments:
+# - display: <Nameref> Receives qr or copy
 nds_git_wizard_resolve_key_display() {
+    local -n _nds_git_key_display=${1:?display_nameref}
     local from_env="${NDS_GIT_SSH_KEY_DISPLAY:-${NDS_GIT_DEPLOY_KEY_DISPLAY:-}}"
     case "${from_env,,}" in
-        qr) printf 'qr\n'; return 0 ;;
-        copy) printf 'copy\n'; return 0 ;;
+        qr) _nds_git_key_display=qr; return 0 ;;
+        copy) _nds_git_key_display=copy; return 0 ;;
     esac
     if nds_env_is_true "${NDS_GIT_SSH_KEY_USE_QR:-${NDS_GIT_DEPLOY_KEY_USE_QR:-false}}"; then
-        printf 'qr\n'
+        _nds_git_key_display=qr
         return 0
     fi
     if [[ "${NDS_GIT_SSH_KEY_USE_QR:-${NDS_GIT_DEPLOY_KEY_USE_QR:-}}" == "false" ]]; then
-        printf 'copy\n'
+        _nds_git_key_display=copy
         return 0
     fi
-    local confirm=""
-    while true; do
-        nds_ui_tty_read -rsn1 -p "${NDS_UI_INDENT_I}Show QR codes? [n] (y/n): " confirm
-        echo >&2
-        case "${confirm,,}" in
-            y) printf 'qr\n'; return 0 ;;
-            n|"") printf 'copy\n'; return 0 ;;
-            *) nds_ui_b "Press y or n" ;;
-        esac
-    done
+    if nds_ask_user_to_proceed "Show QR codes?" n; then
+        _nds_git_key_display=qr
+    else
+        _nds_git_key_display=copy
+    fi
+    return 0
 }
 
 # Description: Print a labeled add-key card, then optional QR codes.
@@ -62,6 +60,7 @@ nds_git_wizard_show_add_key_card() {
     [[ -f "$pub_path" ]] || return 1
     pub="$(tr -d '\n' < "$pub_path")"
 
+    nds_ui_section_header "Git access"
     nds_ui_b ""
     nds_ui_b "$intro"
     nds_ui_b ""
@@ -72,7 +71,8 @@ nds_git_wizard_show_add_key_card() {
         _nds_git_wizard_kv "$extra_label" "$extra_value"
     fi
 
-    display="$(nds_git_wizard_resolve_key_display)" || return 1
+    display=""
+    nds_git_wizard_resolve_key_display display || return 1
     if [[ "$display" == "qr" ]]; then
         nds_ui_b ""
         if ! nds_qr_print "$register_url"; then

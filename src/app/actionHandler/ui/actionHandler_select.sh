@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Action handler UI: selection menu
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-06 | Modified: 2026-08-18
+# Date:          Created: 2026-08-06 | Modified: 2026-08-26
 # ==================================================================================================
 
 # Description: Interactive action picker (env path handled in actionHandler logic).
@@ -26,7 +26,8 @@ nds_app_actionHandler_ui_selectAction() {
         max_choice="${#NDS_ACTION_NAMES[@]}"
         prompt="$(nds_ui_numbered_prompt 0 "$max_choice")"
         while true; do
-            if choice=$(nds_ui_read_menu_digit "$prompt" 0 "$max_choice"); then
+            choice=""
+            if nds_ui_read_menu_digit choice "$prompt" 0 "$max_choice"; then
                 [[ "$choice" == "0" ]] && { nds_ui_b "Operation aborted"; exit 130; }
                 NDS_CURRENT_ACTION="${NDS_ACTION_NAMES[$((choice - 1))]}"
                 return 0

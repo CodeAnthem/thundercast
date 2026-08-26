@@ -219,14 +219,16 @@ suite_git() {
 
     if declare -f nds_git_wizard_resolve_key_display &>/dev/null; then
         export NDS_GIT_SSH_KEY_USE_QR=true
-        if [[ "$(nds_git_wizard_resolve_key_display)" == "qr" ]]; then
+        _nds_git_test_display=""
+        nds_git_wizard_resolve_key_display _nds_git_test_display
+        if [[ "$_nds_git_test_display" == "qr" ]]; then
             TEST_PASSED=$((TEST_PASSED + 1))
             console "  ✓ resolve_key_display: NDS_GIT_SSH_KEY_USE_QR=true"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
             console "  ✗ resolve_key_display: expected qr from env"
         fi
-        unset NDS_GIT_SSH_KEY_USE_QR
+        unset NDS_GIT_SSH_KEY_USE_QR _nds_git_test_display
     fi
 
     if declare -f nds_git_deploy_key_basename &>/dev/null; then
@@ -418,13 +420,14 @@ LOCK
     fi
 
     if declare -f nds_git_wizard_ask_key_source | grep -q 'Have an existing private key' \
-        && grep -q 'read -rsn1' "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+        && grep -q 'nds_ask_user_to_proceed "Have an existing private key?"' \
+            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
         && ! grep -q 'nds_aa_ask_toggle GIT_EXISTING_KEY' \
             "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
         && declare -f nds_git_wizard_ask_auth_method | grep -q 'paste|path' \
         && declare -f nds_git_wizard_ask_auth_method | grep -q 'gh|generate'; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ wizard: existing-key y/n (single key), then paste/path or gh/generate"
+        console "  ✓ wizard: existing-key y/n (proceed helper), then paste/path or gh/generate"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ wizard: missing y/n existing-key or paste/path/gh/generate menus"
@@ -447,7 +450,7 @@ LOCK
         "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
         && grep -q 'is private.' \
         "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
-        && grep -q 'nds_ui_kv_row "Access"' \
+        && grep -q 'nds_ui_kv_row "Permission"' \
         "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
         && grep -q 'nds_git_access_normalize_need' \
         "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
@@ -497,7 +500,7 @@ LOCK
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ install: open_leaf missing write/reason args on git access"
     fi
-    if grep -q 'read -rsn1' \
+    if grep -q 'nds_ask_user_to_proceed "Show QR codes?"' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
         && grep -q 'Show QR codes?' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
@@ -514,12 +517,31 @@ LOCK
         console "  ✗ wizard: missing add-key card or QR still uses aa toggle"
     fi
     if grep -q '_nds_ui_drain_tty' "${SCRIPT_DIR}/ui/input.sh" \
-        && grep -q 'nds_ui_tty_read' "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh"; then
+        && grep -q 'nds_ask_user_to_proceed "Have an existing private key?"' \
+            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ wizard: TTY drain + guarded read before existing-key prompt"
+        console "  ✓ wizard: TTY drain + proceed helper for existing-key prompt"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ wizard: missing TTY drain / guarded read"
+    fi
+    if grep -q 'nds_ui_section_header "Git access"' \
+        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+        && grep -q 'How do you want to create the key?' \
+            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+        && grep -q 'How do you want to provide the key?' \
+            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+        && grep -q 'nds_ui_read_menu_digit digit' \
+            "${SCRIPT_DIR}/app/settingsManager/ui/settings_ask.sh" \
+        && grep -q 'nds_ui_tty_read -r -p' \
+            "${SCRIPT_DIR}/ui/prompts.sh" \
+        && ! grep -q 'digit=$(nds_ui_read_menu_digit' \
+            "${SCRIPT_DIR}/app/settingsManager/ui/settings_ask.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ wizard: section jump before key method; numbered menus are line+nameref"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ wizard: missing section jump or numbered menu still uses subshell digit read"
     fi
     if grep -q 'nested=true' "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
         && grep -q '_nds_git_wizard_ensure_aa' \

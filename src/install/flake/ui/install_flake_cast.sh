@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Catalog gate UI (remoteAction)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-18 | Modified: 2026-08-20
+# Date:          Created: 2026-08-18 | Modified: 2026-08-26
 # Description:   Ask catalog Git URL; list and pick .nds/actions
 # ==================================================================================================
 
@@ -102,7 +102,8 @@ nds_cast_ui_pick_action() {
         nds_ui_b ""
         max_choice="${#ids[@]}"
         prompt="$(nds_ui_numbered_prompt 0 "$max_choice" "" "Make your selection" true)"
-        if choice=$(nds_ui_read_menu_digit "$prompt" 0 "$max_choice" true); then
+        choice=""
+        if nds_ui_read_menu_digit choice "$prompt" 0 "$max_choice" true; then
             if [[ "$choice" == "0" ]]; then
                 return 1
             fi

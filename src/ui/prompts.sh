@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - UI - User prompts and menu input
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-21 | Modified: 2026-08-20
+# Date:          Created: 2025-10-21 | Modified: 2026-08-26
 # Description:   Interactive yes/no/back and numbered-menu prompts
 # ==================================================================================================
 
@@ -47,17 +47,32 @@ nds_ask_user_continue() {
 }
 
 # Description: Yes/no confirm without a back option; skippable via NDS_PROMPTS_SKIP.
+# Echoes Yes/No after the keypress so the answer is visible (same as leftover-gh).
+# Arguments:
+# - prompt:  <String|optional> Question text
+# - default: <String|optional> y or n — Enter accepts this; empty means Enter repeats
 nds_ask_user_to_proceed() {
     local prompt="${1:-Do you want to proceed?}"
-    local confirm=""
+    local default="${2:-}"
+    local confirm="" def_tag=""
+
+    case "${default,,}" in
+        y|yes|true) default=y; def_tag=" [y]" ;;
+        n|no|false) default=n; def_tag=" [n]" ;;
+        *) default="" ;;
+    esac
 
     if nds_skip_menu NDS_PROMPTS_SKIP; then
-        printf '%s%s (y/n): y (skipped)\n' "$NDS_UI_INDENT_B" "$prompt" >&2
+        if [[ "$default" == "n" ]]; then
+            printf '%s%s%s (y/n): n (skipped)\n' "$NDS_UI_INDENT_B" "$prompt" "$def_tag" >&2
+            return 1
+        fi
+        printf '%s%s%s (y/n): y (skipped)\n' "$NDS_UI_INDENT_B" "$prompt" "$def_tag" >&2
         return 0
     fi
 
     while true; do
-        nds_ui_tty_read -rsp "${NDS_UI_INDENT_B}${prompt} (y/n): " -n 1 confirm
+        nds_ui_tty_read -rsp "${NDS_UI_INDENT_B}${prompt}${def_tag} (y/n): " -n 1 confirm
         case "${confirm,,}" in
             y)
                 printf 'Yes\n' >&2
@@ -68,6 +83,13 @@ nds_ask_user_to_proceed() {
                 return 1
                 ;;
             "")
+                if [[ "$default" == "y" ]]; then
+                    printf 'Yes\n' >&2
+                    return 0
+                elif [[ "$default" == "n" ]]; then
+                    printf 'No\n' >&2
+                    return 1
+                fi
                 printf '\n' >&2
                 continue
                 ;;
@@ -103,29 +125,36 @@ nds_ui_numbered_prompt() {
     fi
 }
 
-# Description: Read one menu digit without Enter.
+# Description: Read a numbered-menu choice (type the number, then Enter).
+# Do not call from command substitution — TTY read must stay in the current shell.
+# Empty Enter returns 1 so the caller can apply a default.
 # Arguments:
-# - prompt:     <String> Prompt text
-# - min:        <Int> Minimum valid digit
-# - max:        <Int> Maximum valid digit
-# - allow_back: <Bool|optional> When true, 0 or b returns "0"
+# - out:        <Nameref> Receives the selected number
+# - prompt:     <String> Prompt text (from nds_ui_numbered_prompt)
+# - min:        <Int> Minimum valid number
+# - max:        <Int> Maximum valid number
+# - allow_back: <Bool|optional> When true, 0 or b stores "0"
 nds_ui_read_menu_digit() {
-    local prompt="$1" min="$2" max="$3" allow_back="${4:-false}"
-    local choice=""
+    local -n _nds_ui_menu_digit=$1
+    local prompt="$2" min="$3" max="$4" allow_back="${5:-false}"
+    local _nds_ui_menu_raw=""
 
     nds_ui_init
     while true; do
-        if ! nds_ui_tty_read -rsn1 -p "$prompt" choice 2>/dev/null; then
+        if ! nds_ui_tty_read -r -p "$prompt" _nds_ui_menu_raw; then
             return 1
         fi
-        echo >&2
-        [[ -n "$choice" ]] || return 1
-        if [[ "$allow_back" == "true" ]] && [[ "$choice" == "0" || "$choice" == "b" || "$choice" == "B" ]]; then
-            printf '0'
+        _nds_ui_menu_raw="${_nds_ui_menu_raw#"${_nds_ui_menu_raw%%[![:space:]]*}"}"
+        _nds_ui_menu_raw="${_nds_ui_menu_raw%"${_nds_ui_menu_raw##*[![:space:]]}"}"
+        [[ -n "$_nds_ui_menu_raw" ]] || return 1
+        if [[ "$allow_back" == "true" ]] && [[ "$_nds_ui_menu_raw" == "0" \
+            || "$_nds_ui_menu_raw" == "b" || "$_nds_ui_menu_raw" == "B" ]]; then
+            _nds_ui_menu_digit=0
             return 0
         fi
-        if [[ "$choice" =~ ^[0-9]$ ]] && (( choice >= min && choice <= max )); then
-            printf '%s' "$choice"
+        if [[ "$_nds_ui_menu_raw" =~ ^[0-9]+$ ]] \
+            && (( 10#$_nds_ui_menu_raw >= min && 10#$_nds_ui_menu_raw <= max )); then
+            _nds_ui_menu_digit="$_nds_ui_menu_raw"
             return 0
         fi
         if [[ "$allow_back" == "true" ]]; then

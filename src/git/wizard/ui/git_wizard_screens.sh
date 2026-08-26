@@ -34,11 +34,11 @@ nds_git_wizard_screen_need_blurb() {
         nds_ui_b "This repository is private."
     fi
     if [[ "$need" == "write" ]]; then
-        nds_ui_kv_row "Access" "write (clone and push)" 20
+        nds_ui_kv_row "Permission" "read & write" 20
     else
-        nds_ui_kv_row "Access" "read (clone)" 20
+        nds_ui_kv_row "Permission" "read only" 20
     fi
-    [[ -n "$reason" ]] && nds_ui_kv_row "Reason" "$reason" 20
+    [[ -n "$reason" ]] && nds_ui_kv_row "Purpose" "$reason" 20
 }
 
 nds_git_wizard_screen_intro() {

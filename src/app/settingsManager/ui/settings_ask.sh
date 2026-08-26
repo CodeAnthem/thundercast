@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Configuration prompts
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-01 | Modified: 2026-08-20
+# Date:          Created: 2026-07-01 | Modified: 2026-08-26
 # Description:   Interactive field prompts — all types in one place
 # ==================================================================================================
 
@@ -74,7 +74,7 @@ nds_cfg_print_numbered_choice_options() {
     nds_ui_b ""
 }
 
-# Description: Choice prompt with numbered rows; single-key select (like action menu).
+# Description: Choice prompt with numbered rows (type the number, then Enter).
 # Arguments:
 # - var:     <String> Config variable name
 # - options: <String> Pipe-separated option keys
@@ -84,7 +84,7 @@ nds_cfg_print_numbered_choice_options() {
 nds_cfg_ask_numbered_choice() {
     local var="$1" options="$2" labels="${3:-}" default="${4:-}" allow_back="${5:-false}"
     local -a opts=()
-    local count=0 digit current resolved prompt
+    local count=0 digit current resolved prompt default_digit="" i
 
     [[ -n "$default" ]] && [[ -z "$(nds_cfg_get "$var")" ]] && nds_cfg_set "$var" "$default"
     IFS='|' read -ra opts <<< "$options"
@@ -101,11 +101,21 @@ nds_cfg_ask_numbered_choice() {
         return 0
     fi
 
+    if [[ -n "$default" ]]; then
+        for i in "${!opts[@]}"; do
+            if [[ "${opts[$i]}" == "$default" ]]; then
+                default_digit=$((i + 1))
+                break
+            fi
+        done
+    fi
+
     [[ -n "$labels" ]] && nds_cfg_print_numbered_choice_options "$options" "$labels"
-    prompt="$(nds_ui_numbered_prompt 1 "$count" "$default" "Make your selection" "$allow_back")"
+    prompt="$(nds_ui_numbered_prompt 1 "$count" "$default_digit" "Make your selection" "$allow_back")"
 
     while true; do
-        if digit=$(nds_ui_read_menu_digit "$prompt" 1 "$count" "$allow_back"); then
+        digit=""
+        if nds_ui_read_menu_digit digit "$prompt" 1 "$count" "$allow_back"; then
             if [[ "$allow_back" == "true" && "$digit" == "0" ]]; then
                 return "${NDS_ACTION_BACK:-10}"
             fi
