@@ -445,21 +445,23 @@ LOCK
     fi
     if grep -q 'nds_ui_section_header "Git access"' \
         "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
-        && grep -q 'This repository is private. NDS needs' \
+        && grep -q 'is private.' \
+        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
+        && grep -q 'nds_ui_kv_row "Access"' \
         "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
         && grep -q 'nds_git_access_normalize_need' \
         "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
         && grep -q 'Related private repositories still need SSH access' \
         "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
-        && ! grep -q 'Private repositories' \
+        && ! grep -q 'nds_ui_kv_row "Repository"' \
             "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
         && ! grep -q 'NDS already probes keys' \
             "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ wizard: Git access section header; need/reason intro"
+        console "  ✓ wizard: Git access intro names the repo once"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ wizard: missing Git access header or stale private-repo copy"
+        console "  ✗ wizard: missing Git access header or repo named twice"
     fi
     if grep -q 'nds_git_access_deploy_read_only' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_new.sh" \
@@ -499,9 +501,9 @@ LOCK
         "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
         && grep -q 'Show QR codes?' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
-        && grep -q 'Please add this key to the repository' \
+        && grep -q 'Please add this key, see info below' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
-        && grep -q 'I added the deploy key' \
+        && grep -q 'I added this deploy key' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
         && ! grep -q 'nds_aa_ask_toggle GIT_SSH_KEY_USE_QR' \
             "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh"; then

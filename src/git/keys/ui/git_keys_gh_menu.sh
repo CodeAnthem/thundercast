@@ -215,7 +215,7 @@ nds_git_wizard_menu_gh_account() {
     local -a repos=("$@")
     local pub label="Registering SSH key on GitHub account"
 
-    nds_ui_b "Log in to gh as your machine GitHub user — not your personal account."
+    nds_ui_b "Log in to gh as the machine GitHub user — not your personal account."
     nds_ui_b ""
 
     # Download + device login before keygen so the user is not waiting after

@@ -19,13 +19,11 @@ nds_git_wizard_ask_persist_access() {
         return 0
     fi
 
-    nds_cfg_section_title "Keep repository access on the installed machine?"
-    nds_ui_b "Yes: copy SSH keys and nds-switch onto the machine so nixos-rebuild can fetch private flakes."
-    nds_ui_b "No:  keys stay on this ISO. nds-switch is not installed."
+    nds_ui_b "Keep SSH access on the installed machine?"
     nds_ui_b ""
     nds_aa_ask_numbered_choice GIT_PERSIST_ACCESS \
         "yes|no" \
-        "yes=Keep access on the installed machine|no=Install-time access only (do not copy keys or nds-switch)" \
+        "yes=Copy keys and nds-switch (nixos-rebuild can fetch private flakes)|no=Install-time only (keys stay on this ISO)" \
         "yes" \
         true
     rc=$?
@@ -99,18 +97,16 @@ nds_git_wizard_ask_auth_method() {
     default="$(nds_feat_cfg_get GIT_AUTH_ROUTE 2>/dev/null || true)"
     if [[ "$existing" == "true" ]]; then
         [[ "$default" == "path" ]] || default="paste"
-        nds_cfg_section_title "How do you want to provide the key?"
         nds_aa_ask_numbered_choice GIT_AUTH_ROUTE \
             "paste|path" \
-            "paste=Paste a private SSH key (hidden)|path=Provide a private SSH key path" \
+            "paste=Paste a private SSH key (hidden)|path=Path to a private SSH key" \
             "$default" \
             true
     elif [[ "$is_gh" == "true" ]]; then
         [[ "$default" == "generate" ]] || default="gh"
-        nds_cfg_section_title "How do you want to create the key?"
         nds_aa_ask_numbered_choice GIT_AUTH_ROUTE \
             "gh|generate" \
-            "gh=Use gh CLI (existing login, or device login)|generate=Create a key (print or QR) and add it on github.com yourself" \
+            "gh=Use gh CLI|generate=Create a key and add it on GitHub yourself" \
             "$default" \
             true
     else
@@ -146,27 +142,25 @@ nds_git_wizard_ask_closure_coverage() {
         return 0
     fi
 
-    nds_cfg_section_title "Related private repositories"
     if [[ "$n" -gt 1 ]]; then
-        nds_ui_b "Flake inputs under the same owner still need SSH access (${n} repositories)."
+        nds_ui_b "How should NDS get access to these ${n} repositories?"
     else
-        nds_ui_b "A related flake input still needs SSH access."
+        nds_ui_b "How should NDS get access?"
     fi
-    nds_ui_b "These were not known until the flake lock was read."
     nds_ui_b ""
 
     if _nds_git_wizard_used_gh; then
         default="gh"
         nds_aa_ask_numbered_choice GIT_CLOSURE_COVERAGE \
             "gh|generate|existing" \
-            "gh=Register deploy keys for these repos via gh|generate=Create a key per repo (print or QR) and add it yourself|existing=Paste or path an existing key for each repo" \
+            "gh=Register deploy keys via gh|generate=Create a key per repo and add it yourself|existing=Paste or path a key for each repo" \
             "$default" \
             true
     else
         default="generate"
         nds_aa_ask_numbered_choice GIT_CLOSURE_COVERAGE \
             "generate|existing" \
-            "generate=Create a key per repo (print or QR) and add it yourself|existing=Paste or path an existing key for each repo" \
+            "generate=Create a key per repo and add it yourself|existing=Paste or path a key for each repo" \
             "$default" \
             true
     fi
@@ -261,7 +255,7 @@ nds_git_wizard_execute_auth_choice() {
 # No skip / no retry — private access is required. Supports 0=back.
 # Arguments:
 # - need:        <String> read or write (this call)
-# - scope_label: <String> e.g. this repository
+# - scope_label: <String> unused (repo is named on the intro screen)
 # - urls:        <String...> URLs to probe
 # - --repos:     <String...> owner/repo for gh (optional)
 # Returns:
@@ -269,7 +263,6 @@ nds_git_wizard_execute_auth_choice() {
 nds_git_wizard_route_menu() {
     local need="$1"
     shift
-    local scope_label="$1"
     shift
     local -a urls=() repos=()
     local parsing_repos=false arg host="" is_gh=false rc
@@ -288,8 +281,6 @@ nds_git_wizard_route_menu() {
     if [[ ${#urls[@]} -gt 0 ]]; then
         host="$(_nds_git_url_parse "${urls[0]}" 2>/dev/null | cut -f1)" || host=""
         nds_git_host_is_github "$host" 2>/dev/null && is_gh=true
-        scope_label="$(nds_git_url_display "${urls[0]}")"
-        nds_cfg_section_title "$scope_label"
     fi
 
     nds_git_wizard_ask_key_source

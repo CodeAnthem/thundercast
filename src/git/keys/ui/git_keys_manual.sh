@@ -94,8 +94,9 @@ nds_git_wizard_show_add_key_card() {
 nds_git_wizard_confirm_manual_deploy() {
     local owner="$1" repo="$2"
 
+    [[ -n "$owner" && -n "$repo" ]] || return 1
     nds_ui_b ""
-    nds_ask_user_to_proceed "I added the deploy key on ${owner}/${repo}?" || return 1
+    nds_ask_user_to_proceed "I added this deploy key?" || return 1
     return 0
 }
 
@@ -104,7 +105,7 @@ nds_git_wizard_confirm_manual_deploy() {
 # - <Bool> 0 when user confirms
 nds_git_wizard_confirm_manual_account() {
     nds_ui_b ""
-    nds_ask_user_to_proceed "I added this SSH key to the machine-user account?" || return 1
+    nds_ask_user_to_proceed "I added this SSH key?" || return 1
     return 0
 }
 
@@ -132,7 +133,7 @@ nds_git_wizard_menu_manual_deploy() {
     fi
 
     nds_git_wizard_show_add_key_card "$pub_path" "$title" "$register_url" \
-        "Please add this key to the repository, see info below:" \
+        "Please add this key, see info below:" \
         "Allow write access" "$write_value" || return 1
     nds_git_wizard_confirm_manual_deploy "$owner" "$repo" || return 1
     return 0
@@ -153,7 +154,7 @@ nds_git_wizard_menu_manual_account() {
     pub_path="$(nds_git_session_pubkey_path)"
     register_url="$(nds_git_account_ssh_register_url github.com)"
     nds_git_wizard_show_add_key_card "$pub_path" "$(nds_git_ssh_key_title)" "$register_url" \
-        "Please add this key to the GitHub machine-user account, see info below:" \
+        "Please add this key, see info below:" \
         || return 1
     nds_git_wizard_confirm_manual_account || return 1
     return 0

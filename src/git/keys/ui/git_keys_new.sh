@@ -34,7 +34,7 @@ nds_git_wizard_ask_register_method() {
 
     nds_aa_ask_numbered_choice GIT_SSH_KEY_REGISTER_METHOD \
         "gh|manual" \
-        "gh=Use gh CLI (device login on this ISO)|manual=Show key and register on github.com yourself" \
+        "gh=Use gh CLI|manual=Show the key and add it on GitHub yourself" \
         "gh"
     existing="$(nds_feat_cfg_get GIT_SSH_KEY_REGISTER_METHOD)"
     [[ "$existing" == "gh" ]] && _choice=gh || _choice=manual
@@ -75,9 +75,7 @@ nds_git_wizard_register_account() {
     local -a repos=("$@")
     local method=""
 
-    nds_ui_b ""
     nds_ui_b "Use a dedicated GitHub machine user — not your personal account."
-    nds_ui_b "The SSH key grants full account access; restrict repos via collaborators or teams."
     nds_ui_b ""
 
     nds_git_wizard_ask_register_method method || return 1

@@ -240,10 +240,10 @@ before the settings manager. Each private repository is its own conversation
 
 | Step | Options |
 |------|---------|
-| Need (from the action) | `read` (clone) or `write` (clone and push), plus a reason |
+| Need (from the action) | `read` (clone) or `write` (clone and push), plus a reason. Shown once as Access / Reason under `host/owner/repo is private.` |
 | Have an existing private key? | yes / no (default **no**) |
 | Yes | `paste` (hidden) / `path` |
-| No (GitHub) | `gh` CLI (existing login or device login) / `generate` (print or QR + add link) |
+| No (GitHub) | `gh` CLI / `generate` (add the key on GitHub yourself) |
 | No (other forges) | `generate` |
 
 The first repository is **this repo only**. NDS does not ask about deploy keys for
