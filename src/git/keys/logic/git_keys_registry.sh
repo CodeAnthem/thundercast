@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git SSH key registry (session list, paths, titles)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-16
+# Date:          Created: 2026-07-07 | Modified: 2026-08-26
 # Description:   Registry file listing session private key paths (one per line)
 # ==================================================================================================
 
@@ -85,6 +85,24 @@ nds_git_auth_mode() {
 # - <String> title e.g. nds_control-toolkit (stdout)
 nds_git_deploy_key_title() {
     nds_git_deploy_key_title_for "$(_nds_git_host_label_from_cfg)"
+}
+
+# Description: GitHub deploy-key title for this call (appends _write when the key must push).
+# Arguments:
+# - owner:     <String> Ignored (kept for call-site compatibility)
+# - repo:      <String> Ignored
+# - read_only: <String> true (default) or false
+# Returns:
+# - <String> title e.g. nds_control-toolkit or nds_control-toolkit_write (stdout)
+nds_git_deploy_key_register_title() {
+    local read_only="${3:-true}"
+    local title
+    title="$(nds_git_deploy_key_title "$1" "$2")"
+    if [[ "$read_only" == "false" ]]; then
+        printf '%s_write\n' "$title"
+    else
+        printf '%s\n' "$title"
+    fi
 }
 
 # Description: Session path for a per-repo deploy private key.

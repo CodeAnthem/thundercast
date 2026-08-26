@@ -259,8 +259,9 @@ When related private inputs under the same owner still lack access:
 
 Actions that must push the install flake (toolkit / addRole / user remote
 actions) pass **write** plus a reason into `nds_git_access_run`. That registers a
-**write** deploy key on the install flake via gh, and tells you to enable
-"Allow write access" on the generate path. Related flake inputs stay read-only.
+**write** deploy key on the install flake via gh. On the generate path the card
+shows Title `nds_<host>_write` and `Allow write access: yes (tick the checkbox)`.
+Related flake inputs stay read-only (`Allow write access: no`).
 
 Missing flake.lock inputs on a different owner still get a per-repo conversation.
 

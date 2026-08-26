@@ -237,12 +237,14 @@ suite_git() {
             TEST_FAILED=$((TEST_FAILED + 1))
             console "  ✗ deploy_key_basename: expected nds_deploy_codeanthem_dp_cluster"
         fi
-        if [[ "$(nds_git_deploy_key_title CodeAnthem dp_cluster)" == "nds_control-toolkit" ]]; then
+        if [[ "$(nds_git_deploy_key_title CodeAnthem dp_cluster)" == "nds_control-toolkit" ]] \
+            && [[ "$(nds_git_deploy_key_register_title CodeAnthem dp_cluster false)" == "nds_control-toolkit_write" ]] \
+            && [[ "$(nds_git_deploy_key_register_title CodeAnthem dp_cluster true)" == "nds_control-toolkit" ]]; then
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ deploy_key_title: nds_<hostname> on GitHub"
+            console "  ✓ deploy_key_title: nds_<hostname>; _write suffix when pushing"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
-            console "  ✗ deploy_key_title: expected nds_control-toolkit"
+            console "  ✗ deploy_key_title: expected nds_control-toolkit / _write"
         fi
     fi
 
@@ -461,7 +463,9 @@ LOCK
     fi
     if grep -q 'nds_git_access_deploy_read_only' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_new.sh" \
-        && grep -F -q 'enable \"Allow write access\"' \
+        && grep -q 'tick the checkbox' \
+        "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
+        && grep -q 'nds_git_deploy_key_register_title' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
         && grep -q 'nds_gh_register_deploy_key' \
         "${SCRIPT_DIR}/git/keys/logic/git_keys_gh.sh" \
@@ -493,15 +497,19 @@ LOCK
     fi
     if grep -q 'read -rsn1' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
-        && grep -q 'Generate QR codes for URL and public key' \
+        && grep -q 'Show QR codes?' \
+        "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
+        && grep -q 'Please add this key to the repository' \
+        "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
+        && grep -q 'I added the deploy key' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
         && ! grep -q 'nds_aa_ask_toggle GIT_SSH_KEY_USE_QR' \
             "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ wizard: QR prompt is y/n (default n)"
+        console "  ✓ wizard: add-key card + QR y/n (default n)"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ wizard: QR prompt still uses aa toggle"
+        console "  ✗ wizard: missing add-key card or QR still uses aa toggle"
     fi
     if grep -q '_nds_ui_drain_tty' "${SCRIPT_DIR}/ui/input.sh" \
         && grep -q 'nds_ui_tty_read' "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh"; then

@@ -31,7 +31,7 @@ nds_git_wizard_screen_need_blurb() {
     else
         nds_ui_b "This repository is private. NDS needs an SSH key that can clone it."
     fi
-    [[ -n "$reason" ]] && nds_ui_b "Reason: ${reason}"
+    [[ -n "$reason" ]] && nds_ui_kv_row "Reason" "$reason" 20
 }
 
 nds_git_wizard_screen_intro() {
@@ -130,8 +130,7 @@ nds_git_wizard_screen_single() {
 
     nds_git_wizard_screen_intro "$need" "$reason"
     nds_git_wizard_collect_register_urls "$(_nds_git_url_formatSsh "$host" "$owner" "$repo")"
-    nds_ui_h "Repository"
-    nds_ui_i "  ${host}/${owner}/${repo}"
+    nds_ui_kv_row "Repository" "${host}/${owner}/${repo}" 20
     nds_ui_b ""
 }
 
@@ -145,7 +144,7 @@ nds_git_wizard_screen_closure() {
 
     nds_ui_section_header "Git access"
     nds_ui_b ""
-    nds_ui_b "Related private repositories still need SSH access (flake inputs)."
+    nds_ui_b "Related private repositories still need SSH access."
     nds_ui_b "These were not known until the flake lock was read."
     nds_ui_b ""
     nds_git_wizard_collect_register_urls "${failed[@]}"

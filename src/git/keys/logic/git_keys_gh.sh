@@ -51,7 +51,7 @@ nds_git_register_deploy_for_repo() {
     else
         nds_git_keys_register "$key_path" || true
     fi
-    title="$(nds_git_deploy_key_title "$owner" "$repo")"
+    title="$(nds_git_deploy_key_register_title "$owner" "$repo" "$read_only")"
     nds_git_register_deploy_key "$pub" "$owner" "$repo" "$title" "$read_only" || return 1
     return 0
 }

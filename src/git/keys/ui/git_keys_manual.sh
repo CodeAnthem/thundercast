@@ -5,6 +5,16 @@
 # Date:          Created: 2026-07-07 | Modified: 2026-08-26
 # ==================================================================================================
 
+_NDS_GIT_WIZARD_KV_WIDTH=20
+
+# Description: Labeled field on the add-key card.
+# Arguments:
+# - label: <String> Field name
+# - value: <String> Field value
+_nds_git_wizard_kv() {
+    nds_ui_kv_row "$1" "$2" "$_NDS_GIT_WIZARD_KV_WIDTH"
+}
+
 # Description: Resolve QR vs printed copy (env or one-time prompt).
 # Returns:
 # - <String> qr or copy (stdout)
@@ -24,7 +34,7 @@ nds_git_wizard_resolve_key_display() {
     fi
     local confirm=""
     while true; do
-        nds_ui_tty_read -rsn1 -p "${NDS_UI_INDENT_I}Generate QR codes for URL and public key? [n] (y/n): " confirm
+        nds_ui_tty_read -rsn1 -p "${NDS_UI_INDENT_I}Show QR codes? [n] (y/n): " confirm
         echo >&2
         case "${confirm,,}" in
             y) printf 'qr\n'; return 0 ;;
@@ -34,68 +44,58 @@ nds_git_wizard_resolve_key_display() {
     done
 }
 
-# Description: Show public key and optional QR bundle for manual registration.
+# Description: Print a labeled add-key card, then optional QR codes.
 # Arguments:
-# - display:     <String> qr or copy
-# - pub_path:    <String> Public key file
-# - title:       <String> Key title for display
+# - pub_path:     <String> Public key file
+# - title:        <String> Key title to paste on the host
 # - register_url: <String> Registration page URL
+# - intro:        <String> Lead sentence
+# - extra_label:  <String|optional> Extra field label (empty to skip)
+# - extra_value:  <String|optional> Extra field value
 # Returns:
 # - <Bool> 0 on success
-nds_git_wizard_show_manual_key_at() {
-    local display="${1:-copy}"
-    local pub_path="$2"
-    local title="$3"
-    local register_url="$4"
+nds_git_wizard_show_add_key_card() {
+    local pub_path="$1" title="$2" register_url="$3" intro="$4"
+    local extra_label="${5:-}" extra_value="${6:-}"
+    local pub display
 
     [[ -f "$pub_path" ]] || return 1
+    pub="$(tr -d '\n' < "$pub_path")"
 
     nds_ui_b ""
-    nds_ui_h "SSH public key (${title}):"
+    nds_ui_b "$intro"
     nds_ui_b ""
-    console "$(cat "$pub_path")"
-    nds_ui_b ""
-    nds_ui_i "Add it at: ${register_url}"
+    _nds_git_wizard_kv "Url" "$register_url"
+    _nds_git_wizard_kv "Title" "$title"
+    _nds_git_wizard_kv "Public Key" "$pub"
+    if [[ -n "$extra_label" ]]; then
+        _nds_git_wizard_kv "$extra_label" "$extra_value"
+    fi
 
+    display="$(nds_git_wizard_resolve_key_display)" || return 1
     if [[ "$display" == "qr" ]]; then
-        local pub
-        pub="$(tr -d '\n' < "$pub_path")"
         nds_ui_b ""
-        nds_ui_h "SSH key registration page"
-        nds_ui_b ""
-        if nds_qr_print "$register_url"; then
-            nds_ui_i "$register_url"
-            nds_ui_b ""
-            nds_ui_h "Public key (paste on registration page)"
-            nds_ui_b ""
-            nds_qr_print "$pub" || true
-        else
-            warn "QR unavailable — use printed copy above"
+        if ! nds_qr_print "$register_url"; then
+            warn "QR unavailable — use the printed copy above"
+            return 0
         fi
+        nds_ui_b ""
+        nds_qr_print "$pub" || true
     fi
     return 0
 }
 
 # Description: Wait until user confirms manual deploy key registration.
 # Arguments:
-# - owner:     <String> Repository owner
-# - repo:      <String> Repository name
-# - read_only: <String> true (default) or false
+# - owner: <String> Repository owner
+# - repo:  <String> Repository name
 # Returns:
 # - <Bool> 0 when user confirms
 nds_git_wizard_confirm_manual_deploy() {
     local owner="$1" repo="$2"
-    local read_only="${3:-true}"
 
-    if [[ "$read_only" == "false" ]]; then
-        nds_ui_b "Add this deploy key on GitHub — enable \"Allow write access\" (this action pushes the host)."
-    else
-        nds_ui_b "Add this deploy key on GitHub — leave \"Allow write access\" unchecked."
-    fi
-    nds_ui_i "Repository: ${owner}/${repo}"
-    nds_ui_i "Title: $(nds_git_deploy_key_title "$owner" "$repo")"
     nds_ui_b ""
-    nds_ask_user_to_proceed "Added the deploy key on ${owner}/${repo}?" || return 1
+    nds_ask_user_to_proceed "I added the deploy key on ${owner}/${repo}?" || return 1
     return 0
 }
 
@@ -103,13 +103,8 @@ nds_git_wizard_confirm_manual_deploy() {
 # Returns:
 # - <Bool> 0 when user confirms
 nds_git_wizard_confirm_manual_account() {
-    nds_ui_b "Register the public key on your machine GitHub user account."
-    nds_ui_b "The key has full account SSH access — repo reach is set by GitHub permissions."
     nds_ui_b ""
-    nds_ui_i "GitHub: github.com/settings/ssh/new"
-    nds_ui_i "Title: $(nds_git_ssh_key_title)"
-    nds_ui_b ""
-    nds_ask_user_to_proceed "Added this SSH key to the machine user account?" || return 1
+    nds_ask_user_to_proceed "I added this SSH key to the machine-user account?" || return 1
     return 0
 }
 
@@ -123,16 +118,23 @@ nds_git_wizard_confirm_manual_account() {
 # - <Bool> 0 on success
 nds_git_wizard_menu_manual_deploy() {
     local owner="$1" repo="$2" host="${3:-github.com}" read_only="${4:-true}"
-    local display pub_path register_url title
+    local pub_path register_url title write_value
 
     nds_git_deploy_key_generate "$owner" "$repo" || return 1
     pub_path="$(nds_git_deploy_key_pubkey_path "$owner" "$repo")"
-    title="$(nds_git_deploy_key_title "$owner" "$repo")"
+    title="$(nds_git_deploy_key_register_title "$owner" "$repo" "$read_only")"
     register_url="$(nds_git_deploy_key_register_url "$host" "$owner" "$repo")"
 
-    display="$(nds_git_wizard_resolve_key_display)" || return 1
-    nds_git_wizard_show_manual_key_at "$display" "$pub_path" "$title" "$register_url" || return 1
-    nds_git_wizard_confirm_manual_deploy "$owner" "$repo" "$read_only" || return 1
+    if [[ "$read_only" == "false" ]]; then
+        write_value="yes (tick the checkbox)"
+    else
+        write_value="no (leave the checkbox off)"
+    fi
+
+    nds_git_wizard_show_add_key_card "$pub_path" "$title" "$register_url" \
+        "Please add this key to the repository, see info below:" \
+        "Allow write access" "$write_value" || return 1
+    nds_git_wizard_confirm_manual_deploy "$owner" "$repo" || return 1
     return 0
 }
 
@@ -140,7 +142,7 @@ nds_git_wizard_menu_manual_deploy() {
 # Returns:
 # - <Bool> 0 on success
 nds_git_wizard_menu_manual_account() {
-    local display pub_path register_url
+    local pub_path register_url
 
     if [[ ! -f "$(nds_git_session_pubkey_path)" ]]; then
         nds_git_key_generate "$(nds_git_session_key_path)" || return 1
@@ -150,8 +152,8 @@ nds_git_wizard_menu_manual_account() {
 
     pub_path="$(nds_git_session_pubkey_path)"
     register_url="$(nds_git_account_ssh_register_url github.com)"
-    display="$(nds_git_wizard_resolve_key_display)" || return 1
-    nds_git_wizard_show_manual_key_at "$display" "$pub_path" "$(nds_git_ssh_key_title)" "$register_url" \
+    nds_git_wizard_show_add_key_card "$pub_path" "$(nds_git_ssh_key_title)" "$register_url" \
+        "Please add this key to the GitHub machine-user account, see info below:" \
         || return 1
     nds_git_wizard_confirm_manual_account || return 1
     return 0
