@@ -62,13 +62,15 @@ suite_install() {
     fi
     unset NDS_CURRENT_ACTION
 
-    if grep -q 'NDS_ACTION:-' \
+    if grep -q '_nds_install_verify_is_flake' \
+        "${SCRIPT_DIR}/install/verify/logic/install_verify.sh" \
+        && grep -q 'addRole|toolkit' \
         "${SCRIPT_DIR}/install/verify/logic/install_verify.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ verify: uses NDS_ACTION so addRole still flake-checks"
+        console "  ✓ verify: flake checks for toolkit/addRole (not classic configuration.nix)"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ verify: still keys only off NDS_CURRENT_ACTION (addRole would classic-check)"
+        console "  ✗ verify: toolkit/addRole still classic-check configuration.nix"
     fi
 
     # Regression: stdout of --show-hardware-config must land in dest, not the detail log.

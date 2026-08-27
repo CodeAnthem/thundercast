@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Post-install verification
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-21
+# Date:          Created: 2026-07-07 | Modified: 2026-08-27
 # Description:   Verify partition mounts, hardware artifacts, bootloader, and system profile
 # ==================================================================================================
 
@@ -184,12 +184,27 @@ _nds_install_verify_sops() {
         || _nds_install_verify_fail "sops age key missing on target (.sops.yaml in flake)"
 }
 
+# Description: True when this session installed from a flake (not classic configuration.nix).
+_nds_install_verify_is_flake() {
+    local action kind
+    if declare -f _nds_install_apply_kind &>/dev/null; then
+        kind="$(_nds_install_apply_kind)"
+        [[ "$kind" == "flake" ]] && return 0
+        [[ "$kind" == "classic" ]] && return 1
+    fi
+    action="${NDS_ACTION:-${NDS_CURRENT_ACTION:-}}"
+    case "$action" in
+        installFlake|remoteAction|addRole|toolkit) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 # Description: Verify a local install is bootable before bundle/reboot.
 # Checks mounts, system profile, hardware artifacts, bootloader, and optional secrets.
 # Returns:
 # - <Bool> 0 when all checks pass
 nds_install_verify_local() {
-    local disk loader uefi encryption hostname action flake_root
+    local disk loader uefi encryption hostname flake_root
 
     _NDS_INSTALL_VERIFY_FAILS=()
     _nds_install_gather_context
@@ -198,8 +213,6 @@ nds_install_verify_local() {
     loader="${NDS_CTX_BOOT_LOADER:-grub}"
     uefi="$NDS_CTX_BOOT_UEFI_MODE"
     encryption="$NDS_CTX_ENCRYPTION"
-    # Catalog gate sets NDS_CURRENT_ACTION to addRole/toolkit; NDS_ACTION stays remoteAction.
-    action="${NDS_ACTION:-${NDS_CURRENT_ACTION:-}}"
     hostname="$NDS_CTX_HOSTNAME"
     flake_root="${NDS_FLAKE_ROOT:-}"
 
@@ -222,17 +235,14 @@ nds_install_verify_local() {
     mountpoint -q /mnt/boot \
         || _nds_install_verify_fail "Boot partition is not mounted at /mnt/boot"
 
-    case "$action" in
-        installFlake|remoteAction)
-            _nds_install_gather_flake_context
-            flake_root="${flake_root:-$NDS_CTX_FLAKE_INSTALL_PATH}"
-            _nds_install_verify_flake_hardware "$hostname"
-            _nds_install_verify_sops "$flake_root"
-            ;;
-        *)
-            _nds_install_verify_classic_hardware
-            ;;
-    esac
+    if _nds_install_verify_is_flake; then
+        _nds_install_gather_flake_context
+        flake_root="${flake_root:-$NDS_CTX_FLAKE_INSTALL_PATH}"
+        _nds_install_verify_flake_hardware "$hostname"
+        _nds_install_verify_sops "$flake_root"
+    else
+        _nds_install_verify_classic_hardware
+    fi
 
     _nds_install_verify_bootloader "$loader" "$uefi" "$disk"
     _nds_install_verify_git_key
