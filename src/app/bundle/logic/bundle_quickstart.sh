@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Install bundle quickstart markdown
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-06-30 | Modified: 2026-08-16
+# Date:          Created: 2026-06-30 | Modified: 2026-08-27
 # ==================================================================================================
 
 # Description: NDS version that produced this bundle.
@@ -68,6 +68,8 @@ _nds_bundle_action_readme_url() {
     case "$action" in
         installFlake) slug="installFlake" ;;
         remoteAction) slug="remoteAction" ;;
+        toolkit) slug="toolkit" ;;
+        addRole) slug="addRole" ;;
         classicInstall) slug="classicInstall" ;;
     esac
     printf 'https://github.com/CodeAnthem/thundercast/blob/main/src/actions/%s/README.md\n' "$slug"
@@ -80,7 +82,7 @@ _nds_bundle_quickstart() {
     local hostname admin_user ssh_port ssh_pw_auth admin_ssh_key port_opt host_ip
     local encryption use_password use_key key_device key_file
     local remote_unlock remote_net remote_ip remote_port unlock_ip ip_note
-    local staging_dir has_admin_pw=false has_git_keys=false
+    local staging_dir has_admin_pw=false has_git_keys=false has_toolkit_keys=false
     local nds_ver nixos_ver git_key
 
     hostname="${NDS_CTX_HOSTNAME:-unknown}"
@@ -102,6 +104,9 @@ _nds_bundle_quickstart() {
     if [[ -f "${staging_dir}/secrets/admin_password.txt" ]] \
         || [[ -f "${NDS_RUNTIME_DIR:-}/secrets/admin_password.txt" ]]; then
         has_admin_pw=true
+    fi
+    if [[ -f "${staging_dir}/secrets/toolkit/operator_age.txt" ]]; then
+        has_toolkit_keys=true
     fi
     if [[ -d "${staging_dir}/secrets/git" ]]; then
         for git_key in "${staging_dir}/secrets/git"/*; do
@@ -158,6 +163,24 @@ EOF
 
         if [[ "$has_git_keys" == "true" ]]; then
             printf '| `secrets/git/*` | Private SSH keys used for flake git access. Copy to `/root/.ssh/` (chmod 600) before pasting nds-restore.env. |\n'
+        fi
+
+        if [[ "$has_toolkit_keys" == "true" ]]; then
+            printf '| `secrets/toolkit/*` | Operator age + toolkit SSH. Private keys stay in this zip - never commit them. |\n'
+        fi
+
+        if [[ "$has_toolkit_keys" == "true" ]]; then
+            cat <<EOF
+
+## Operator keys (keep this zip)
+
+> **WARNING:** \`secrets/toolkit/operator_age.txt\` and \`secrets/toolkit/toolkit_ssh\`
+> are the only copies of the operator private keys. They are not in git.
+> Lose this zip and you cannot decrypt toolkit secrets or restore this ops VM.
+
+To restore this toolkit later, set \`CAST_TOOLKIT_BUNDLE\` to this zip (or the
+\`secrets/toolkit/\` directory) and answer Restore yes on the ISO.
+EOF
         fi
 
         if [[ "$encryption" == "true" && "$remote_unlock" == "true" ]]; then

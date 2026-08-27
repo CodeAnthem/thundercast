@@ -76,7 +76,7 @@ nds_toolkit_compose() {
     nds_step_complete "Generated toolkit keys"
     if [[ -f "$(_nds_toolkit_secrets_dir)/operator_age.pub" ]]; then
         info "Operator age pubkey: $(cat "$(_nds_toolkit_secrets_dir)/operator_age.pub")"
-        warn "Operator private key is only in the install bundle — never commit it"
+        info "Operator private key is only in the install bundle — never commit it"
     fi
 
     dest="$(_nds_toolkit_secrets_dir)"

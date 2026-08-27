@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Bundle core feature selfchecks
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-16
+# Date:          Created: 2026-08-05 | Modified: 2026-08-27
 # ==================================================================================================
 
 suite_bundle() {
@@ -67,6 +67,24 @@ suite_bundle() {
         else
             TEST_FAILED=$((TEST_FAILED + 1))
             console "  ✗ bundle: QUICK_START.md missing secrets/git section"
+        fi
+        rm -rf "$qs_stage"
+        rm -f "$dest"
+
+        dest=$(mktemp)
+        qs_stage=$(mktemp -d)
+        mkdir -p "${qs_stage}/secrets/toolkit"
+        printf 'dummy-age\n' >"${qs_stage}/secrets/toolkit/operator_age.txt"
+        NDS_CTX_HOSTNAME=testhost _nds_bundle_quickstart "${qs_stage}/QUICK_START.md"
+        if grep -q 'secrets/toolkit' "${qs_stage}/QUICK_START.md" \
+            && grep -q 'Operator keys (keep this zip)' "${qs_stage}/QUICK_START.md" \
+            && grep -q 'CAST_TOOLKIT_BUNDLE' "${qs_stage}/QUICK_START.md" \
+            && ! grep -q $'\u2014' "${qs_stage}/QUICK_START.md"; then
+            TEST_PASSED=$((TEST_PASSED + 1))
+            console "  ✓ bundle: QUICK_START.md documents toolkit operator keys"
+        else
+            TEST_FAILED=$((TEST_FAILED + 1))
+            console "  ✗ bundle: QUICK_START.md missing toolkit operator-key warning"
         fi
         rm -rf "$qs_stage"
         rm -f "$dest"
