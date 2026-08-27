@@ -155,8 +155,10 @@ _nds_install_ensure_flake_checkout() {
 }
 
 # Description: Eval the install host so nixos-install does not start on a broken config.
-# Uses path: so gitignored facter.json is visible. Does not run nix flake check —
-# ThunderCore exposes a check per nixosConfiguration, which would eval every host.
+# path: includes gitignored facter.json. Same --store as prefetch so locked git
+# inputs are found locally. --no-update-lock-file: getFlake on a dirty tree
+# re-fetches SSH inputs without NDS keys (Permission denied).
+# Does not run nix flake check — ThunderCore checks every nixosConfiguration.
 # Arguments:
 # - flake_root: <String> Flake checkout
 # - host_name:  <String|optional> nixosConfigurations key (FLAKE_HOST / CTX)
@@ -164,7 +166,8 @@ _nds_install_flake_check() {
     local flake_root="$1"
     local host_name="${2:-}"
     local log="${NDS_NIXOS_INSTALL_LOG:-/tmp/nds_nixosInstallation.log}"
-    local nix_expr rc=0
+    local flake_ref nix_config rc=0
+    local -a store_args=()
 
     [[ -f "${flake_root}/flake.nix" ]] || {
         error "Flake missing at ${flake_root}"
@@ -186,7 +189,12 @@ _nds_install_flake_check() {
     }
 
     flake_root="$(readlink -f "$flake_root" 2>/dev/null || printf '%s' "$flake_root")"
-    nix_expr="let flake = builtins.getFlake \"path:${flake_root}\"; in flake.nixosConfigurations.\"${host_name}\".config.system.build.toplevel.drvPath"
+    flake_ref=$(_nds_install_nix_flake_system_ref "$host_name")
+    mapfile -t store_args < <(_nds_install_nix_install_store_args 2>/dev/null || true)
+    nix_config="experimental-features = nix-command flakes"
+    if declare -f _nds_install_nix_nixos_install_config &>/dev/null; then
+        nix_config="$(_nds_install_nix_nixos_install_config)"
+    fi
 
     mkdir -p "$(dirname "$log")" 2>/dev/null || true
     printf '\n=== nix eval nixosConfigurations.%s ===\n' "$host_name" | tee -a "$log"
@@ -195,9 +203,11 @@ _nds_install_flake_check() {
     (
         set -o pipefail
         cd "$flake_root" || exit 1
-        nix eval --raw --impure --show-trace \
+        env NIX_CONFIG="$nix_config" nix eval --raw --impure --show-trace \
+            --no-update-lock-file --no-write-lock-file \
             --extra-experimental-features 'nix-command flakes' \
-            --expr "$nix_expr" 2>&1 | tee -a "$log"
+            "${store_args[@]}" \
+            "path:${flake_root}#${flake_ref}.drvPath" 2>&1 | tee -a "$log"
     )
     rc=$?
     if [[ "$rc" -ne 0 ]]; then

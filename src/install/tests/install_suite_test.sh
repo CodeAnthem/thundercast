@@ -232,15 +232,21 @@ suite_install() {
             "${SCRIPT_DIR}/install/flake/logic/install_flake_core.sh" \
         && grep -q 'nix eval' \
             "${SCRIPT_DIR}/install/flake/logic/install_flake_core.sh" \
+        && grep -q -- '--no-update-lock-file' \
+            "${SCRIPT_DIR}/install/flake/logic/install_flake_core.sh" \
+        && grep -q '_nds_install_nix_install_store_args' \
+            "${SCRIPT_DIR}/install/flake/logic/install_flake_core.sh" \
         && ! grep -q 'nix flake check --' \
+            "${SCRIPT_DIR}/install/flake/logic/install_flake_core.sh" \
+        && ! grep -q 'builtins.getFlake' \
             "${SCRIPT_DIR}/install/flake/logic/install_flake_core.sh" \
         && grep -q '_nds_install_flake_check "$flake_root" "$hostname"' \
             "${SCRIPT_DIR}/install/flake/logic/install_flake_install_pipeline.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ flake check: git-add facts then path: eval of install host"
+        console "  ✓ flake check: path: eval on install store, no lock update"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ flake check: still uses nix flake check or skips host eval"
+        console "  ✗ flake check: still getFlake/lock-update or skips host eval"
     fi
 
     if declare -f nds_install_diag_snapshot &>/dev/null; then
