@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Package binary resolve (PATH or nixpkgs#)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-05
+# Date:          Created: 2026-08-05 | Modified: 2026-08-27
 # Description:   Shared helper — ensure may show step UI + logs on first nix warm
 # ==================================================================================================
 
@@ -100,6 +100,14 @@ nds_pkg_ensure() {
 
     if declare -f nds_step_exec &>/dev/null; then
         nds_step_exec "$label" nds_pkg_warm "$bin" "$attr" || return 1
+    elif declare -f nds_step_start_spin &>/dev/null; then
+        nds_step_start_spin "$label"
+        if nds_pkg_warm "$bin" "$attr"; then
+            declare -f nds_step_complete &>/dev/null && nds_step_complete "$label"
+        else
+            declare -f nds_step_fail &>/dev/null && nds_step_fail "$label"
+            return 1
+        fi
     elif declare -f nds_step_start &>/dev/null; then
         nds_step_start "$label"
         if nds_pkg_warm "$bin" "$attr"; then

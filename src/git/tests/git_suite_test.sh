@@ -500,6 +500,16 @@ LOCK
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ install: open_leaf missing write/reason args on git access"
     fi
+    if grep -q 'nds_step_start_spin "Checking git access"' \
+        "${SCRIPT_DIR}/git/access/logic/git_access.sh" \
+        && grep -q 'nds_step_cancel' \
+        "${SCRIPT_DIR}/git/access/logic/git_access.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ git_access: spinner while probing, cancel before wizard"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ git_access: probe is still a static line (no start_spin/cancel)"
+    fi
     if grep -q 'nds_ask_user_to_proceed "Show QR codes?"' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
         && grep -q 'Show QR codes?' \

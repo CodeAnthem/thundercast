@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Flake host picker prompts
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-21
+# Date:          Created: 2026-08-05 | Modified: 2026-08-27
 # Description:   Interactive host selection; writes FLAKE_HOST via bound nds_cfg_*
 # ==================================================================================================
 
@@ -28,7 +28,18 @@ nds_flake_pick_host() {
     nds_ui_b "Choose a nixosConfigurations attribute from this flake."
     nds_ui_b ""
 
-    if declare -f nds_step_start &>/dev/null; then
+    if declare -f nds_step_start_spin &>/dev/null; then
+        nds_step_start_spin "Listing nixosConfigurations"
+        hosts_out="$(nds_flake_list_hosts "$flake_root")" || list_rc=$?
+        if [[ -n "$hosts_out" ]]; then
+            mapfile -t hosts <<< "$hosts_out"
+        fi
+        if [[ "$list_rc" -eq 0 ]]; then
+            nds_step_complete "Listing nixosConfigurations (${#hosts[@]} hosts)"
+        else
+            nds_step_fail "Listing nixosConfigurations"
+        fi
+    elif declare -f nds_step_start &>/dev/null; then
         nds_step_start "Listing nixosConfigurations"
         hosts_out="$(nds_flake_list_hosts "$flake_root")" || list_rc=$?
         if [[ -n "$hosts_out" ]]; then

@@ -24,7 +24,7 @@ nds_install_open_leaf() {
 
     host_dir="${NDS_FLAKE_HOST_DIR:-hosts/x86_64-linux}"
 
-    nds_step_start "Cloning install flake"
+    nds_step_start_spin "Cloning install flake"
     if ! probe_dir=$(nds_preflight_probe_flake "$(nds_cfg_get FLAKE_REPO_URL)"); then
         nds_step_fail "Install flake clone"
         return 1
@@ -40,14 +40,14 @@ nds_install_open_leaf() {
 
     nds_preflight_apply_disko_strategy "$probe_dir" "${NDS_FLAKE_HOST}" "$host_dir"
 
-    nds_step_start "Verifying git input access"
+    nds_step_start_spin "Verifying git input access"
     if ! nds_git_ensure_flake_closure_access "$probe_dir" "$(nds_cfg_get FLAKE_REPO_URL)"; then
         nds_step_fail "Git input access"
         return 1
     fi
     nds_step_complete "Git input access OK"
 
-    nds_step_start "Verifying leaf write access"
+    nds_step_start_spin "Verifying leaf write access"
     if ! nds_install_flake_probe_leaf_write "$probe_dir"; then
         nds_step_fail "Leaf write access"
         return 1

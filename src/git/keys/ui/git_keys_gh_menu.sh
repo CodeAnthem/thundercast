@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git auth wizard GitHub CLI menu
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-26
+# Date:          Created: 2026-07-07 | Modified: 2026-08-27
 # ==================================================================================================
 
 # Description: Print one device-login line with optional color on code/URL.
@@ -147,7 +147,7 @@ nds_git_wizard_gh_ensure_auth() {
     fi
 
     if ! nds_gh_has_key_scope; then
-        nds_step_start "Extending GitHub session"
+        nds_step_start_spin "Extending GitHub session"
         nds_gh_unset_blocking_tokens
         BROWSER=false "${gh_cmd[@]}" auth refresh -h github.com -s repo,admin:public_key || {
             nds_step_fail "Extending GitHub session"
@@ -189,7 +189,7 @@ nds_git_wizard_menu_gh_deploy() {
     local label="Registering deploy key on ${owner}/${repo}"
 
     nds_git_wizard_gh_prepare || return 1
-    nds_step_start "$label"
+    nds_step_start_spin "$label"
     if ! nds_git_register_deploy_for_repo "$owner" "$repo" "$read_only"; then
         nds_step_fail "$label"
         return 1
@@ -230,7 +230,7 @@ nds_git_wizard_menu_gh_account() {
     nds_git_keys_register "$(nds_git_session_key_path)" || true
     nds_git_auth_set_mode account
 
-    nds_step_start "$label"
+    nds_step_start_spin "$label"
     if nds_git_register_for_repos "$pub" "${repos[@]}"; then
         nds_step_complete "$label"
         success "SSH key registered on GitHub account ($(nds_git_ssh_key_title))"

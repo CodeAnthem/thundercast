@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Remote action catalog (remoteAction)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-18 | Modified: 2026-08-26
+# Date:          Created: 2026-08-18 | Modified: 2026-08-27
 # Description:   Clone a catalog repo, list .nds/actions, load the selected script
 # ==================================================================================================
 
@@ -288,7 +288,7 @@ nds_cast_gate() {
         nds_cast_ensure_access "$cast_url" || return 14
     fi
 
-    nds_step_start "Cloning remote actions"
+    nds_step_start_spin "Cloning remote actions"
     if ! cast_root=$(nds_cast_clone "$cast_url"); then
         nds_step_fail "Cloning remote actions"
         return 14

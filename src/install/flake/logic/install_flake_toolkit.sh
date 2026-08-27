@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Toolkit create/restore helpers (operator age, SSH, sops policy)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-18 | Modified: 2026-08-20
+# Date:          Created: 2026-08-18 | Modified: 2026-08-27
 # Description:   Generate operator credentials; never commit private keys
 # ==================================================================================================
 
@@ -53,8 +53,6 @@ nds_toolkit_generate_operator() {
     nds_bundle_register_file "secrets/toolkit/operator_age.pub" "${dest}/operator_age.pub"
     nds_bundle_register_file "secrets/toolkit/toolkit_ssh" "${dest}/toolkit_ssh"
     nds_bundle_register_file "secrets/toolkit/toolkit_ssh.pub" "${dest}/toolkit_ssh.pub"
-    info "Operator age pubkey: ${pub_age}"
-    warn "Operator private key is only in the install bundle — never commit it"
     return 0
 }
 

@@ -25,7 +25,7 @@ Boot uses the same **nixcfg** path as classicInstall: at install time NDS writes
 `boot.nix` next to the host. Sibling `.nix` files (mounts, boot, opts, guest) are
 auto-imported by fileStore `method = "host"` — do not list them in `configuration.nix`.
 Scaffolded hosts get by-label `mounts.nix`; install may rewrite to by-uuid. After clone
-and git-input prefetch, NDS runs `nix flake check`.
+and git-input prefetch, NDS evals `nixosConfigurations.<host>` (not `nix flake check`).
 
 ### Boot
 

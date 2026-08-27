@@ -49,20 +49,34 @@ nds_toolkit_compose() {
         error "Toolkit host name is empty"
         return 1
     }
-    info "Generating toolkit keys and writing host files…"
     nds_cfg_set NETWORK_HOSTNAME "$host"
     export NDS_FLAKE_HOST="$host"
 
+    nds_step_start_spin "Generating toolkit keys"
     if [[ "$mode" == "restore" ]]; then
-        nds_toolkit_restore_from_bundle "$(nds_cfg_get CAST_TOOLKIT_BUNDLE)" || return 1
+        nds_toolkit_restore_from_bundle "$(nds_cfg_get CAST_TOOLKIT_BUNDLE)" || {
+            nds_step_fail "Generating toolkit keys"
+            return 1
+        }
         nds_toolkit_write_sops_policy "$flake_root" \
-            "$(cat "$(_nds_toolkit_secrets_dir)/operator_age.pub")" || return 1
+            "$(cat "$(_nds_toolkit_secrets_dir)/operator_age.pub")" || {
+            nds_step_fail "Generating toolkit keys"
+            return 1
+        }
         mkdir -p "${flake_root}/.nds"
         cp "$(_nds_toolkit_secrets_dir)/operator_age.pub" "${flake_root}/.nds/operator.age.pub"
         [[ -f "$(_nds_toolkit_secrets_dir)/toolkit_ssh.pub" ]] \
             && cp "$(_nds_toolkit_secrets_dir)/toolkit_ssh.pub" "${flake_root}/.nds/toolkit.ssh.pub"
     else
-        nds_toolkit_generate_operator "$flake_root" || return 1
+        nds_toolkit_generate_operator "$flake_root" || {
+            nds_step_fail "Generating toolkit keys"
+            return 1
+        }
+    fi
+    nds_step_complete "Generated toolkit keys"
+    if [[ -f "$(_nds_toolkit_secrets_dir)/operator_age.pub" ]]; then
+        info "Operator age pubkey: $(cat "$(_nds_toolkit_secrets_dir)/operator_age.pub")"
+        warn "Operator private key is only in the install bundle — never commit it"
     fi
 
     dest="$(_nds_toolkit_secrets_dir)"

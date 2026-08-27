@@ -8,6 +8,7 @@
 
 declare -g NDS_UI_STEP_NAME=""
 declare -g NDS_UI_STEP_START=0
+declare -g NDS_UI_STEP_SPIN_PID=""
 
 # Description: Render the icon prefix for a step state.
 # Arguments:
@@ -55,22 +56,73 @@ nds_ui_step_yield() {
 nds_ui_step_resume() {
     [[ -n "${NDS_UI_STEP_NAME:-}" ]] || return 0
     nds_ui_step_tty || return 0
+    [[ -n "${NDS_UI_STEP_SPIN_PID:-}" ]] && return 0
     printf '%s%s %s' "$NDS_UI_INDENT_B" "$(nds_ui_step_icon start)" "$NDS_UI_STEP_NAME" >&2
+}
+
+# Description: Stop a background spinner started by nds_step_start_spin.
+_nds_step_spinner_stop() {
+    local pid="${NDS_UI_STEP_SPIN_PID:-}"
+    NDS_UI_STEP_SPIN_PID=""
+    [[ -n "$pid" ]] || return 0
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+}
+
+# Description: Animate the current step line until complete, fail, or cancel.
+# Arguments:
+# - message: <String> Step label
+_nds_step_spinner_start() {
+    local message="$1"
+    _nds_step_spinner_stop
+    nds_ui_step_tty || return 0
+    (
+        trap 'exit 0' TERM INT
+        local spinstr='|/-\\' char
+        while true; do
+            char="${spinstr:0:1}"
+            printf '\r\033[K%s[%s%s] %s' "$NDS_UI_INDENT_B" "$char" "$char" "$message" >&2
+            spinstr="${spinstr:1}${spinstr:0:1}"
+            sleep 0.12
+        done
+    ) </dev/null &
+    NDS_UI_STEP_SPIN_PID=$!
 }
 
 # Description: Start an in-progress step line on stderr.
 nds_step_start() {
     local message="$1"
+    _nds_step_spinner_stop
     NDS_UI_STEP_NAME="$message"
     NDS_UI_STEP_START=$(date +%s)
     nds_ui_step_tty || return 0
     printf '%s%s %s' "$NDS_UI_INDENT_B" "$(nds_ui_step_icon start)" "$message" >&2
 }
 
+# Description: Start a step and animate until complete, fail, or cancel.
+# Use for foreground work that must keep namerefs / captured stdout.
+# Arguments:
+# - message: <String> Step label
+nds_step_start_spin() {
+    nds_step_start "$1"
+    _nds_step_spinner_start "$1"
+}
+
+# Description: Drop the in-progress step without OK/FAIL (wizard takes the TTY).
+nds_step_cancel() {
+    _nds_step_spinner_stop
+    if nds_ui_step_tty && [[ -n "${NDS_UI_STEP_NAME:-}" ]]; then
+        printf '\r\033[K' >&2
+    fi
+    NDS_UI_STEP_NAME=""
+    NDS_UI_STEP_START=0
+}
+
 # Description: Finish the current step as success (elapsed seconds).
 nds_step_complete() {
     local message="${1:-$NDS_UI_STEP_NAME}"
     local elapsed=$(( $(date +%s) - ${NDS_UI_STEP_START:-$(date +%s)} ))
+    _nds_step_spinner_stop
     if nds_ui_step_tty; then
         printf '\r\033[K%s%s %s  (%ds)\n' "$NDS_UI_INDENT_B" "$(nds_ui_step_icon ok)" "$message" "$elapsed" >&2
     else
@@ -84,6 +136,7 @@ nds_step_complete() {
 nds_step_fail() {
     local message="${1:-$NDS_UI_STEP_NAME}"
     local elapsed=$(( $(date +%s) - ${NDS_UI_STEP_START:-$(date +%s)} ))
+    _nds_step_spinner_stop
     if nds_ui_step_tty; then
         printf '\r\033[K%s%s %s  (%ds)\n' "$NDS_UI_INDENT_B" "$(nds_ui_step_icon fail)" "$message" "$elapsed" >&2
     else

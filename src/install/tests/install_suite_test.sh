@@ -229,12 +229,18 @@ suite_install() {
             END { exit (stg && chk && stg < chk) ? 0 : 1 }
         ' "${SCRIPT_DIR}/install/flake/logic/install_flake_install_pipeline.sh" \
         && grep -q 'path:${flake_root}' \
-            "${SCRIPT_DIR}/install/flake/logic/install_flake_core.sh"; then
+            "${SCRIPT_DIR}/install/flake/logic/install_flake_core.sh" \
+        && grep -q 'nix eval' \
+            "${SCRIPT_DIR}/install/flake/logic/install_flake_core.sh" \
+        && ! grep -q 'nix flake check --' \
+            "${SCRIPT_DIR}/install/flake/logic/install_flake_core.sh" \
+        && grep -q '_nds_install_flake_check "$flake_root" "$hostname"' \
+            "${SCRIPT_DIR}/install/flake/logic/install_flake_install_pipeline.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ flake check: git-add facts then path: flake (sees facter.json)"
+        console "  ✓ flake check: git-add facts then path: eval of install host"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ flake check: still evals git flake before staging facter.json"
+        console "  ✗ flake check: still uses nix flake check or skips host eval"
     fi
 
     if declare -f nds_install_diag_snapshot &>/dev/null; then

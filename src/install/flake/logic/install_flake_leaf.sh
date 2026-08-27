@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Leaf flake helpers for remoteAction (thundercast + .roles)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-17 | Modified: 2026-08-20
+# Date:          Created: 2026-08-17 | Modified: 2026-08-27
 # Description:   Resolve thundercast action, role NDS env, hooks, leaf commit/push
 # ==================================================================================================
 
@@ -271,7 +271,7 @@ nds_flake_apply_role_nds() {
 # Arguments:
 # - flake_root: <String> Leaf checkout
 # - message:    <String> Commit message
-nds_install_flake_commit_push_leaf() {
+_nds_install_flake_commit_push_work() {
     local flake_root="$1"
     local message="$2"
     local url branch
@@ -307,6 +307,22 @@ nds_install_flake_commit_push_leaf() {
     fi
     success "Pushed host files to ${url} (${branch})"
     return 0
+}
+
+# Description: Commit host + NDS env and push to the leaf origin (write access).
+# Arguments:
+# - flake_root: <String> Leaf checkout
+# - message:    <String> Commit message
+nds_install_flake_commit_push_leaf() {
+    local flake_root="$1"
+    local message="$2"
+
+    if declare -f nds_step_exec &>/dev/null && [[ -z "${NDS_UI_STEP_NAME:-}" ]]; then
+        nds_step_exec "Pushing host files to leaf" \
+            _nds_install_flake_commit_push_work "$flake_root" "$message"
+        return $?
+    fi
+    _nds_install_flake_commit_push_work "$flake_root" "$message"
 }
 
 # Description: Dry-run push so a read-only deploy key fails before role/settings.

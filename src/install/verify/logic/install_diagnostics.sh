@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Install diagnostics (compact log, separate from nixos-install output)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-14
+# Date:          Created: 2026-07-07 | Modified: 2026-08-27
 # Description:   Structured install state in NDS_INSTALL_DIAG_LOG (folded into nds.log)
 # ==================================================================================================
 
@@ -152,7 +152,7 @@ nds_install_diag_step_failure() {
     local line
 
     case "$step_label" in
-        *NixOS*|*nixos-anywhere*)
+        *NixOS*|*nixos-anywhere*|*Checking*)
             verbose="${NDS_NIXOS_INSTALL_LOG:-$verbose}"
             ;;
     esac

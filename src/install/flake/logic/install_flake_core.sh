@@ -154,31 +154,57 @@ _nds_install_ensure_flake_checkout() {
     error "Failed to stage $repo_url to $install_path"
 }
 
-# Description: Run nix flake check after clone/prefetch (needs private git inputs).
+# Description: Eval the install host so nixos-install does not start on a broken config.
+# Uses path: so gitignored facter.json is visible. Does not run nix flake check —
+# ThunderCore exposes a check per nixosConfiguration, which would eval every host.
 # Arguments:
 # - flake_root: <String> Flake checkout
+# - host_name:  <String|optional> nixosConfigurations key (FLAKE_HOST / CTX)
 _nds_install_flake_check() {
     local flake_root="$1"
+    local host_name="${2:-}"
     local log="${NDS_NIXOS_INSTALL_LOG:-/tmp/nds_nixosInstallation.log}"
+    local nix_expr rc=0
 
     [[ -f "${flake_root}/flake.nix" ]] || {
         error "Flake missing at ${flake_root}"
         return 1
     }
-    {
-        printf '\n=== nix flake check ===\n'
-    } >>"$log"
-    if ! (
+    if [[ -z "$host_name" ]]; then
+        host_name="${NDS_CTX_HOSTNAME:-}"
+    fi
+    if [[ -z "$host_name" ]] && declare -f nds_cfg_get &>/dev/null; then
+        host_name="$(nds_cfg_get FLAKE_HOST 2>/dev/null || true)"
+    fi
+    [[ -n "$host_name" ]] || {
+        error "FLAKE_HOST is required to check the install target"
+        return 1
+    }
+    [[ "$host_name" =~ ^[A-Za-z0-9._-]+$ ]] || {
+        error "Invalid flake host name: ${host_name}"
+        return 1
+    }
+
+    flake_root="$(readlink -f "$flake_root" 2>/dev/null || printf '%s' "$flake_root")"
+    nix_expr="let flake = builtins.getFlake \"path:${flake_root}\"; in flake.nixosConfigurations.\"${host_name}\".config.system.build.toplevel.drvPath"
+
+    mkdir -p "$(dirname "$log")" 2>/dev/null || true
+    printf '\n=== nix eval nixosConfigurations.%s ===\n' "$host_name" | tee -a "$log"
+    # stdout/stderr stay on this fd so nds_step_exec captures them in the
+    # detail log (diagnostics). tee keeps a copy in nixosInstallation.log.
+    (
+        set -o pipefail
         cd "$flake_root" || exit 1
-        # path: includes gitignored working-tree files (facter.json). A git
-        # flake copy does not, so check would fail in ~1s without git add -f.
-        nix flake check --impure --extra-experimental-features 'nix-command flakes' \
-            "path:${flake_root}"
-    ) >>"$log" 2>&1; then
-        error "nix flake check failed — see ${log}"
+        nix eval --raw --impure --show-trace \
+            --extra-experimental-features 'nix-command flakes' \
+            --expr "$nix_expr" 2>&1 | tee -a "$log"
+    )
+    rc=$?
+    if [[ "$rc" -ne 0 ]]; then
+        error "flake eval failed for ${host_name}"
         return 1
     fi
-    nds_install_log "flake: nix flake check ok (${flake_root})"
+    nds_install_log "flake: eval ok path:${flake_root}#${host_name}"
     return 0
 }
 

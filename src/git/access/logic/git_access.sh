@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git access logic + feature entry (no TTY in logic_*)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-26
+# Date:          Created: 2026-08-05 | Modified: 2026-08-27
 # Description:   Normalize/probe from config AA; entry may call prompts then verify
 # ==================================================================================================
 
@@ -183,7 +183,18 @@ nds_git_access_run() {
     export NDS_FLAKE_REPO_URL="${_g_run[FLAKE_REPO_URL]:-}"
     export NDS_FLAKE_SOURCE="${_g_run[FLAKE_SOURCE]:-remote}"
 
-    if nds_git_access_logic_try _g_run; then
+    if declare -f nds_step_start_spin &>/dev/null; then
+        nds_step_start_spin "Checking git access"
+        if nds_git_access_logic_try _g_run; then
+            if [[ "${_g_run[GIT_ACCESS_METHOD]:-}" == "import" ]]; then
+                nds_step_complete "Git access confirmed for ${owner}/${repo} (existing key)"
+            else
+                nds_step_complete "Git access confirmed for ${owner}/${repo}"
+            fi
+            return 0
+        fi
+        nds_step_cancel
+    elif nds_git_access_logic_try _g_run; then
         return 0
     fi
 
@@ -211,7 +222,19 @@ nds_git_access_run() {
         [[ "$rc" -eq "${NDS_ACTION_BACK:-10}" ]] && continue
         [[ "$rc" -ne 0 ]] && continue
 
-        if nds_git_access_logic_verify _g_run; then
+        if declare -f nds_step_start_spin &>/dev/null; then
+            nds_step_start_spin "Verifying git access"
+            if nds_git_access_logic_verify _g_run; then
+                if declare -f nds_git_access_set &>/dev/null; then
+                    nds_git_access_set method "${_g_run[FLAKE_REPO_URL]}" \
+                        "${_g_run[GIT_ACCESS_METHOD]:-${_g_run[GIT_SSH_KEY_REGISTER_METHOD]:-import}}"
+                fi
+                nds_step_complete "Git access confirmed for ${owner}/${repo}"
+                NDS_CFG_AA_NAME="$prev_aa"
+                return 0
+            fi
+            nds_step_cancel
+        elif nds_git_access_logic_verify _g_run; then
             if declare -f nds_git_access_set &>/dev/null; then
                 nds_git_access_set method "${_g_run[FLAKE_REPO_URL]}" \
                     "${_g_run[GIT_ACCESS_METHOD]:-${_g_run[GIT_SSH_KEY_REGISTER_METHOD]:-import}}"

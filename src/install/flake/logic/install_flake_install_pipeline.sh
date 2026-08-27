@@ -39,7 +39,7 @@ nds_nixos_install_flake() {
         fi
 
         nds_step_exec "Checking flake" \
-            _nds_install_flake_check "$flake_root" || return 1
+            _nds_install_flake_check "$flake_root" "$hostname" || return 1
 
         nds_step_exec_nixos "Installing via nixos-anywhere" \
             _nds_install_via_nixos_anywhere "$flake_root" "$hostname" "$NDS_CTX_REMOTE_TARGET_IP" || return 1
@@ -116,7 +116,7 @@ nds_nixos_install_flake() {
     fi
 
     nds_step_exec "Checking flake" \
-        _nds_install_flake_check "$flake_root" || return 1
+        _nds_install_flake_check "$flake_root" "$hostname" || return 1
 
     nds_step_exec_nixos "Installing NixOS from flake" \
         _nds_install_nixos_flake "$flake_root" "$hostname" "$NDS_CTX_HW_PLACEMENT" || return 1
