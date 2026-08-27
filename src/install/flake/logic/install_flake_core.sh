@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Flake checkout and flake nixos-install
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-28 | Modified: 2026-08-21
+# Date:          Created: 2025-10-28 | Modified: 2026-08-27
 # Description:   Stage flake, git-add install facts, build+activate flake system
 # ==================================================================================================
 
@@ -170,7 +170,10 @@ _nds_install_flake_check() {
     } >>"$log"
     if ! (
         cd "$flake_root" || exit 1
-        nix flake check --impure --extra-experimental-features 'nix-command flakes'
+        # path: includes gitignored working-tree files (facter.json). A git
+        # flake copy does not, so check would fail in ~1s without git add -f.
+        nix flake check --impure --extra-experimental-features 'nix-command flakes' \
+            "path:${flake_root}"
     ) >>"$log" 2>&1; then
         error "nix flake check failed — see ${log}"
         return 1

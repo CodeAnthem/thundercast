@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - UI - TTY input guard
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-20 | Modified: 2026-08-20
+# Date:          Created: 2026-08-20 | Modified: 2026-08-27
 # Description:   Discard keystrokes when no prompt is active; Ctrl+C still aborts
 # ==================================================================================================
 
@@ -16,6 +16,8 @@ _nds_ui_tty_ok() {
 }
 
 # Description: Discard typeahead so a missed paste cannot answer the next prompt.
+# Must run while the TTY is still non-canonical (idle), or queued keys stay
+# invisible until Enter.
 # No-op when there is no controlling TTY (unattended / ssh without -t).
 _nds_ui_drain_tty() {
     local _chunk
@@ -26,6 +28,17 @@ _nds_ui_drain_tty() {
         done
     } </dev/tty 2>/dev/null || true
     return 0
+}
+
+# Description: True when bash read -n is in the argument list (single-key).
+_nds_ui_read_wants_cbreak() {
+    local a
+    for a in "$@"; do
+        case "$a" in
+            -n|-n[0-9]*|-*n[0-9]*) return 0 ;;
+        esac
+    done
+    return 1
 }
 
 _nds_ui_input_restore_stty() {
@@ -67,12 +80,13 @@ nds_ui_input_guard_disable() {
 }
 
 # Description: Lift the guard for an interactive read. Nestable.
+# Drain typeahead while still idle (non-canonical), then restore cooked stty.
 nds_ui_prompt_enter() {
     _NDS_UI_PROMPT_DEPTH=$((${_NDS_UI_PROMPT_DEPTH:-0} + 1))
     if [[ "${_NDS_UI_PROMPT_DEPTH}" -eq 1 && "${_NDS_UI_INPUT_GUARD:-0}" == "1" ]]; then
+        _nds_ui_drain_tty
         _nds_ui_input_restore_stty
     fi
-    _nds_ui_drain_tty
 }
 
 # Description: Resume discarding input when the outermost prompt ends.
@@ -87,10 +101,14 @@ nds_ui_prompt_leave() {
 }
 
 # Description: bash read from /dev/tty with the input guard lifted.
+# Single-key reads (-n) force cbreak so y/n and digits do not wait for Enter.
 # Arguments: passed to read (do not redirect stdin).
 nds_ui_tty_read() {
     local rc=0
     nds_ui_prompt_enter
+    if _nds_ui_read_wants_cbreak "$@"; then
+        stty -icanon min 1 time 0 </dev/tty 2>/dev/null || true
+    fi
     # shellcheck disable=SC2162
     read "$@" </dev/tty
     rc=$?

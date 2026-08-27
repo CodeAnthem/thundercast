@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Install confirmation screen
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-06 | Modified: 2026-08-16
+# Date:          Created: 2026-07-06 | Modified: 2026-08-27
 # Description:   Local/remote install confirm plus overwrite prompts
 # ==================================================================================================
 declare -f nds_skip_register &>/dev/null && nds_skip_register NDS_INSTALL_CONFIRM_SKIP
@@ -99,6 +99,7 @@ nds_install_ui_confirm_install() {
     fi
     nds_install_ui_show_warning "$disk" "$strategy" "$extra"
     nds_ask_user_to_proceed "Start installation now" || return 1
+    info "Installation confirmed — starting now"
     return 0
 }
 

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Part A: apply a complete settings session (classic or flake, local or remote)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-20 | Modified: 2026-08-26
+# Date:          Created: 2026-08-20 | Modified: 2026-08-27
 # Description:   Disk/install only. Composers (Part B) must validate, then call this.
 # ==================================================================================================
 
@@ -25,7 +25,10 @@ nds_install_open_leaf() {
     host_dir="${NDS_FLAKE_HOST_DIR:-hosts/x86_64-linux}"
 
     nds_step_start "Cloning install flake"
-    probe_dir=$(nds_preflight_probe_flake "$(nds_cfg_get FLAKE_REPO_URL)") || return 1
+    if ! probe_dir=$(nds_preflight_probe_flake "$(nds_cfg_get FLAKE_REPO_URL)"); then
+        nds_step_fail "Install flake clone"
+        return 1
+    fi
     nds_step_complete "Install flake cloned"
     export NDS_FLAKE_PROBE_DIR="$probe_dir"
 
@@ -38,11 +41,17 @@ nds_install_open_leaf() {
     nds_preflight_apply_disko_strategy "$probe_dir" "${NDS_FLAKE_HOST}" "$host_dir"
 
     nds_step_start "Verifying git input access"
-    nds_git_ensure_flake_closure_access "$probe_dir" "$(nds_cfg_get FLAKE_REPO_URL)" || return 1
+    if ! nds_git_ensure_flake_closure_access "$probe_dir" "$(nds_cfg_get FLAKE_REPO_URL)"; then
+        nds_step_fail "Git input access"
+        return 1
+    fi
     nds_step_complete "Git input access OK"
 
     nds_step_start "Verifying leaf write access"
-    nds_install_flake_probe_leaf_write "$probe_dir" || return 1
+    if ! nds_install_flake_probe_leaf_write "$probe_dir"; then
+        nds_step_fail "Leaf write access"
+        return 1
+    fi
     nds_step_complete "Leaf write access OK"
 
     export NDS_FLAKE_PREPARED=1

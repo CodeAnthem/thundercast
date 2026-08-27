@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git auth wizard screens (menu output)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-26
+# Date:          Created: 2026-07-07 | Modified: 2026-08-27
 # ==================================================================================================
 
 declare -ga NDS_GIT_AUTH_REGISTER_URLS=()
@@ -14,7 +14,7 @@ nds_git_ui_ask_clear_gh_session() {
     nds_ui_b "A GitHub CLI (gh) login is still active on this live ISO."
     nds_ui_b "SSH deploy/account keys on GitHub are kept either way."
     nds_ui_b ""
-    nds_ask_user_to_proceed "Clear the gh session from this ISO?"
+    nds_ask_user_to_proceed "Clear the gh session from this ISO?" n
 }
 
 # Description: Intro for a private-repo SSH wizard (boxed header, then this repo).

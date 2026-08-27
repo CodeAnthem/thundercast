@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git tools tests (read-only / temp dirs)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-05 | Modified: 2026-08-26
+# Date:          Created: 2026-07-05 | Modified: 2026-08-27
 # ==================================================================================================
 
 suite_git() {
@@ -542,6 +542,14 @@ LOCK
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ wizard: missing section jump or numbered menu still uses subshell digit read"
+    fi
+    if grep -q 'Clear the gh session from this ISO?" n' \
+            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ leftover gh: Enter defaults to keep session"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ leftover gh: prompt still has no default (blocks on failure)"
     fi
     if grep -q 'nested=true' "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
         && grep -q '_nds_git_wizard_ensure_aa' \

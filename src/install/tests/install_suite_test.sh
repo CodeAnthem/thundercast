@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Install pipeline tests (read-only / mocked)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-20
+# Date:          Created: 2026-07-07 | Modified: 2026-08-27
 # ==================================================================================================
 
 suite_install() {
@@ -221,6 +221,20 @@ suite_install() {
             TEST_FAILED=$((TEST_FAILED + 1))
             console "  ✗ flake system ref: expected toplevel attr, got $out"
         fi
+    fi
+
+    if awk '
+            /nds_step_exec "Checking flake"/ { chk=NR }
+            /_nds_install_flake_git_stage_install_files/ { if (!stg) stg=NR }
+            END { exit (stg && chk && stg < chk) ? 0 : 1 }
+        ' "${SCRIPT_DIR}/install/flake/logic/install_flake_install_pipeline.sh" \
+        && grep -q 'path:${flake_root}' \
+            "${SCRIPT_DIR}/install/flake/logic/install_flake_core.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ flake check: git-add facts then path: flake (sees facter.json)"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ flake check: still evals git flake before staging facter.json"
     fi
 
     if declare -f nds_install_diag_snapshot &>/dev/null; then

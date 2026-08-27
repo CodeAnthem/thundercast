@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git slug + install helper smoke (no TTY)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-28 | Modified: 2026-08-20
+# Date:          Created: 2026-07-28 | Modified: 2026-08-27
 # ==================================================================================================
 
 suite_standalone() {
@@ -158,5 +158,35 @@ suite_standalone() {
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ read_menu_digit: function missing"
+    fi
+
+    local _step_keep="${NDS_UI_STEP_NAME:-}" _ok_out _warn_out
+    NDS_UI_STEP_NAME="Verifying git input access"
+    _ok_out=$(success "Access granted: 3 repositories" 2>&1)
+    _warn_out=$(warn "probe hiccup" 2>&1)
+    if [[ "$_ok_out" != *"Access granted"* ]] && [[ "$_warn_out" == *"probe hiccup"* ]]; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ logger: success stays off an open step line; warn still prints"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ logger: success glued to step or warn swallowed (ok='${_ok_out}' warn='${_warn_out}')"
+    fi
+    if [[ -n "$_step_keep" ]]; then
+        NDS_UI_STEP_NAME="$_step_keep"
+    else
+        NDS_UI_STEP_NAME=""
+    fi
+    unset _step_keep _ok_out _warn_out
+
+    if declare -f _nds_ui_read_wants_cbreak >/dev/null \
+        && _nds_ui_read_wants_cbreak -rsp "x" -n 1 confirm \
+        && _nds_ui_read_wants_cbreak -rsn1 -p "x" var \
+        && ! _nds_ui_read_wants_cbreak -rsp "x" value \
+        && grep -q 'stty -icanon min 1' "${SCRIPT_DIR}/ui/input.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ tty_read: single-key -n uses cbreak (no Enter)"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ tty_read: -n still waits for Enter (icanon restore)"
     fi
 }

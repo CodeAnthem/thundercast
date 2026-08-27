@@ -49,6 +49,7 @@ nds_toolkit_compose() {
         error "Toolkit host name is empty"
         return 1
     }
+    info "Generating toolkit keys and writing host files…"
     nds_cfg_set NETWORK_HOSTNAME "$host"
     export NDS_FLAKE_HOST="$host"
 

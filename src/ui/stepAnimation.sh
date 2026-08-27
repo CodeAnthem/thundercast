@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - UI - Step progress and spinner animation
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-06-29 | Modified: 2026-08-15
+# Date:          Created: 2026-06-29 | Modified: 2026-08-27
 # Description:   Install step lines, spinner, and nds_step_exec wrapper
 # ==================================================================================================
 
@@ -42,6 +42,20 @@ nds_ui_step_icon() {
             fi
             ;;
     esac
+}
+
+# Description: Clear the in-progress step line so other TTY output can print.
+nds_ui_step_yield() {
+    [[ -n "${NDS_UI_STEP_NAME:-}" ]] || return 0
+    nds_ui_step_tty || return 0
+    printf '\r\033[K' >&2
+}
+
+# Description: Re-draw the in-progress step after yielded TTY output.
+nds_ui_step_resume() {
+    [[ -n "${NDS_UI_STEP_NAME:-}" ]] || return 0
+    nds_ui_step_tty || return 0
+    printf '%s%s %s' "$NDS_UI_INDENT_B" "$(nds_ui_step_icon start)" "$NDS_UI_STEP_NAME" >&2
 }
 
 # Description: Start an in-progress step line on stderr.

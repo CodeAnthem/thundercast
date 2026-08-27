@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - UI logger (single leveled emitter)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-06 | Modified: 2026-08-16
+# Date:          Created: 2026-08-06 | Modified: 2026-08-27
 # Description:   One logger for console and/or install log — no duplicate emit paths
 # ==================================================================================================
 
@@ -88,7 +88,17 @@ nds_log() {
         case "$level" in
             error|validation|fatal) quiet=false ;;
         esac
+        # An open step owns the TTY line (`[   ] …` has no newline). Inner
+        # success/info would glue onto it; the step complete line is the OK.
+        if [[ "$quiet" != true && -n "${NDS_UI_STEP_NAME:-}" ]]; then
+            case "$level" in
+                success|info|debug|log) quiet=true ;;
+            esac
+        fi
         if [[ "$quiet" != true ]]; then
+            if [[ -n "${NDS_UI_STEP_NAME:-}" ]] && declare -f nds_ui_step_yield &>/dev/null; then
+                nds_ui_step_yield
+            fi
             if [[ "$level" == "log" ]]; then
                 printf '  %s\n' "$msg" >&2
             elif [[ "${NDS_UI_COLOR:-false}" == true && "$NDS_UI_MODE" != "unicode" && -n "$color_code" ]]; then
@@ -101,6 +111,9 @@ nds_log() {
                 else
                     printf '  %s\n' "$msg" >&2
                 fi
+            fi
+            if [[ -n "${NDS_UI_STEP_NAME:-}" ]] && declare -f nds_ui_step_resume &>/dev/null; then
+                nds_ui_step_resume
             fi
         fi
     fi
@@ -134,7 +147,9 @@ nds_log_from_env() {
     if declare -f nds_mode_is_unattended &>/dev/null && nds_mode_is_unattended; then
         tag="unattended"
     fi
-    printf '    -> [%s] - %s\n' "$tag" "$msg" >&2
+    if [[ -z "${NDS_UI_STEP_NAME:-}" ]]; then
+        printf '    -> [%s] - %s\n' "$tag" "$msg" >&2
+    fi
     if declare -f nds_install_log &>/dev/null; then
         nds_install_log "-> [${tag}] - ${msg}"
     fi

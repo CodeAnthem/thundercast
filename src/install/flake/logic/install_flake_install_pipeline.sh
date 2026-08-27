@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Flake install pipeline (local + remote nixos-anywhere)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-06 | Modified: 2026-08-21
+# Date:          Created: 2026-07-06 | Modified: 2026-08-27
 # ==================================================================================================
 
 # Description: Full flake-based NixOS install.
@@ -107,6 +107,8 @@ nds_nixos_install_flake() {
 
     nds_step_exec "Staging committed host structure in git" \
         _nds_install_flake_git_stage_committed_files "$flake_root" "$host_dir" || return 1
+    nds_step_exec "Staging hardware facts for flake eval" \
+        _nds_install_flake_git_stage_install_files "$flake_root" "$host_dir" || return 1
 
     if declare -f nds_git_prefetch_flake_closure &>/dev/null; then
         nds_step_exec "Prefetching flake git inputs" \
