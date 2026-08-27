@@ -115,7 +115,7 @@ The toolkit **host folder must already exist** in the leaf (example: `hosts/x86_
 | | |
 |--|--|
 | **Do** | `NDS_ACTION=toolkit`, `CAST_TOOLKIT_MODE=new`, **local** disk. Confirm wipe. After install, copy the bundle (private age + SSH keys live there). Reboot. |
-| **Pass** | Git has **public** keys only (`.nds/operator.age.pub`, `.nds/toolkit.ssh.pub`). Private keys are in the zip / on `/mnt` (then the installed disk), not in git. `toolkit` menu starts. `tc-sops health` runs. `toolkit-update` is a tools fetch, not `nixos-rebuild`. |
+| **Pass** | Git has **public** keys only (`.toolkit/operator/*.pub`). Private keys are in the zip / on `/mnt` (then the installed disk), not in git. `toolkit` menu starts. `tc-sops health` runs. `toolkit-update` is a tools fetch, not `nixos-rebuild`. |
 | **Fail** | Private key committed, `toolkit` missing after boot, or install used `INSTALL_MODE=remote`. |
 
 ---

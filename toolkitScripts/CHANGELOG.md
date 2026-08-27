@@ -2,6 +2,13 @@
 
 Versions here are **tools only** (this tree). NixOS/comin is a separate channel.
 
+## 0.4.0 — 2026-08-28
+
+- Cluster state lives under `.toolkit/` (operator pubs, `machines/<host>/`, `sops/secrets.map`)
+- `.sops.yaml` is compiled from that tree; scopes are not a separate cryptic KEY=value pile
+- NDS ISO hooks must not own this folder
+
+
 ## 0.3.1 — 2026-08-20
 
 - TTY idle: discard keystrokes except Ctrl+C until a prompt is active

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Structure / layout selfchecks (CI-safe)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-07 | Modified: 2026-08-16
+# Date:          Created: 2026-08-07 | Modified: 2026-08-28
 # Description:   Post-refactor layout invariants — no TTY, no disk wipe
 # ==================================================================================================
 
@@ -220,6 +220,7 @@ suite_structure() {
         && declare -f nds_lib_getHostIP &>/dev/null \
         && declare -f nds_lib_key_bodyLooksValid &>/dev/null \
         && declare -f nds_lib_env_is_true &>/dev/null \
+        && declare -f nds_hook_register &>/dev/null \
         && declare -f nds_ui_indent_push &>/dev/null \
         && declare -f nds_ui_warn &>/dev/null; then
         TEST_PASSED=$((TEST_PASSED + 1))

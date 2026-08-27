@@ -1,14 +1,14 @@
 # ==================================================================================================
 # Thundercast - toolkit core (paths, leaf clone, logging)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-19 | Modified: 2026-08-20
+# Date:          Created: 2026-08-19 | Modified: 2026-08-28
 # Description:   Leaf git lives under TCAST_LEAF_DIR — not /etc/nixos
 # ==================================================================================================
 
 TCAST_TOOLKIT_OP_KEY="${SOPS_AGE_KEY_FILE:-/etc/sops/age/operator.txt}"
 TCAST_LEAF_DIR="${TCAST_LEAF_DIR:-/var/lib/nds-toolkit/leaf}"
 TCAST_LEAF_BRANCH="${TCAST_LEAF_BRANCH:-main}"
-TCAST_REGISTER_REL=".nds/toolkit-register"
+TCAST_REGISTER_REL=".toolkit"
 
 tcast_die() {
     echo "toolkit: $*" >&2
@@ -170,7 +170,7 @@ tcast_leaf_sync() {
     while IFS= read -r f; do
         [[ -n "$f" ]] || continue
         case "$f" in
-            .nds/toolkit-register/*) ;;
+            .toolkit/*|.nds/toolkit-register/*) ;;
             *) continue ;;
         esac
         if [[ -e "${dir}/${f}" ]] && ! git -C "$dir" ls-files --error-unmatch "$f" >/dev/null 2>&1; then

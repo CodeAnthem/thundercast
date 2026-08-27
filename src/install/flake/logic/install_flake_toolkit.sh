@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Toolkit create/restore helpers (operator age, SSH, sops policy)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-18 | Modified: 2026-08-27
+# Date:          Created: 2026-08-18 | Modified: 2026-08-28
 # Description:   Generate operator credentials; never commit private keys
 # ==================================================================================================
 
@@ -18,7 +18,7 @@ _nds_toolkit_secrets_dir() {
 # - <Bool> 0 on success
 nds_toolkit_generate_operator() {
     local flake_root="$1"
-    local dest pub_age pub_ssh
+    local dest pub_age
     dest="$(_nds_toolkit_secrets_dir)"
     mkdir -p "$dest" || return 1
 
@@ -34,9 +34,8 @@ nds_toolkit_generate_operator() {
         error "Could not derive operator age public key"
         return 1
     }
-    mkdir -p "${flake_root}/.nds"
+    mkdir -p "${dest}" || return 1
     printf '%s\n' "$pub_age" > "${dest}/operator_age.pub"
-    printf '%s\n' "$pub_age" > "${flake_root}/.nds/operator.age.pub"
 
     if [[ ! -f "${dest}/toolkit_ssh" ]]; then
         ssh-keygen -t ed25519 -N "" -f "${dest}/toolkit_ssh" -C "nds-toolkit" >/dev/null || {
@@ -45,8 +44,6 @@ nds_toolkit_generate_operator() {
         }
         chmod 600 "${dest}/toolkit_ssh"
     fi
-    pub_ssh="$(cat "${dest}/toolkit_ssh.pub")"
-    printf '%s\n' "$pub_ssh" > "${flake_root}/.nds/toolkit.ssh.pub"
 
     nds_toolkit_write_sops_policy "$flake_root" "$pub_age" || return 1
     nds_bundle_register_file "secrets/toolkit/operator_age.txt" "${dest}/operator_age.txt"

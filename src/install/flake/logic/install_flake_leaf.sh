@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Leaf flake helpers for remoteAction (thundercast + .roles)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-17 | Modified: 2026-08-27
+# Date:          Created: 2026-08-17 | Modified: 2026-08-28
 # Description:   Resolve thundercast action, role NDS env, hooks, leaf commit/push
 # ==================================================================================================
 
@@ -138,28 +138,14 @@ _nds_install_flake_git_for_url() {
     env "${envv[@]}" git -c credential.helper= "$@"
 }
 
-# Description: Source leaf and role hook scripts for one lifecycle name.
+# Description: Run leaf + action-pack hooks for one lifecycle event.
 # Arguments:
 # - flake_root: <String> Leaf checkout
 # - hook:       <String> post_scaffold | pre_install | post_install
 nds_install_flake_run_hooks() {
     local flake_root="$1"
     local hook="$2"
-    local role script
-    role="$(nds_cfg_get SCAFFOLD_ROLE 2>/dev/null || true)"
-    export NDS_LEAF_HOOK="$hook"
-    for script in \
-        "${flake_root}/.nds/hooks/${hook}.sh" \
-        "${flake_root}/.roles/${role}/hooks/${hook}.sh"; do
-        [[ -f "$script" ]] || continue
-        info "Leaf hook: ${script#"$flake_root"/}"
-        # shellcheck disable=SC1090
-        nds_import_file "$script" || {
-            error "Hook failed: $script"
-            return 1
-        }
-    done
-    return 0
+    nds_hook_run "$flake_root" "$hook"
 }
 
 # Description: Write portable NDS knobs for a host into the leaf repo.
@@ -286,7 +272,7 @@ _nds_install_flake_commit_push_work() {
         return 1
     }
 
-    git -C "$flake_root" add -- "hosts" ".nds" ".sops.yaml" "secrets" 2>/dev/null || true
+    git -C "$flake_root" add -- "hosts" ".nds" ".toolkit" ".sops.yaml" "secrets" 2>/dev/null || true
     if git -C "$flake_root" diff --cached --quiet 2>/dev/null; then
         info "No new host files to commit"
         return 0

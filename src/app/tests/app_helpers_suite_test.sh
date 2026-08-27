@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git slug + install helper smoke (no TTY)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-28 | Modified: 2026-08-27
+# Date:          Created: 2026-07-28 | Modified: 2026-08-28
 # ==================================================================================================
 
 suite_standalone() {
@@ -177,6 +177,34 @@ suite_standalone() {
         NDS_UI_STEP_NAME=""
     fi
     unset _step_keep _ok_out _warn_out
+
+    if declare -f nds_hook_register >/dev/null; then
+        local hook_leaf
+        hook_leaf=$(mktemp -d)
+        nds_hook_reset
+        mkdir -p "${hook_leaf}/.nds/addRole"
+        printf '%s\n' \
+            '# nds-hook: post_install' \
+            '_nds_hook_test_fn() { printf ran >"${NDS_HOOK_TEST_OUT}"; }' \
+            'nds_hook_register post_install _nds_hook_test_fn' \
+            > "${hook_leaf}/.nds/addRole/note.sh"
+        NDS_HOOK_TEST_OUT="${hook_leaf}/out"
+        NDS_CURRENT_ACTION=addRole nds_hook_run "$hook_leaf" post_install
+        if [[ "$(<"${hook_leaf}/out")" == "ran" ]]; then
+            TEST_PASSED=$((TEST_PASSED + 1))
+            console "  ✓ hooks: .nds/<action>/*.sh register + run"
+        else
+            TEST_FAILED=$((TEST_FAILED + 1))
+            console "  ✗ hooks: .nds/<action> did not run"
+        fi
+        nds_hook_reset
+        rm -rf "$hook_leaf"
+        unset NDS_HOOK_TEST_OUT NDS_CURRENT_ACTION
+        unset -f _nds_hook_test_fn 2>/dev/null || true
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ hooks: nds_hook_register missing"
+    fi
 
     if declare -f _nds_ui_read_wants_cbreak >/dev/null \
         && _nds_ui_read_wants_cbreak -rsp "x" -n 1 confirm \

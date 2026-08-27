@@ -13,16 +13,13 @@ Do **not** install ThunderCast itself as the flake (no real `nixosConfigurations
 ```
 flake.nix
 setup/
-hosts/x86_64-linux/          # per-machine; add the toolkit host here before the toolkit action
-  control-toolkit/           # existing ops VM — toolkit action installs this (no role template)
-.roles/                      # addRole only (manager, worker, gateway, …)
-  manager/
-  worker/
-  gateway/
+hosts/x86_64-linux/<name>/   # you: configuration.nix + opts.nix; NDS: boot/mounts/guest
+.roles/<id>/                 # templates — see .roles/README.md
+.toolkit/                    # ops state (pubs, machines/, sops map) — not NDS
 .nds/
-  hosts/                     # NDS writes <hostname>.recipe + .env + .inventory
-  hooks/                     # optional
-  actions/                   # optional user catalog (remoteAction); not addRole/toolkit
+  <action>/                  # ISO hooks for that action (nds_hook_register)
+  common/                    # ISO hooks for every action
+  hosts/                     # NDS recipes (disk/encryption defaults; re-askable on restore)
 ```
 
 ## Bootstrap order

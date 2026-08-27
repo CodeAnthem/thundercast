@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - toolkitScripts logic tests (no private keys, no github)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-19 | Modified: 2026-08-20
+# Date:          Created: 2026-08-19 | Modified: 2026-08-28
 # ==================================================================================================
 set -euo pipefail
 
@@ -50,10 +50,9 @@ export TCAST_UI_NO_CLEAR=1
 export TCAST_UI_NO_PAUSE=1
 export TCAST_TOOLKIT_ROOT="$ROOT"
 
-mkdir -p "$LEAF/secrets/hosts" "$LEAF/.roles/worker" "$LEAF/host-lib"
+mkdir -p "$LEAF/secrets/hosts" "$LEAF/.roles/worker"
 printf '{ ... }: {}\n' > "$LEAF/flake.nix"
 printf '{ opts.nixos.profile.id = "worker"; }\n' > "$LEAF/.roles/worker/opts.nix"
-printf 'mkHardware = dir: dir + "/hardware-configuration.nix";\n' > "$LEAF/host-lib/mkHardware.nix"
 git -C "$LEAF" init -q
 git -C "$LEAF" -c user.email=t@t -c user.name=t add flake.nix
 git -C "$LEAF" -c user.email=t@t -c user.name=t commit -q -m init
@@ -65,22 +64,22 @@ if out="$(tcast_sops_health)"; then
 else
     fail "health without operator should pass"
 fi
-mkdir -p "$LEAF/.nds"
+mkdir -p "$LEAF/.toolkit/operator"
 "$AGE" -o "$TCAST_TOOLKIT_OP_KEY" >/dev/null 2>&1
-"$AGE" -y "$TCAST_TOOLKIT_OP_KEY" > "$LEAF/.nds/operator.age.pub"
+"$AGE" -y "$TCAST_TOOLKIT_OP_KEY" > "$LEAF/.toolkit/operator/age.pub"
 tcast_register_import_leaf
 tcast_operator_ready && fail "pub file skipped Init" || ok "pub file does not skip Init"
-tcast_register_meta_set operator_age_pub "$(tr -d '[:space:]' < "$LEAF/.nds/operator.age.pub")"
+tcast_register_meta_set operator_age_pub "$(tr -d '[:space:]' < "$LEAF/.toolkit/operator/age.pub")"
 tcast_operator_ready && fail "register pub skipped Init" || ok "register pub without initialized_at is not ready"
 
 tcast_sops_operator_init
 tcast_operator_ready && ok "ready after init" || fail "ready after init"
 [[ "$(tcast_register_meta_get operator_age_pub)" == age1* ]] && ok "operator init records pub" || fail "operator pub"
 [[ -f "$TCAST_TOOLKIT_OP_KEY" ]] && ok "operator private stays off-leaf" || fail "operator private"
-if grep -q 'AGE-SECRET-KEY-' "$LEAF"/.nds/operator.age.pub 2>/dev/null; then
+if grep -q 'AGE-SECRET-KEY-' "$LEAF"/.toolkit/operator/age.pub 2>/dev/null; then
     fail "operator private leaked into leaf pub file"
 else
-    ok "leaf operator.age.pub is public only"
+    ok "leaf operator age.pub is public only"
 fi
 if tcast_sops_health >/dev/null; then
     ok "health empty after init"

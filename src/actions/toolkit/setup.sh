@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - toolkit composer (ops VM create/restore, then Part A)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-20 | Modified: 2026-08-27
+# Date:          Created: 2026-08-20 | Modified: 2026-08-28
 # Description:   First-class toolkit VM flow — not a remote catalog action
 # ==================================================================================================
 
@@ -63,10 +63,6 @@ nds_toolkit_compose() {
             nds_step_fail "Generating toolkit keys"
             return 1
         }
-        mkdir -p "${flake_root}/.nds"
-        cp "$(_nds_toolkit_secrets_dir)/operator_age.pub" "${flake_root}/.nds/operator.age.pub"
-        [[ -f "$(_nds_toolkit_secrets_dir)/toolkit_ssh.pub" ]] \
-            && cp "$(_nds_toolkit_secrets_dir)/toolkit_ssh.pub" "${flake_root}/.nds/toolkit.ssh.pub"
     else
         nds_toolkit_generate_operator "$flake_root" || {
             nds_step_fail "Generating toolkit keys"

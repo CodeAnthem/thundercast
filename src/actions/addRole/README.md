@@ -24,6 +24,8 @@ sudo -E bash src/app/main.sh
 5. Compose: scaffold, `.nds/hosts/<host>.recipe` (+ legacy `.env`), push
 6. Part A: partition + `nixos-install --flake`
 
+ISO hooks: `.nds/addRole/*.sh` and `.nds/common/*.sh` (`nds_hook_register`).
+
 Secrets stay as `*_FILE` paths in the recipe. Disk device is not stored in the portable recipe.
 
 ## After install

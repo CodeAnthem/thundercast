@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Install pipeline tests (read-only / mocked)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-27
+# Date:          Created: 2026-07-07 | Modified: 2026-08-28
 # ==================================================================================================
 
 suite_install() {
@@ -770,6 +770,7 @@ suite_install() {
     if _nds_install_flake_scaffold_host_folder "$scaf_root" "lab-worker-c" "worker" \
         && [[ ! -f "${scaf_host}/disko.nix" ]] \
         && grep -q 'networkmanager.enable = true' "${scaf_host}/configuration.nix" \
+        && grep -q 'thundercast.nixosModules.host' "${scaf_host}/configuration.nix" \
         && ! grep -q 'address = ""' "${scaf_host}/configuration.nix"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ scaffold: nds strategy skips disko.nix; DHCP has no empty address"

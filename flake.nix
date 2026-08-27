@@ -2,6 +2,7 @@
   description = "ThunderCast — NixOS installer (NDS) and operator toolkit";
 
   outputs = { self }: {
+    nixosModules.host = import ./modules/nixos/host;
     nixosModules.toolkit = {
       imports = [
         ./modules/nixos/toolkit/ops.nix

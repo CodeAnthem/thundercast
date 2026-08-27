@@ -1,7 +1,6 @@
 { config, lib, pkgs, inputs, ... }: {
   imports = [
-    (import ../../../host-lib/mkHardware.nix ./.)
-    ../../../host-lib/sops-base.nix
+    (inputs.thundercast.nixosModules.host { hostDir = ./.; })
   ];
 
   networking = {
