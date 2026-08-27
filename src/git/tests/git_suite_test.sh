@@ -533,12 +533,12 @@ LOCK
             "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
         && grep -q 'nds_ui_read_menu_digit digit' \
             "${SCRIPT_DIR}/app/settingsManager/ui/settings_ask.sh" \
-        && grep -q 'nds_ui_tty_read -r -p' \
-            "${SCRIPT_DIR}/ui/prompts.sh" \
+        && grep -A30 '^nds_ui_read_menu_digit()' \
+            "${SCRIPT_DIR}/ui/prompts.sh" | grep -q 'nds_ui_tty_read -rsn1' \
         && ! grep -q 'digit=$(nds_ui_read_menu_digit' \
             "${SCRIPT_DIR}/app/settingsManager/ui/settings_ask.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ wizard: section jump before key method; numbered menus are line+nameref"
+        console "  ✓ wizard: section jump before key method; numbered menus are single-key+nameref"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ wizard: missing section jump or numbered menu still uses subshell digit read"

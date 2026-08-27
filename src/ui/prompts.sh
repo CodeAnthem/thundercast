@@ -105,63 +105,76 @@ nds_ask_user_to_proceed() {
 # Arguments:
 # - min:         <Int> Minimum valid digit
 # - max:         <Int> Maximum valid digit
-# - default_opt: <String|optional> Default option key shown in brackets
+# - default_opt: <String|optional> Default shown in brackets
 # - text:        <String|optional> Prompt text
 # - allow_back:  <Bool|optional> When true, show 0=back
+# - allow_x:     <Bool|optional> When true, show x=done
 nds_ui_numbered_prompt() {
-    local min="$1" max="$2" default_opt="${3:-}" text="${4:-Make your selection}" allow_back="${5:-false}"
+    local min="$1" max="$2" default_opt="${3:-}" text="${4:-Make your selection}"
+    local allow_back="${5:-false}" allow_x="${6:-false}"
+    local extra="${min}-${max}"
 
     nds_ui_init
-    if [[ "$allow_back" == "true" ]]; then
-        if [[ -n "$default_opt" ]]; then
-            printf '%s%s [%s] (%s-%s, 0=back): ' "$NDS_UI_INDENT_I" "$text" "$default_opt" "$min" "$max"
-        else
-            printf '%s%s (%s-%s, 0=back): ' "$NDS_UI_INDENT_I" "$text" "$min" "$max"
-        fi
-    elif [[ -n "$default_opt" ]]; then
-        printf '%s%s [%s] (%s-%s): ' "$NDS_UI_INDENT_I" "$text" "$default_opt" "$min" "$max"
+    [[ "$allow_back" == "true" ]] && extra="${extra}, 0=back"
+    [[ "$allow_x" == "true" ]] && extra="${extra}, x=done"
+    if [[ -n "$default_opt" ]]; then
+        printf '%s%s [%s] (%s): ' "$NDS_UI_INDENT_I" "$text" "$default_opt" "$extra"
     else
-        printf '%s%s (%s-%s): ' "$NDS_UI_INDENT_I" "$text" "$min" "$max"
+        printf '%s%s (%s): ' "$NDS_UI_INDENT_I" "$text" "$extra"
     fi
 }
 
-# Description: Read a numbered-menu choice (type the number, then Enter).
+# Description: Read one menu key (no Enter) and echo it, same as y/n Yes/No.
 # Do not call from command substitution — TTY read must stay in the current shell.
 # Empty Enter returns 1 so the caller can apply a default.
 # Arguments:
-# - out:        <Nameref> Receives the selected number
+# - out:        <Nameref> Receives the selected number (or x)
 # - prompt:     <String> Prompt text (from nds_ui_numbered_prompt)
 # - min:        <Int> Minimum valid number
 # - max:        <Int> Maximum valid number
 # - allow_back: <Bool|optional> When true, 0 or b stores "0"
+# - allow_x:    <Bool|optional> When true, x stores "x"
 nds_ui_read_menu_digit() {
     local -n _nds_ui_menu_digit=$1
-    local prompt="$2" min="$3" max="$4" allow_back="${5:-false}"
-    local _nds_ui_menu_raw=""
+    local prompt="$2" min="$3" max="$4" allow_back="${5:-false}" allow_x="${6:-false}"
+    local _nds_ui_menu_raw="" hint
 
     nds_ui_init
+    if [[ "$allow_back" == "true" && "$allow_x" == "true" ]]; then
+        hint="Invalid selection. Choose ${min}-${max}, 0 to go back, or x when done."
+    elif [[ "$allow_back" == "true" ]]; then
+        hint="Invalid selection. Choose ${min}-${max}, or 0 to go back."
+    elif [[ "$allow_x" == "true" ]]; then
+        hint="Invalid selection. Choose ${min}-${max}, or x when done."
+    else
+        hint="Invalid selection. Choose ${min}-${max}."
+    fi
     while true; do
-        if ! nds_ui_tty_read -r -p "$prompt" _nds_ui_menu_raw; then
+        if ! nds_ui_tty_read -rsn1 -p "$prompt" _nds_ui_menu_raw; then
             return 1
         fi
-        _nds_ui_menu_raw="${_nds_ui_menu_raw#"${_nds_ui_menu_raw%%[![:space:]]*}"}"
-        _nds_ui_menu_raw="${_nds_ui_menu_raw%"${_nds_ui_menu_raw##*[![:space:]]}"}"
-        [[ -n "$_nds_ui_menu_raw" ]] || return 1
+        if [[ -z "$_nds_ui_menu_raw" || "$_nds_ui_menu_raw" == $'\n' || "$_nds_ui_menu_raw" == $'\r' ]]; then
+            return 1
+        fi
+        if [[ "$allow_x" == "true" ]] && [[ "${_nds_ui_menu_raw,,}" == "x" ]]; then
+            printf 'x\n' >&2
+            _nds_ui_menu_digit=x
+            return 0
+        fi
         if [[ "$allow_back" == "true" ]] && [[ "$_nds_ui_menu_raw" == "0" \
             || "$_nds_ui_menu_raw" == "b" || "$_nds_ui_menu_raw" == "B" ]]; then
+            printf '%s\n' "$_nds_ui_menu_raw" >&2
             _nds_ui_menu_digit=0
             return 0
         fi
-        if [[ "$_nds_ui_menu_raw" =~ ^[0-9]+$ ]] \
+        if [[ "$_nds_ui_menu_raw" =~ ^[0-9]$ ]] \
             && (( 10#$_nds_ui_menu_raw >= min && 10#$_nds_ui_menu_raw <= max )); then
+            printf '%s\n' "$_nds_ui_menu_raw" >&2
             _nds_ui_menu_digit="$_nds_ui_menu_raw"
             return 0
         fi
-        if [[ "$allow_back" == "true" ]]; then
-            nds_ui_b "Invalid selection. Choose ${min}-${max}, or 0 to go back."
-        else
-            nds_ui_b "Invalid selection. Choose ${min}-${max}."
-        fi
+        printf '\n' >&2
+        nds_ui_b "$hint"
     done
 }
 

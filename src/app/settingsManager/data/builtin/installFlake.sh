@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Install from flake preset
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-01 | Modified: 2026-08-26
+# Date:          Created: 2026-07-01 | Modified: 2026-08-27
 # ==================================================================================================
 
 installFlake_defaults() {
@@ -13,7 +13,7 @@ installFlake_defaults() {
     nds_cfg_set FLAKE_REPO_URL ""
     nds_cfg_set FLAKE_LOCAL_PATH ""
     nds_cfg_set FLAKE_INSTALL_PATH "/mnt/etc/nixos"
-    nds_cfg_set FLAKE_HOST ""
+    [[ -n "$(nds_cfg_get FLAKE_HOST)" ]] || nds_cfg_set FLAKE_HOST ""
     nds_cfg_set FLAKE_HOST_DIR "hosts/x86_64-linux"
     nds_cfg_set FLAKE_HARDWARE_PLACEMENT "host-dir"
     nds_cfg_set GIT_PERSIST_ACCESS ""
@@ -61,6 +61,10 @@ _nds_settings_installFlake_ask_location() {
 }
 
 installFlake_configure() {
+    # Toolkit owns URL/host/mode — keep this preset seeded, not in the menu.
+    if nds_cfg_is INSTALL_COMPOSER toolkit; then
+        return 0
+    fi
     # After early gate, URL/host/mode are usually set — allow review/edit.
     nds_cfg_section_title "Install mode"
     nds_cfg_ask_numbered_choice INSTALL_MODE \
@@ -106,21 +110,29 @@ installFlake_configure() {
 }
 
 installFlake_summary() {
+    if nds_cfg_is INSTALL_COMPOSER toolkit; then
+        return 0
+    fi
     nds_cfg_summary_row "Install mode" "$(nds_cfg_display_choice "$(nds_cfg_get INSTALL_MODE)" "local=On target|remote=nixos-anywhere")"
     if nds_cfg_is INSTALL_MODE remote; then
         nds_cfg_summary_row "Target host" "$(nds_cfg_get REMOTE_TARGET_IP)"
     fi
     if nds_cfg_is FLAKE_SOURCE remote; then
-        nds_cfg_summary_row "Flake (git)" "$(nds_cfg_get FLAKE_REPO_URL)"
+        nds_cfg_summary_row "Flake" "$(nds_cfg_get FLAKE_REPO_URL)"
     else
-        nds_cfg_summary_row "Flake (path)" "$(nds_cfg_get FLAKE_LOCAL_PATH)"
+        nds_cfg_summary_row "Flake" "$(nds_cfg_get FLAKE_LOCAL_PATH)"
     fi
-    nds_cfg_summary_row "Host name" "$(nds_cfg_get FLAKE_HOST)"
+    nds_cfg_summary_row "Host" "$(nds_cfg_get FLAKE_HOST)"
 }
 
 installFlake_prompt_errors() {
     local root host hosts_out
     local -a hosts=()
+
+    if nds_cfg_is INSTALL_COMPOSER toolkit; then
+        installFlake_validate
+        return $?
+    fi
 
     nds_ui_section_header "Configuration — required fields"
     nds_cfg_section_title "Install mode"

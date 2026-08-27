@@ -124,7 +124,7 @@ The toolkit **host folder must already exist** in the leaf (example: `hosts/x86_
 
 | | |
 |--|--|
-| **Do** | `NDS_ACTION=toolkit` with `NDS_INSTALL_MODE=remote` (or pick remote in the menu). |
+| **Do** | `NDS_ACTION=toolkit` with `NDS_INSTALL_MODE=remote`. |
 | **Pass** | Hard error: toolkit is local-only. No clone/push required after the refuse. |
 | **Fail** | nixos-anywhere starts, or install continues without copying operator keys. |
 

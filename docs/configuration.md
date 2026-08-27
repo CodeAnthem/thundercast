@@ -51,13 +51,14 @@ Leaf restore prefers `.nds/hosts/<host>.recipe` over legacy `export NDS_*=` `.en
 | `FLAKE_LOCAL_PATH` | `NDS_FLAKE_LOCAL_PATH` | when set | Local path to flake on live ISO |
 | `FLAKE_LOCATION` | `NDS_FLAKE_LOCATION` | never | Derived — use `FLAKE_REPO_URL` or `FLAKE_LOCAL_PATH` |
 | `FLAKE_SOURCE` | `NDS_FLAKE_SOURCE` | never | Derived `remote` or `local` |
-| `FLAKE_HOST` | `NDS_FLAKE_HOST` | when set | `nixosConfigurations` name |
+| `FLAKE_HOST` | `NDS_FLAKE_HOST` | when set | `nixosConfigurations` name. Toolkit does **not** prompt — default `control-toolkit` unless this env is set. |
 | `FLAKE_INSTALL_PATH` | `NDS_FLAKE_INSTALL_PATH` | when set | Flake git root on target (default `/mnt/etc/nixos`) |
 | `FLAKE_HOST_DIR` | `NDS_FLAKE_HOST_DIR` | when set | Host directory under flake (default `hosts/x86_64-linux`) |
 | `FLAKE_HARDWARE_PLACEMENT` | `NDS_FLAKE_HARDWARE_PLACEMENT` | when set | `host-dir`, `flake-root`, or `skip` |
 | `CAST_REPO_URL` | `NDS_CAST_REPO_URL` | when set | User catalog git URL (remoteAction). Default Thundercast URL has **no user actions**. |
 | `CAST_ACTION` | `NDS_CAST_ACTION` | when set | Catalog action id (`.nds/actions/<id>.sh`). Unattended: required. addRole/toolkit are built-in, not catalog ids. |
-| `CAST_TOOLKIT_MODE` | `NDS_CAST_TOOLKIT_MODE` | when set | `new` or `restore` |
+| `CAST_TOOLKIT_MODE` | `NDS_CAST_TOOLKIT_MODE` | when set | `new` or `restore`. Toolkit UI is **Restore existing toolkit?** (default no); this key stays the recipe/env contract. |
+| `CAST_TOOLKIT_BUNDLE` | `NDS_CAST_TOOLKIT_BUNDLE` | changed | Zip path when restoring a previous toolkit |
 | `SOPS_AGE_REUSE` | `NDS_SOPS_AGE_REUSE` | when set | `generate` or `file` |
 | `SOPS_AGE_KEY_FILE` | `NDS_SOPS_AGE_KEY_FILE` | when set | Existing machine age key path |
 

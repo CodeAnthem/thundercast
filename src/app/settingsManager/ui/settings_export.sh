@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Settings Manager UI: export / confirm / preset summary
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-06 | Modified: 2026-08-15
+# Date:          Created: 2026-08-06 | Modified: 2026-08-27
 # ==================================================================================================
 
 declare -f nds_skip_register &>/dev/null && nds_skip_register NDS_CONFIG_CONFIRM_SKIP
@@ -55,11 +55,13 @@ nds_cfg_confirm_saved() {
 # - number: <String|optional> Menu index prefix
 nds_cfg_preset_summary() {
     local preset="$1" number="${2:-}"
-    local display header fn
+    local display fn
     display=$(nds_cfg_preset_get_display "$preset")
-    header="${display}:"
-    [[ -n "$number" ]] && header="$number. $header"
-    nds_ui_h "$header"
+    if [[ -n "$number" ]]; then
+        nds_ui_h "$number. $display"
+    else
+        nds_ui_h "${display}:"
+    fi
     if fn="$(_nds_preset_hook_fn "$preset" summary)"; then
         "$fn"
     fi

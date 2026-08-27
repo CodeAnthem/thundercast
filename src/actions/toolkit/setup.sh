@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - toolkit composer (ops VM create/restore, then Part A)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-20 | Modified: 2026-08-20
+# Date:          Created: 2026-08-20 | Modified: 2026-08-27
 # Description:   First-class toolkit VM flow — not a remote catalog action
 # ==================================================================================================
 
@@ -17,14 +17,16 @@ action_config() {
     nds_cfg_preset_set_priority boot 21
     nds_cfg_preset_set_priority disk 22
     nds_cfg_preset_set_priority encryption 23
+    nds_cfg_preset_set_menu installFlake false
     nds_cfg_set INSTALL_KIND "flake"
     nds_cfg_set INSTALL_COMPOSER "toolkit"
+    nds_cfg_set INSTALL_MODE "local"
 }
 
 action_preview() {
     nds_ui_h "Create or restore the toolkit ops VM"
     nds_ui_b ""
-    nds_ui_b "You will configure toolkit mode, the install flake, and disk / encryption."
+    nds_ui_b "You will configure restore vs create, the install flake URL, and disk / encryption."
     nds_ui_b ""
     nds_ui_b "After confirmation, NDS will:"
     nds_ui_i "generate (or restore) operator age + toolkit SSH into secret files"
@@ -95,6 +97,7 @@ _nds_toolkit_refuse_remote() {
 
 action_setup() {
     nds_mode_resolve || true
+    [[ -n "$(nds_cfg_get FLAKE_HOST)" ]] || nds_cfg_set FLAKE_HOST "control-toolkit"
     _nds_toolkit_refuse_remote || exit 11
 
     if [[ -z "$(nds_cfg_get FLAKE_REPO_URL)" ]]; then

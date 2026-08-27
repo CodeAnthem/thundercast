@@ -74,7 +74,7 @@ nds_cfg_print_numbered_choice_options() {
     nds_ui_b ""
 }
 
-# Description: Choice prompt with numbered rows (type the number, then Enter).
+# Description: Choice prompt with numbered rows; single-key select (like action menu).
 # Arguments:
 # - var:     <String> Config variable name
 # - options: <String> Pipe-separated option keys
@@ -122,6 +122,7 @@ nds_cfg_ask_numbered_choice() {
             resolved="${opts[$((digit - 1))]}"
             break
         elif [[ -n "$default" ]]; then
+            [[ -n "$default_digit" ]] && printf '%s\n' "$default_digit" >&2
             resolved="$default"
             break
         fi

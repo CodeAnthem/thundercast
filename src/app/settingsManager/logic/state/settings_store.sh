@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Configuration store (get/set + snapshot + action reset)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-01 | Modified: 2026-08-16
+# Date:          Created: 2026-07-01 | Modified: 2026-08-27
 # Description:   Flat CONFIG_DATA / preset registry globals
 # ==================================================================================================
 
@@ -67,10 +67,12 @@ nds_cfg_reset_for_action() {
         preset=$(basename "$preset_file" .sh)
         nds_cfg_preset_enable "$preset"
         unset "PRESET_META[${preset}__display]"
+        unset "PRESET_META[${preset}__menu]"
     done
     for preset in installFlake remoteAction addRole toolkit; do
         nds_cfg_preset_disable "$preset"
         unset "PRESET_META[${preset}__display]"
         unset "PRESET_META[${preset}__priority]"
+        unset "PRESET_META[${preset}__menu]"
     done
 }

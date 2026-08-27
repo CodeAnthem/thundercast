@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Configuration menu
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-01 | Modified: 2026-08-20
+# Date:          Created: 2026-07-01 | Modified: 2026-08-27
 # Description:   Category menu — calls per-preset configure/summary/validate (no hook framework)
 # ==================================================================================================
 
@@ -36,9 +36,14 @@ nds_cfg_prompt_errors() {
 
 # Description: Interactive settings category menu.
 nds_cfg_menu() {
-    local presets=("$@") last_status="" sel=""
-    if [[ ${#presets[@]} -eq 0 ]]; then
-        readarray -t presets < <(nds_cfg_preset_get_all_enabled)
+    local last_status="" sel="" prompt=""
+    local -a menu_presets=() validate_presets=()
+    if [[ $# -eq 0 ]]; then
+        readarray -t validate_presets < <(nds_cfg_preset_get_all_enabled)
+        readarray -t menu_presets < <(nds_cfg_preset_get_all_menu)
+    else
+        menu_presets=("$@")
+        validate_presets=("$@")
     fi
 
     while true; do
@@ -48,21 +53,23 @@ nds_cfg_menu() {
         nds_ui_b ""
 
         local i=0 preset
-        for preset in "${presets[@]}"; do
+        for preset in "${menu_presets[@]}"; do
             ((++i))
             nds_cfg_preset_summary "$preset" "$i"
             nds_ui_b ""
         done
 
+        prompt="$(nds_ui_numbered_prompt 1 "$i" "" "Select category" false true)"
         while true; do
-            nds_ui_tty_read -sr -n 1 -p "${NDS_UI_INDENT_B}Select category (1-$i or X when ready): " sel
-            echo
-            [[ -z "$sel" ]] && continue
+            sel=""
+            if ! nds_ui_read_menu_digit sel "$prompt" 1 "$i" false true; then
+                continue
+            fi
 
-            if [[ "${sel,,}" == "x" ]]; then
-                if ! nds_cfg_validate_all "${presets[@]}"; then
-                    nds_cfg_prompt_errors "${presets[@]}"
-                    if ! nds_cfg_validate_all "${presets[@]}"; then
+            if [[ "$sel" == "x" ]]; then
+                if ! nds_cfg_validate_all "${validate_presets[@]}"; then
+                    nds_cfg_prompt_errors "${validate_presets[@]}"
+                    if ! nds_cfg_validate_all "${validate_presets[@]}"; then
                         last_status="Configuration has errors — complete the required fields above."
                         warn "$last_status"
                         break
@@ -82,7 +89,7 @@ nds_cfg_menu() {
             fi
 
             if [[ "$sel" =~ ^[0-9]+$ ]] && [[ "$sel" -ge 1 ]] && [[ "$sel" -le "$i" ]]; then
-                preset="${presets[$((sel-1))]}"
+                preset="${menu_presets[$((sel-1))]}"
                 nds_ui_section_header "$(nds_cfg_preset_get_display "$preset") Configuration"
                 nds_ui_b "Press ENTER to keep current value, or type a new value"
                 nds_ui_b ""

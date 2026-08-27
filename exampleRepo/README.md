@@ -28,7 +28,7 @@ hosts/x86_64-linux/          # per-machine; add the toolkit host here before the
 ## Bootstrap order
 
 1. Copy this tree to a private GitHub repo and `nix flake lock`.
-2. ISO → **toolkit** (`NDS_ACTION=toolkit`) → **new** → this leaf URL (write access). Toolkit installs `hosts/…/control-toolkit/` (create that host in git first). Local install only.
+2. ISO → **toolkit** (`NDS_ACTION=toolkit`) → leave Restore off → this leaf URL (write access). Toolkit installs `hosts/…/control-toolkit/` (create that host in git first). Local install only.
 3. ISO → **addRole** (`NDS_ACTION=addRole`) → **manager** → first boot `swarm init`.
 4. On the toolkit: run `toolkit` (menu). Encrypt stubs, harvest tokens, enroll hosts from there. `toolkit-update` pulls a new tools VERSION.
 5. **addRole** gateway / workers (join from sops). Enroll each machine from the toolkit menu.

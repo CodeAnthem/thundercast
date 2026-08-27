@@ -2,13 +2,15 @@
 # ==================================================================================================
 # NDS - toolkit composer preset (ops VM create / restore)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-20 | Modified: 2026-08-20
+# Date:          Created: 2026-08-20 | Modified: 2026-08-27
 # ==================================================================================================
 
 toolkit_defaults() {
     nds_cfg_set INSTALL_KIND "flake"
     nds_cfg_set INSTALL_COMPOSER "toolkit"
+    nds_cfg_set INSTALL_MODE "local"
     nds_cfg_set CAST_TOOLKIT_MODE "new"
+    nds_cfg_set CAST_TOOLKIT_RESTORE "false"
     nds_cfg_set CAST_TOOLKIT_BUNDLE ""
     nds_cfg_set SCAFFOLD_MODE "existing"
     nds_cfg_set FLAKE_HOST "control-toolkit"
@@ -22,29 +24,56 @@ toolkit_defaults() {
     [[ -n "$(nds_cfg_get FLAKE_REPO_URL)" ]] || nds_cfg_set FLAKE_REPO_URL ""
 }
 
+# Description: Pin FLAKE_HOST to control-toolkit unless already set (env/recipe).
+_nds_toolkit_cfg_ensure_host() {
+    [[ -n "$(nds_cfg_get FLAKE_HOST)" ]] || nds_cfg_set FLAKE_HOST "control-toolkit"
+}
+
+# Description: Mirror CAST_TOOLKIT_MODE=restore onto the UI toggle.
+_nds_toolkit_cfg_load_restore_flag() {
+    if nds_cfg_is CAST_TOOLKIT_MODE restore; then
+        nds_cfg_set CAST_TOOLKIT_RESTORE true
+    else
+        [[ -n "$(nds_cfg_get CAST_TOOLKIT_RESTORE)" ]] || nds_cfg_set CAST_TOOLKIT_RESTORE false
+    fi
+}
+
+# Description: Keep CAST_TOOLKIT_MODE in sync with the restore toggle.
+_nds_toolkit_cfg_apply_restore() {
+    if nds_cfg_true CAST_TOOLKIT_RESTORE; then
+        nds_cfg_set CAST_TOOLKIT_MODE restore
+    else
+        nds_cfg_set CAST_TOOLKIT_MODE new
+        nds_cfg_set CAST_TOOLKIT_BUNDLE ""
+    fi
+}
+
 toolkit_configure() {
     nds_cfg_section_title "Toolkit VM"
-    nds_cfg_ask_choice CAST_TOOLKIT_MODE "Toolkit" "new|restore" \
-        "new=Create operator key and deploy write access|restore=Inject a previous bundle zip" \
-        "new"
-    if nds_cfg_is CAST_TOOLKIT_MODE restore; then
+    _nds_toolkit_cfg_ensure_host
+    _nds_toolkit_cfg_load_restore_flag
+    nds_cfg_ask_toggle CAST_TOOLKIT_RESTORE "Restore existing toolkit" false
+    _nds_toolkit_cfg_apply_restore
+    if nds_cfg_true CAST_TOOLKIT_RESTORE; then
         nds_cfg_ask_path CAST_TOOLKIT_BUNDLE "Path to toolkit bundle zip" "" true
     fi
     nds_cfg_ask_url FLAKE_REPO_URL "Install flake Git URL" "" true
-    nds_cfg_ask_hostname FLAKE_HOST "Toolkit host name" "control-toolkit" true
 }
 
 toolkit_summary() {
-    nds_cfg_summary_row "Toolkit" "$(nds_cfg_get CAST_TOOLKIT_MODE)"
-    if nds_cfg_is CAST_TOOLKIT_MODE restore; then
+    _nds_toolkit_cfg_load_restore_flag
+    nds_cfg_summary_row "Restore" "$(nds_cfg_display_toggle "$(nds_cfg_get CAST_TOOLKIT_RESTORE)")"
+    if nds_cfg_true CAST_TOOLKIT_RESTORE; then
         nds_cfg_summary_row "Bundle" "$(nds_cfg_get CAST_TOOLKIT_BUNDLE)"
     fi
-    nds_cfg_summary_row "Install flake" "$(nds_cfg_get FLAKE_REPO_URL)"
-    nds_cfg_summary_row "Host" "$(nds_cfg_get FLAKE_HOST)"
+    nds_cfg_summary_row "Flake" "$(nds_cfg_get FLAKE_REPO_URL)"
 }
 
 toolkit_prompt_errors() {
     nds_cfg_section_title "Toolkit VM"
+    _nds_toolkit_cfg_ensure_host
+    _nds_toolkit_cfg_load_restore_flag
+    _nds_toolkit_cfg_apply_restore
     while ! toolkit_validate &>/dev/null; do
         if [[ -z "$(nds_cfg_get FLAKE_REPO_URL)" ]]; then
             nds_cfg_ask_url FLAKE_REPO_URL "Install flake Git URL" "" true
@@ -54,15 +83,12 @@ toolkit_prompt_errors() {
             nds_cfg_ask_path CAST_TOOLKIT_BUNDLE "Path to toolkit bundle zip" "" true
             continue
         fi
-        if [[ -z "$(nds_cfg_get FLAKE_HOST)" ]]; then
-            nds_cfg_ask_hostname FLAKE_HOST "Toolkit host name" "control-toolkit" true
-            continue
-        fi
         break
     done
 }
 
 toolkit_validate() {
+    _nds_toolkit_cfg_ensure_host
     [[ -n "$(nds_cfg_get FLAKE_REPO_URL)" ]] || {
         validation_error "Install flake Git URL is required"
         return 1

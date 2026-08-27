@@ -132,4 +132,31 @@ suite_standalone() {
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ nds_ui_input_guard: missing input.sh functions"
     fi
+
+    if declare -f nds_ui_read_menu_digit >/dev/null; then
+        local _saved_tty _got="" _args="" _prompt
+        _saved_tty="$(declare -f nds_ui_tty_read)"
+        nds_ui_tty_read() {
+            _args="$*"
+            local _v="${!#}"
+            printf -v "$_v" '%s' "1"
+            return 0
+        }
+        _prompt="$(nds_ui_numbered_prompt 1 3 1 "Make your selection" true)"
+        if nds_ui_read_menu_digit _got "$_prompt" 1 3 true \
+            && [[ "$_got" == "1" ]] \
+            && [[ "$_args" == *n1* || "$_args" == *"-n "* ]] \
+            && [[ "$_prompt" != *[Ee]nter* ]]; then
+            TEST_PASSED=$((TEST_PASSED + 1))
+            console "  ✓ read_menu_digit: single key, no Enter, prompt has no Enter"
+        else
+            TEST_FAILED=$((TEST_FAILED + 1))
+            console "  ✗ read_menu_digit: expected single-key 1 (got='${_got}' args='${_args}')"
+        fi
+        eval "$_saved_tty"
+        unset _saved_tty _got _args _prompt
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ read_menu_digit: function missing"
+    fi
 }

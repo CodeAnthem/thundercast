@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Preset registry (enable / display / priority)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-01 | Modified: 2026-08-16
+# Date:          Created: 2026-07-01 | Modified: 2026-08-27
 # Description:   PRESET_REGISTRY helpers used by the settings menu
 # ==================================================================================================
 
@@ -47,6 +47,17 @@ nds_cfg_preset_set_display() {
     PRESET_META["${1}__display"]="$2"
 }
 
+# Description: Show (true) or hide (false) a preset in the category menu.
+# Hidden presets stay enabled for defaults and validate.
+nds_cfg_preset_set_menu() {
+    PRESET_META["${1}__menu"]="$2"
+}
+
+# Description: True when a preset should appear in the category menu.
+nds_cfg_preset_is_menu() {
+    [[ "${PRESET_META[${1}__menu]:-true}" != "false" ]]
+}
+
 # Description: Read a preset's menu sort priority (default 50).
 nds_cfg_preset_get_priority() {
     echo "${PRESET_META[${1}__priority]:-50}"
@@ -78,6 +89,17 @@ nds_cfg_preset_get_all_enabled() {
     local presets=() preset
     for preset in "${!PRESET_REGISTRY[@]}"; do
         [[ "${PRESET_REGISTRY[$preset]}" == "enabled" ]] && presets+=("$preset")
+    done
+    _nds_cfg_sort_presets "${presets[@]}"
+}
+
+# Description: List enabled presets that are visible in the category menu (stdout).
+nds_cfg_preset_get_all_menu() {
+    local presets=() preset
+    for preset in "${!PRESET_REGISTRY[@]}"; do
+        [[ "${PRESET_REGISTRY[$preset]}" == "enabled" ]] || continue
+        nds_cfg_preset_is_menu "$preset" || continue
+        presets+=("$preset")
     done
     _nds_cfg_sort_presets "${presets[@]}"
 }

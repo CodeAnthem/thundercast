@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Action discovery selfcheck
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-07 | Modified: 2026-08-20
+# Date:          Created: 2026-08-07 | Modified: 2026-08-27
 # ==================================================================================================
 
 _nds_test_import_action() {
@@ -215,12 +215,14 @@ suite_actions() {
     if grep -q '_nds_toolkit_refuse_remote' \
             "${SCRIPT_DIR}/actions/toolkit/setup.sh" \
         && grep -q 'toolkit is local-only' \
+            "${SCRIPT_DIR}/actions/toolkit/setup.sh" \
+        && grep -q 'nds_cfg_preset_set_menu installFlake false' \
             "${SCRIPT_DIR}/actions/toolkit/setup.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ toolkit: INSTALL_MODE=remote is refused"
+        console "  ✓ toolkit: INSTALL_MODE=remote is refused, installFlake hidden"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ toolkit: remote install is not hard-blocked"
+        console "  ✗ toolkit: remote install is not hard-blocked or Your flake still listed"
     fi
 
     if grep -q 'nds_sm_validate' "${SCRIPT_DIR}/actions/classicInstall/setup.sh" \
