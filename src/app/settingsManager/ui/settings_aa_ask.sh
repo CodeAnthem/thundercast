@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Feature AA prompts (require nds_cfg_aa_bind)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-16
+# Date:          Created: 2026-08-05 | Modified: 2026-08-28
 # Description:   Feature UI ask_* — write live feature AA, not bare CONFIG_DATA
 # ==================================================================================================
 
@@ -15,7 +15,7 @@ _nds_aa_ask_require_bound() {
     return 0
 }
 
-# Bound get/set for feature UI — under bind hit feature AA; else CONFIG_DATA (compat).
+# Bound get/set for feature UI — under bind hit feature AA; else CONFIG_DATA.
 # Description: Read a config key via the bound feature AA (else CONFIG_DATA).
 nds_feat_cfg_get() {
     nds_cfg_get "$@"

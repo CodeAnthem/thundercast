@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - nixWriter classic install orchestration
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-06 | Modified: 2026-08-16
+# Date:          Created: 2026-07-06 | Modified: 2026-08-28
 # Description:   Reads settings answers and calls pure nixWriter blocks
 # ==================================================================================================
 
@@ -94,9 +94,6 @@ nds_nixcfg_remoteUnlock_auto() {
     show_hint=$(nds_cfg_get "ENCRYPTION_REMOTE_HINT")
     [[ "$show_hint" == "false" ]] || show_hint=true
     shutdown_sec=$(nds_cfg_get "ENCRYPTION_REMOTE_SHUTDOWN")
-    if [[ -z "$shutdown_sec" ]] && nds_cfg_true ENCRYPTION_REMOTE_HARDEN; then
-        shutdown_sec=120
-    fi
     shutdown_sec=$(_nds_nixcfg_remoteUnlock_shutdown_sec "$shutdown_sec")
     if [[ "$net_mode" == "static" ]]; then
         ip=$(nds_cfg_get "NETWORK_IP")

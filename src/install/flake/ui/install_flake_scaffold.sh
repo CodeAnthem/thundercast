@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Flake host scaffold prompts
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-20
+# Date:          Created: 2026-08-05 | Modified: 2026-08-28
 # Description:   Interactive existing/new host scaffold; writes AA via nds_aa_ask_*
 # ==================================================================================================
 
@@ -38,7 +38,7 @@ _nds_flake_default_role() {
 }
 
 # Description: Pick existing host or new role+name. Does not write host files.
-# Loads .nds/hosts/<name>.env or .roles/<role>/nds.sh.
+# Loads .nds/hosts/<name>.recipe or .roles/<role>/nds.sh.
 # Arguments:
 # - flake_root: <String> Path to the checked-out flake
 # - system:     <String|optional> Nix system (default: x86_64-linux)

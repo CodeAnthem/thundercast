@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - addRole composer (generate flake host from a role, then Part A)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-20 | Modified: 2026-08-20
+# Date:          Created: 2026-08-20 | Modified: 2026-08-28
 # Description:   Scaffold a nixosConfiguration from .roles/, write recipe, optional install
 # ==================================================================================================
 
@@ -28,7 +28,7 @@ action_preview() {
     nds_ui_b "This is generate, then install:"
     nds_ui_i "clone the install flake (write git access)"
     nds_ui_i "pick a .roles/ template and scaffold hosts/<system>/<host>/"
-    nds_ui_i "write a portable recipe to .nds/hosts/<host>.recipe (legacy .env too; no secrets)"
+    nds_ui_i "write a portable recipe to .nds/hosts/<host>.recipe (no secrets)"
     nds_ui_i "confirm disk wipe, then push, then Part A partitions and flake-installs"
     nds_ui_b ""
 }

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Flake checkout and flake nixos-install
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-28 | Modified: 2026-08-27
+# Date:          Created: 2025-10-28 | Modified: 2026-08-28
 # Description:   Stage flake, git-add install facts, build+activate flake system
 # ==================================================================================================
 
@@ -229,7 +229,7 @@ _nds_install_nix_flake_system_ref() {
     printf 'nixosConfigurations."%s".config.system.build.toplevel' "$host_name"
 }
 
-# Description: Install-time secrets / legacy filenames (gitignored after staging).
+# Description: Install-time host facts (gitignored after staging).
 _nds_install_flake_host_fact_names() {
     printf '%s\n' facter.json hardware-configuration.nix machine.nix nds-boot.nix
 }

@@ -12,7 +12,7 @@ Interactive vs unattended is `NDS_AUTO_CONFIRM` / `--auto-confirm` (or `NDS_MODE
 |----------|-------------|
 | `NDS_AUTO_CONFIRM` | Umbrella — skip interactive menus and Y/n prompts (`true`) |
 | `NDS_ACTION` | Action name — skip action picker (e.g. `installFlake`, `addRole`, `toolkit`, `apply`) |
-| `NDS_RECIPE_FILE` | Path to a sectioned `tc-recipe` or legacy `export NDS_*=` file (same as `--recipe`). Secret **values** are ignored; `*_FILE` paths are kept. |
+| `NDS_RECIPE_FILE` | Path to a sectioned `tc-recipe` or `export NDS_*=` file (same as `--recipe`). Secret **values** are ignored; `*_FILE` paths are kept. |
 | `NDS_INSTALL_CONFIRM_SKIP` | Skip disk wipe confirms (format + local + remote). Unattended already skips these. |
 | `NDS_GIT_AUTH_SKIP` | Skip git SSH wizard **and fail** if access is missing (`true`). `NDS_AUTO_CONFIRM` does **not** skip git auth. |
 | `NDS_REBOOT_SKIP` | Interactive only — skip the “Reboot now?” prompt (`true`) |
@@ -20,12 +20,11 @@ Interactive vs unattended is `NDS_AUTO_CONFIRM` / `--auto-confirm` (or `NDS_MODE
 | `NDS_SCOPED_CONFIG_FILE` | Path to a file of `export NDS_*=` lines (optional `declare -gA` git maps). Sourced at startup. Needed for git maps: arrays cannot ride `curl \| bash` or `sudo`. |
 | `NDS_GIT_IMPORT_KEY_PATH` | Path to a private SSH key to import before git auth (USB/scp) |
 | `NDS_GIT_IMPORT_KEY` | Private SSH key **text** (PEM / OpenSSH). ISO-env escape hatch for headless runs — **not** stored in CONFIG_DATA, recipes, or git. Prefer `NDS_GIT_IMPORT_KEY_PATH` or `NDS_GIT_KEY_BODY` for per-repo. Unencrypted keys for headless (a passphrase prompt needs a TTY). |
-| `NDS_DEPLOY_KEY_PATH` | Deprecated alias for `NDS_GIT_IMPORT_KEY_PATH` |
 | `NDS_GIT_SSH_KEY_USE_QR` | Skip QR prompt on manual path — `true` or `false` |
 | `NDS_GIT_SSH_KEY_DISPLAY` | Manual display mode: `qr` or `copy` |
 | `NDS_GIT_SESSION_KEY_PATH` | Session private key path (default `/root/.ssh/git-<owner>-key`) |
 
-Legacy skip vars still work (`NDS_SKIP_MENU`, `NDS_ACTION_PREVIEW_SKIP`, `NDS_CAST_WARN_SKIP`, `NDS_CONFIG_CONFIRM_SKIP`, `NDS_REMOTE_CONFIRM_SKIP`, `NDS_DISK_FORMAT_CONFIRM_SKIP`, `NDS_BACKUP_CONFIRM_SKIP`, `NDS_SCAFFOLD_OVERWRITE_SKIP`, `NDS_HARDWARE_OVERWRITE_SKIP`, `NDS_PREFLIGHT_WARN_SKIP`, `NDS_PROMPTS_SKIP`). `NDS_AUTO_CONFIRM` already covers them. `NDS_INSTALL_CONFIRM_SKIP` also covers format and remote confirms.
+Skip vars (`NDS_SKIP_MENU`, `NDS_ACTION_PREVIEW_SKIP`, `NDS_CAST_WARN_SKIP`, `NDS_CONFIG_CONFIRM_SKIP`, `NDS_REMOTE_CONFIRM_SKIP`, `NDS_DISK_FORMAT_CONFIRM_SKIP`, `NDS_BACKUP_CONFIRM_SKIP`, `NDS_SCAFFOLD_OVERWRITE_SKIP`, `NDS_HARDWARE_OVERWRITE_SKIP`, `NDS_PREFLIGHT_WARN_SKIP`, `NDS_PROMPTS_SKIP`) are also honored. `NDS_AUTO_CONFIRM` already covers them. `NDS_INSTALL_CONFIRM_SKIP` also covers format and remote confirms.
 
 ## CLI flags
 
@@ -37,7 +36,7 @@ Legacy skip vars still work (`NDS_SKIP_MENU`, `NDS_ACTION_PREVIEW_SKIP`, `NDS_CA
 | `--recipe FILE` | Sets `NDS_RECIPE_FILE` — load a recipe into the settings session |
 | `apply [FILE]` | Sets `NDS_ACTION=apply` and optionally `NDS_RECIPE_FILE` |
 
-Leaf restore prefers `.nds/hosts/<host>.recipe` over legacy `export NDS_*=` `.env`. Registered secrets (`ACCESS_ADMIN_PASSWORD`, `ENCRYPTION_PASSPHRASE`, `TOOLKIT_AGE_KEY`, `TOOLKIT_SSH_KEY`) travel as `*_FILE` paths — never values in git or printed recipes.
+Leaf restore loads `.nds/hosts/<host>.recipe`. Registered secrets (`ACCESS_ADMIN_PASSWORD`, `ENCRYPTION_PASSPHRASE`, `TOOLKIT_AGE_KEY`, `TOOLKIT_SSH_KEY`) travel as `*_FILE` paths — never values in git or printed recipes.
 
 ---
 
@@ -115,7 +114,7 @@ flake eval always sees root/boot mounts and the bootloader device.
 | `ENCRYPTION_REMOTE_NETWORK` | `NDS_ENCRYPTION_REMOTE_NETWORK` | `dhcp` or static |
 | `ENCRYPTION_REMOTE_PORT` | `NDS_ENCRYPTION_REMOTE_PORT` | Initrd SSH port (default `2222`) |
 | `ENCRYPTION_REMOTE_HINT` | `NDS_ENCRYPTION_REMOTE_HINT` | Magenta console line with port + IP (`true` by default) |
-| `ENCRYPTION_REMOTE_SHUTDOWN` | `NDS_ENCRYPTION_REMOTE_SHUTDOWN` | Seconds to wait at the LUKS prompt before power-off: `0` = off, else `30`–`3600` (`0` by default). Replaces `ENCRYPTION_REMOTE_HARDEN`. |
+| `ENCRYPTION_REMOTE_SHUTDOWN` | `NDS_ENCRYPTION_REMOTE_SHUTDOWN` | Seconds to wait at the LUKS prompt before power-off: `0` = off, else `30`–`3600` (`0` by default). |
 
 Set `export NDS_ENCRYPTION=false` (or any other `NDS_*` key) before start, or put the same lines in `NDS_SCOPED_CONFIG_FILE`.
 

@@ -47,46 +47,9 @@ tcast_kv_set() {
     mv "$tmp" "$file"
 }
 
-# Description: Copy legacy .nds/toolkit-register into .toolkit once.
-_tcast_register_migrate_legacy() {
-    local leaf old host key val dest
-    leaf="$(tcast_leaf)"
-    old="${leaf}/.nds/toolkit-register"
-    [[ -d "$old" ]] || return 0
-    [[ -d "$(tcast_machines_dir)" ]] && return 0
-    tcast_info "migrating ${old} -> .toolkit/"
-    mkdir -p "$(tcast_operator_dir)" "$(tcast_machines_dir)" "${leaf}/.toolkit/sops"
-    if [[ -f "${old}/meta" ]]; then
-        cp "${old}/meta" "$(tcast_operator_dir)/meta"
-    fi
-    if [[ -f "${leaf}/.nds/operator.age.pub" ]]; then
-        cp "${leaf}/.nds/operator.age.pub" "$(tcast_operator_dir)/age.pub"
-    fi
-    if [[ -f "${leaf}/.nds/toolkit.ssh.pub" ]]; then
-        cp "${leaf}/.nds/toolkit.ssh.pub" "$(tcast_operator_dir)/ssh.pub"
-    fi
-    if [[ -d "${old}/hosts" ]]; then
-        for host in "${old}/hosts"/*; do
-            [[ -f "$host" ]] || continue
-            dest="$(tcast_machines_dir)/$(basename "$host")"
-            mkdir -p "$dest"
-            while IFS= read -r line || [[ -n "$line" ]]; do
-                [[ "$line" == *=* ]] || continue
-                key="${line%%=*}"
-                val="${line#*=}"
-                case "$key" in
-                    age_pub) printf '%s\n' "$val" > "${dest}/age.pub" ;;
-                    *) printf '%s\n' "$val" > "${dest}/${key}" ;;
-                esac
-            done < "$host"
-        done
-    fi
-}
-
 tcast_register_ensure() {
     local d
     d="$(tcast_register_dir)"
-    _tcast_register_migrate_legacy
     mkdir -p "$(tcast_operator_dir)" "$(tcast_machines_dir)" "${d}/sops" || return 1
     [[ -f "$(tcast_operator_dir)/meta" ]] || printf 'version=1\n' > "$(tcast_operator_dir)/meta"
 }
@@ -112,10 +75,6 @@ tcast_register_meta_set() {
 
 tcast_register_host_dir() {
     printf '%s/%s\n' "$(tcast_machines_dir)" "$1"
-}
-
-tcast_register_host_file() {
-    tcast_register_host_dir "$1"
 }
 
 tcast_register_host_get() {

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git auth wizard flow (menu state machine)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-26
+# Date:          Created: 2026-07-07 | Modified: 2026-08-28
 # Description:   Per-repo conversation: existing-key y/n, then paste/path or gh/generate.
 #                Related-repo coverage is asked only after flake inputs are known.
 # ==================================================================================================
@@ -45,8 +45,7 @@ nds_git_wizard_ask_persist_access() {
 nds_git_wizard_ask_key_source() {
     local default="n"
 
-    if [[ -n "${NDS_GIT_IMPORT_KEY:-}" || -n "${NDS_GIT_IMPORT_KEY_PATH:-}" \
-        || -n "${NDS_DEPLOY_KEY_PATH:-}" ]]; then
+    if [[ -n "${NDS_GIT_IMPORT_KEY:-}" || -n "${NDS_GIT_IMPORT_KEY_PATH:-}" ]]; then
         default="y"
     fi
 

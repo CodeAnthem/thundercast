@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git SSH key discovery (logic)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-07-07
+# Date:          Created: 2026-07-07 | Modified: 2026-08-28
 # ==================================================================================================
 
 # Description: Collect private key candidate paths from a directory.
@@ -34,8 +34,6 @@ nds_git_discover_key_candidates() {
         [[ -f "$owner_key" ]] && printf '%s\n' "$owner_key"
         if [[ -n "${NDS_GIT_IMPORT_KEY_PATH:-}" && -f "${NDS_GIT_IMPORT_KEY_PATH}" ]]; then
             printf '%s\n' "${NDS_GIT_IMPORT_KEY_PATH}"
-        elif [[ -n "${NDS_DEPLOY_KEY_PATH:-}" && -f "${NDS_DEPLOY_KEY_PATH}" ]]; then
-            printf '%s\n' "${NDS_DEPLOY_KEY_PATH}"
         fi
     } | awk 'NF' | sort -u
 }

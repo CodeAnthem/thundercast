@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Settings manager sessions, secrets-as-files, and recipes
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-20 | Modified: 2026-08-20
+# Date:          Created: 2026-08-20 | Modified: 2026-08-28
 # Description:   Isolated SM sessions; validators shared with Part B via nds_sm_validate
 # ==================================================================================================
 
@@ -355,7 +355,7 @@ nds_sm_get_options() {
 }
 
 # ==================================================================================================
-# Recipe load / export (sectioned + legacy export NDS_*=)
+# Recipe load / export (sectioned tc-recipe + export NDS_*=)
 # ==================================================================================================
 
 _nds_sm_section_for_key() {
@@ -415,7 +415,7 @@ _nds_sm_recipe_set_line() {
 }
 
 # Description: Load a recipe file into the current (or given) session.
-# Accepts sectioned tc-recipe files and legacy `export NDS_*=` recipes.
+# Accepts sectioned tc-recipe files and `export NDS_*=` recipes.
 # Secret VALUES are ignored; *_FILE paths are kept.
 # Arguments:
 # - sid?: <String> Session id (optional)

@@ -6,22 +6,6 @@
 # Description:   Resolve thundercast action, role NDS env, hooks, leaf commit/push
 # ==================================================================================================
 
-# Portable keys written to .nds/hosts/<name>.env (no secrets, no disk device).
-_NDS_LEAF_HOST_ENV_KEYS=(
-    FLAKE_HOST
-    FLAKE_HOST_DIR
-    FLAKE_HARDWARE_PLACEMENT
-    FLAKE_REPO_URL
-    SCAFFOLD_ROLE
-    ENCRYPTION
-    DISK_STRATEGY
-    DISK_FS_TYPE
-    DISK_SWAP_SIZE_MIB
-    BOOT_UEFI_MODE
-    BOOT_LOADER
-    NETWORK_HOSTNAME
-)
-
 # Description: True when owner/repo is the install flake (private leaf).
 # Arguments:
 # - owner: <String> Git owner
@@ -148,30 +132,20 @@ nds_install_flake_run_hooks() {
     nds_hook_run "$flake_root" "$hook"
 }
 
-# Description: Write portable NDS knobs for a host into the leaf repo.
+# Description: Write a portable host recipe into the leaf repo (no secrets, no disk device).
 # Arguments:
 # - flake_root: <String> Leaf checkout
 # - hostname:   <String> Host name
 nds_flake_write_host_nds_env() {
     local flake_root="$1"
     local hostname="$2"
-    local dest key val
+    local dest
     [[ -n "$hostname" ]] || return 1
-    dest="${flake_root}/.nds/hosts/${hostname}.env"
+    dest="${flake_root}/.nds/hosts/${hostname}.recipe"
     mkdir -p "$(dirname "$dest")"
-    {
-        echo "# NDS host restore for ${hostname} — no secrets. Written by NDS compose."
-        for key in "${_NDS_LEAF_HOST_ENV_KEYS[@]}"; do
-            val="$(nds_cfg_get "$key" 2>/dev/null || true)"
-            [[ -n "$val" ]] || continue
-            val="${val//\\/\\\\}"
-            val="${val//\"/\\\"}"
-            printf 'export NDS_%s="%s"\n' "$key" "$val"
-        done
-    } >"$dest"
     _nds_flake_write_host_inventory "$flake_root" "$hostname"
     if declare -f nds_sm_export &>/dev/null; then
-        nds_sm_export --git "${flake_root}/.nds/hosts/${hostname}.recipe" || return 1
+        nds_sm_export --git "$dest" || return 1
     fi
     nds_install_log "leaf: wrote ${dest#"$flake_root"/}"
 }
@@ -195,50 +169,26 @@ _nds_flake_write_host_inventory() {
     } >"$dest"
 }
 
-# Description: Load .nds/hosts/<name>.env into CONFIG_DATA.
-# Arguments:
-# - env_file: <String> Path to env file
-nds_flake_load_host_nds_env() {
-    local env_file="$1"
-    local line key val
-    [[ -f "$env_file" ]] || return 1
-    while IFS= read -r line || [[ -n "$line" ]]; do
-        [[ "$line" == export\ NDS_* ]] || continue
-        key="${line#export NDS_}"
-        key="${key%%=*}"
-        val="${line#export NDS_${key}=}"
-        val="${val#\"}"
-        val="${val%\"}"
-        nds_cfg_set "$key" "$val"
-    done < "$env_file"
-    info "Loaded NDS restore env from ${env_file}"
-}
-
-# Description: Restore a host session from the leaf. Prefers .recipe, then legacy .env.
+# Description: Restore a host session from the leaf recipe.
 # Arguments:
 # - flake_root: <String> Leaf checkout
 # - hostname:   <String> Host name
 nds_flake_load_host_restore() {
     local flake_root="$1"
     local hostname="$2"
-    local recipe env_file
+    local recipe
     [[ -n "$hostname" ]] || return 1
     recipe="${flake_root}/.nds/hosts/${hostname}.recipe"
-    env_file="${flake_root}/.nds/hosts/${hostname}.env"
     if [[ -f "$recipe" ]] && declare -f nds_sm_load &>/dev/null; then
         nds_sm_load "$recipe" || return 1
         info "Loaded NDS recipe from ${recipe}"
         return 0
     fi
-    if [[ -f "$env_file" ]]; then
-        nds_flake_load_host_nds_env "$env_file"
-        return $?
-    fi
-    warn "No .nds/hosts/${hostname}.recipe or .env — using current NDS settings"
+    warn "No .nds/hosts/${hostname}.recipe — using current NDS settings"
     return 0
 }
 
-# Description: Source .roles/<role>/nds.sh or .nds/<role>/nds.sh when present.
+# Description: Source .roles/<role>/nds.sh when present.
 # Arguments:
 # - flake_root: <String> Leaf checkout
 # - role:       <String> Role id
@@ -246,7 +196,6 @@ nds_flake_apply_role_nds() {
     local flake_root="$1"
     local role="$2"
     local script="${flake_root}/.roles/${role}/nds.sh"
-    [[ -f "$script" ]] || script="${flake_root}/.nds/${role}/nds.sh"
     [[ -n "$role" && -f "$script" ]] || return 0
     info "Applying role NDS defaults: ${script#"${flake_root}/"}"
     # shellcheck disable=SC1090

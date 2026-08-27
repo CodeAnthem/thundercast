@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Action handler (select, configure, execute)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-29 | Modified: 2026-08-26
+# Date:          Created: 2026-07-29 | Modified: 2026-08-28
 # Description:   Action selection, feature AA bridge, presets, execution
 # ==================================================================================================
 
@@ -128,18 +128,6 @@ nds_app_actionHandler_logic_execute() {
     local rc=0
 
     export NDS_CURRENT_ACTION="$action_name"
-
-    case "$action_name" in
-        remoteAction)
-            case "${NDS_CAST_ACTION:-}" in
-                toolkit|addRole)
-                    info "NDS_CAST_ACTION=${NDS_CAST_ACTION} is a built-in action — not a catalog script"
-                    nds_app_actionHandler_logic_execute "$NDS_CAST_ACTION"
-                    return $?
-                    ;;
-            esac
-            ;;
-    esac
 
     [[ -f "$setup_script" ]] || { error "Setup script not found: $setup_script"; return 1; }
 

@@ -2,6 +2,11 @@
 
 Versions here are **tools only** (this tree). NixOS/comin is a separate channel.
 
+## 0.4.1 — 2026-08-28
+
+- Drop layout migration: `.toolkit/` only (no copy from `.nds/toolkit-register`)
+- Scaffold writes `.nds/hosts/<host>.recipe`, not `.env`
+
 ## 0.4.0 — 2026-08-28
 
 - Cluster state lives under `.toolkit/` (operator pubs, `machines/<host>/`, `sops/secrets.map`)

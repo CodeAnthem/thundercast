@@ -14,7 +14,7 @@ tcast_nodes_roles() {
 
 tcast_nodes_role_exists() {
     local leaf="$1" role="$2"
-    [[ -f "${leaf}/.roles/${role}/opts.nix" || -f "${leaf}/.nds/${role}/opts.nix" ]]
+    [[ -f "${leaf}/.roles/${role}/opts.nix" ]]
 }
 
 tcast_nodes_host_dirs() {
@@ -44,11 +44,7 @@ tcast_nodes_scaffold() {
     fi
     mkdir -p "$host_dir"
     today="$(date -u +%Y-%m-%d)"
-    if [[ -f "${leaf}/.nds/${role}/opts.nix" ]]; then
-        printf '(import ../../../.nds/%s/opts.nix)\n' "$role" > "${host_dir}/opts.nix"
-    else
-        printf '(import ../../../.roles/%s/opts.nix)\n' "$role" > "${host_dir}/opts.nix"
-    fi
+    printf '(import ../../../.roles/%s/opts.nix)\n' "$role" > "${host_dir}/opts.nix"
     cat > "${host_dir}/boot.nix" << EOF
 { lib, ... }: {
   boot.loader.grub = {
@@ -90,10 +86,12 @@ EOF
     tcast_register_host_set "$hostname" system "$system"
     tcast_register_host_set "$hostname" scaffolded_at "$(tcast_now)"
     mkdir -p "${leaf}/.nds/hosts"
-    cat > "${leaf}/.nds/hosts/${hostname}.env" << EOF
-export NDS_FLAKE_HOST="${hostname}"
-export NDS_FLAKE_HOST_DIR="hosts/${system}"
-export NDS_SCAFFOLD_MODE="existing"
+    cat > "${leaf}/.nds/hosts/${hostname}.recipe" << EOF
+# tc-recipe v1
+[flake]
+FLAKE_HOST="${hostname}"
+FLAKE_HOST_DIR="hosts/${system}"
+SCAFFOLD_MODE="existing"
 EOF
     tcast_info "scaffolded ${host_dir} (role=${role})"
 }

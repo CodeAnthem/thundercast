@@ -142,34 +142,21 @@ nds_hook_load() {
     return 0
 }
 
-# Description: Run registered functions for one event. Legacy: source old named files.
+# Description: Run registered functions for one event.
 # Arguments:
 # - flake_root: <String> Leaf checkout
 # - event:      <String> Lifecycle event
 nds_hook_run() {
     local flake_root="$1"
     local event="$2"
-    local fn script
-    local ran=0
+    local fn
 
     nds_hook_load "$flake_root" || return 1
     export NDS_LEAF_HOOK="$event"
 
     while IFS= read -r fn; do
         [[ -n "$fn" ]] || continue
-        ran=1
         "$fn" || return 1
     done < <(printf '%s\n' "${NDS_HOOK_FNS[$event]:-}")
-
-    # One-release compat: .nds/hooks/<event>.sh ran on source.
-    script="${flake_root}/.nds/hooks/${event}.sh"
-    if [[ -f "$script" ]]; then
-        warn "Legacy hook ${script#"$flake_root"/} — move to .nds/<action>/*.sh (nds_hook_register or # nds-hook:)"
-        info "Leaf hook: ${script#"$flake_root"/}"
-        nds_import_file "$script" || return 1
-        ran=1
-    fi
-
-    [[ "$ran" == "1" ]] || true
     return 0
 }

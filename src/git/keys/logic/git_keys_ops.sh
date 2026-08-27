@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git SSH key management (session wiring)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-05 | Modified: 2026-08-15
+# Date:          Created: 2026-07-05 | Modified: 2026-08-28
 # Description:   NDS-aware paths and session wiring around git/lib key ops
 # ==================================================================================================
 
@@ -133,7 +133,7 @@ nds_git_auth_try_session_key() {
 # Returns:
 # - <Bool> 0 when key was imported and loaded
 nds_git_auth_try_import_path() {
-    local path="${NDS_GIT_IMPORT_KEY_PATH:-${NDS_DEPLOY_KEY_PATH:-}}"
+    local path="${NDS_GIT_IMPORT_KEY_PATH:-}"
     local dest
     [[ -n "$path" && -f "$path" ]] || return 1
     dest="$(nds_git_session_key_path)"

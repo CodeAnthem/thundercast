@@ -170,7 +170,7 @@ tcast_leaf_sync() {
     while IFS= read -r f; do
         [[ -n "$f" ]] || continue
         case "$f" in
-            .toolkit/*|.nds/toolkit-register/*) ;;
+            .toolkit/*) ;;
             *) continue ;;
         esac
         if [[ -e "${dir}/${f}" ]] && ! git -C "$dir" ls-files --error-unmatch "$f" >/dev/null 2>&1; then

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Flake tools — prepare, scaffold, detect disko
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-01 | Modified: 2026-08-19
+# Date:          Created: 2026-07-01 | Modified: 2026-08-28
 # Description:   Flake prepare, disko detect, host-folder scaffold (no interactive picker)
 # ==================================================================================================
 
@@ -169,9 +169,7 @@ _nds_install_flake_scaffold_host_folder() {
 
     mkdir -p "$host_dir" || { error "Cannot create $host_dir"; return 1; }
 
-    if [[ -f "${flake_root}/.nds/${role}/opts.nix" ]]; then
-        printf '(import ../../../.nds/%s/opts.nix)\n' "$role" > "${host_dir}/opts.nix" || return 1
-    elif [[ -f "${flake_root}/.roles/${role}/opts.nix" ]]; then
+    if [[ -f "${flake_root}/.roles/${role}/opts.nix" ]]; then
         printf '(import ../../../.roles/%s/opts.nix)\n' "$role" > "${host_dir}/opts.nix" || return 1
     else
         sed "s/__ROLE__/${role}/g" \

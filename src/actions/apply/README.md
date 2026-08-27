@@ -13,7 +13,7 @@ sudo bash src/scripts/tc-nds.sh apply /path/to/host.recipe
 
 ## Recipe
 
-Sectioned `tc-recipe v1` or legacy `export NDS_*=` lines. Leaf files: `.nds/hosts/<host>.recipe` (preferred) and `.env` (fallback).
+Sectioned `tc-recipe v1` or `export NDS_*=` lines. Leaf files: `.nds/hosts/<host>.recipe`.
 
 Registered secrets (`ACCESS_ADMIN_PASSWORD`, `ENCRYPTION_PASSPHRASE`, `TOOLKIT_AGE_KEY`, `TOOLKIT_SSH_KEY`) must be **file paths** (`*_FILE`). Values in the recipe are ignored.
 

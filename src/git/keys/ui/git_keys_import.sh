@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git auth wizard import menu
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-16
+# Date:          Created: 2026-07-07 | Modified: 2026-08-28
 # Description:   Path and paste key import (cwd/.ssh auto-scan runs before the wizard)
 # ==================================================================================================
 
@@ -19,8 +19,6 @@ nds_git_wizard_menu_import_path() {
     if [[ "${_NDS_GIT_RELATED_IMPORT:-}" != "1" ]]; then
         if [[ -n "${NDS_GIT_IMPORT_KEY_PATH:-}" && -f "${NDS_GIT_IMPORT_KEY_PATH}" ]]; then
             src="${NDS_GIT_IMPORT_KEY_PATH}"
-        elif [[ -n "${NDS_DEPLOY_KEY_PATH:-}" && -f "${NDS_DEPLOY_KEY_PATH}" ]]; then
-            src="${NDS_DEPLOY_KEY_PATH}"
         fi
     fi
     if [[ -z "${src:-}" && ${#urls[@]} -gt 0 ]] && declare -f nds_git_access_get &>/dev/null; then

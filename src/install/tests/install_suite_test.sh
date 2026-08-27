@@ -447,26 +447,25 @@ suite_install() {
     local restore_dir
     restore_dir=$(mktemp -d)
     mkdir -p "${restore_dir}/.nds/hosts"
-    printf 'export NDS_DISK_STRATEGY="nds"\n' > "${restore_dir}/.nds/hosts/lab.env"
     printf '%s\n' '[disk]' 'DISK_STRATEGY="disko"' > "${restore_dir}/.nds/hosts/lab.recipe"
     nds_cfg_set DISK_STRATEGY ""
     nds_flake_load_host_restore "$restore_dir" lab
     if [[ "$(nds_cfg_get DISK_STRATEGY)" == "disko" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ host restore: .recipe wins over legacy .env"
+        console "  ✓ host restore: loads .recipe"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ host restore: recipe did not win ($(nds_cfg_get DISK_STRATEGY))"
+        console "  ✗ host restore: recipe did not load ($(nds_cfg_get DISK_STRATEGY))"
     fi
     rm -f "${restore_dir}/.nds/hosts/lab.recipe"
-    nds_cfg_set DISK_STRATEGY ""
+    nds_cfg_set DISK_STRATEGY "nds"
     nds_flake_load_host_restore "$restore_dir" lab
     if [[ "$(nds_cfg_get DISK_STRATEGY)" == "nds" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ host restore: falls back to .env"
+        console "  ✓ host restore: missing recipe leaves current settings"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ host restore: env fallback ($(nds_cfg_get DISK_STRATEGY))"
+        console "  ✗ host restore: missing recipe changed settings ($(nds_cfg_get DISK_STRATEGY))"
     fi
     rm -rf "$restore_dir"
 

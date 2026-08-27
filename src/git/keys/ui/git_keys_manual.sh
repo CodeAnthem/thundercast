@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git auth wizard manual registration menu
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-26
+# Date:          Created: 2026-07-07 | Modified: 2026-08-28
 # ==================================================================================================
 
 _NDS_GIT_WIZARD_KV_WIDTH=20
@@ -21,16 +21,16 @@ _nds_git_wizard_kv() {
 # - display: <Nameref> Receives qr or copy
 nds_git_wizard_resolve_key_display() {
     local -n _nds_git_key_display=${1:?display_nameref}
-    local from_env="${NDS_GIT_SSH_KEY_DISPLAY:-${NDS_GIT_DEPLOY_KEY_DISPLAY:-}}"
+    local from_env="${NDS_GIT_SSH_KEY_DISPLAY:-}"
     case "${from_env,,}" in
         qr) _nds_git_key_display=qr; return 0 ;;
         copy) _nds_git_key_display=copy; return 0 ;;
     esac
-    if nds_env_is_true "${NDS_GIT_SSH_KEY_USE_QR:-${NDS_GIT_DEPLOY_KEY_USE_QR:-false}}"; then
+    if nds_env_is_true "${NDS_GIT_SSH_KEY_USE_QR:-false}"; then
         _nds_git_key_display=qr
         return 0
     fi
-    if [[ "${NDS_GIT_SSH_KEY_USE_QR:-${NDS_GIT_DEPLOY_KEY_USE_QR:-}}" == "false" ]]; then
+    if [[ "${NDS_GIT_SSH_KEY_USE_QR:-}" == "false" ]]; then
         _nds_git_key_display=copy
         return 0
     fi

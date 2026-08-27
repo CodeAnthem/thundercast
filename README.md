@@ -105,7 +105,7 @@ Fork or offline? Set `NDS_REPO_URL` before the one-liner, or clone your fork in 
 Skip re-entering the menu by **exporting `NDS_*` variables** before step 3:
 
 - **From a previous install** — when you press **X** in the menu, NDS prints an `export NDS_…` block. Save it. Paste or `source` that file before running NDS again.
-- **Recipe file** — `--recipe FILE` / `NDS_RECIPE_FILE` loads a sectioned `tc-recipe` (or legacy `export NDS_*=`). Secret **values** are ignored; `*_FILE` paths are kept. Leaf restore prefers `.nds/hosts/<host>.recipe` over legacy `.env`.
+- **Recipe file** — `--recipe FILE` / `NDS_RECIPE_FILE` loads a sectioned `tc-recipe` (or `export NDS_*=` lines). Secret **values** are ignored; `*_FILE` paths are kept. Leaf restore uses `.nds/hosts/<host>.recipe`.
 - The same export is included in the install backup zip, so you can recover it from there too.
 
 Any `NDS_<FIELD>` overrides the matching menu field (same names as the backup export). Example for a flake install:
@@ -220,7 +220,7 @@ Live ISO → menu → disk prep (or skip if flake owns disko)
            remote: nixos-anywhere (installFlake / addRole / apply / remoteAction — not toolkit)
 ```
 
-**addRole / toolkit / remoteAction** also clone the leaf with **write** access, write `.nds/hosts/<host>.recipe` (and a legacy `.env`), then Part A.
+**addRole / toolkit / remoteAction** also clone the leaf with **write** access, write `.nds/hosts/<host>.recipe`, then Part A.
 
 NDS clones your flake **directly** — no wrapper flake. Install-time files (`hardware-configuration.nix`, optional `machine.nix` for LUKS) are gitignored on disk. Committed `mounts.nix` + `boot.nix` are the structural files flake eval must see.
 

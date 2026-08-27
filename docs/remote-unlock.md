@@ -114,9 +114,6 @@ The console prints a red timeout line just before poweroff.
 LUKS passphrase tries stay at the systemd default (3 per cryptsetup start).
 sshd is not touched. Unlock SSH stays on port 2222.
 
-Legacy `NDS_ENCRYPTION_REMOTE_HARDEN=true` still maps to 120 seconds when
-`NDS_ENCRYPTION_REMOTE_SHUTDOWN` is unset.
-
 ## Finding the IP
 
 - **Static IP** (recommended): always reachable at exactly the address you set.

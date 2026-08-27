@@ -2,7 +2,7 @@
 # ==================================================================================================
 # DPS Project - Bootstrap NixOS - A NixOS Deployment System
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-06-29 | Modified: 2026-08-16
+# Date:          Created: 2026-06-29 | Modified: 2026-08-28
 # Description:   classicConfig builder tests (read-only — writes to temp dir only)
 # ==================================================================================================
 
@@ -340,29 +340,6 @@ suite_classic_config() {
     content=$(<"$output")
     assert_not_contains "$content" 'nds-unlock-lockout' "remote-unlock shutdown-15 configuration.nix"
     assert_not_contains "$content" 'sleep 15' "remote-unlock shutdown-15 configuration.nix"
-
-    rm -rf "$tmp_dir"
-
-    # Legacy ENCRYPTION_REMOTE_HARDEN=true maps to 120s when SHUTDOWN is unset.
-    tmp_dir=$(mktemp -d)
-    output="${tmp_dir}/configuration.nix"
-    _nds_test_seed_admin_password "$tmp_dir"
-
-    _nds_test_reset_encryption_vars
-    CONFIG_DATA[ENCRYPTION]="true"
-    CONFIG_DATA[ENCRYPTION_PASSWORD]="true"
-    CONFIG_DATA[ENCRYPTION_KEY]="false"
-    CONFIG_DATA[ENCRYPTION_REMOTE_UNLOCK]="true"
-    CONFIG_DATA[ENCRYPTION_REMOTE_SSH_KEY]="ssh-ed25519 AAAAfakeKey test@host"
-    CONFIG_DATA[ENCRYPTION_REMOTE_NETWORK]="dhcp"
-    CONFIG_DATA[ENCRYPTION_REMOTE_HARDEN]="true"
-
-    nds_nixcfg_build_classic_auto
-    nds_nixcfg_write "$output"
-
-    content=$(<"$output")
-    assert_contains "$content" 'nds-unlock-lockout' "remote-unlock harden-compat configuration.nix"
-    assert_contains "$content" 'sleep 120' "remote-unlock harden-compat configuration.nix"
 
     rm -rf "$tmp_dir"
     if [[ -n "$_sv_save" ]]; then

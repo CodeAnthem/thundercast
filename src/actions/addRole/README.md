@@ -21,7 +21,7 @@ sudo -E bash src/app/main.sh
 2. Pick role + host
 3. Settings menu (boot / disk / encryption)
 4. **Disk confirm** — abort here leaves origin unchanged
-5. Compose: scaffold, `.nds/hosts/<host>.recipe` (+ legacy `.env`), push
+5. Compose: scaffold, `.nds/hosts/<host>.recipe`, push
 6. Part A: partition + `nixos-install --flake`
 
 ISO hooks: `.nds/addRole/*.sh` and `.nds/common/*.sh` (`nds_hook_register`).

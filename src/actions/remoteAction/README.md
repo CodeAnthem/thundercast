@@ -31,8 +31,6 @@ Hostname lives in the **Network** category. Flake path / host-dir / hardware pla
 
 A private catalog URL (`git@…` or private `https://`) uses the git SSH wizard. Public `https://` catalogs clone without a key.
 
-Compat: `NDS_ACTION=remoteAction` + `NDS_CAST_ACTION=toolkit|addRole` redirects to the built-in action. Prefer `NDS_ACTION=toolkit` / `NDS_ACTION=addRole`.
-
 ## Discovery
 
 1. Clone catalog → `.nds/actions/*.sh` + optional `manifest` (addRole/toolkit skipped)
@@ -41,4 +39,4 @@ Compat: `NDS_ACTION=remoteAction` + `NDS_CAST_ACTION=toolkit|addRole` redirects 
 4. Clone the install flake (write access required when the action pushes)
 5. Leaf `.nds/action.sh` may override the selected user action
 
-Existing-host restore loads `.nds/hosts/<name>.recipe` first, then legacy `.env`.
+Existing-host restore loads `.nds/hosts/<name>.recipe`.

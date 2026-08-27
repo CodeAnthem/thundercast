@@ -103,7 +103,7 @@ Note the leaf’s `origin/main` SHA **before** this run.
 | | |
 |--|--|
 | **Do** | Same as V3, but confirm wipe. Wait for Part A. Copy the bundle. Reboot. |
-| **Pass** | Remote has `hosts/<system>/<host>/` plus `.nds/hosts/<host>.recipe` (and legacy `.env`). Machine boots. Recipe has **paths** (`*_FILE`), not passphrase/password values. |
+| **Pass** | Remote has `hosts/<system>/<host>/` plus `.nds/hosts/<host>.recipe`. Machine boots. Recipe has **paths** (`*_FILE`), not passphrase/password values. |
 | **Fail** | Scaffold without install, or secrets in the committed recipe. |
 
 ---
@@ -149,8 +149,6 @@ Take a `.recipe` from V2/V4 (or export after a menu **X**). Point `*_FILE` at fi
 | **Do** | Interactive: pick **remoteAction**, leave catalog URL at ThunderCast. Unattended: `NDS_ACTION=remoteAction` without `NDS_CAST_ACTION`. |
 | **Pass** | Fail closed. Message to use `NDS_ACTION=addRole` / `NDS_ACTION=toolkit`. Does **not** source `.nds/actions/addRole.sh` or `toolkit.sh`. |
 | **Fail** | Defaults to addRole, or sources the stub and exits 14 after a fake “success” path. |
-
-Compat (not preferred): `NDS_ACTION=remoteAction` + `NDS_CAST_ACTION=toolkit` must redirect to the **built-in** toolkit action, not the stub.
 
 ---
 
@@ -206,6 +204,5 @@ Same as V1 with `ENCRYPTION=true` (passphrase and/or USB keyfile). If remote unl
 | `classicInstall` + `INSTALL_MODE=remote` | Not implemented |
 | `toolkit` + nixos-anywhere | Refused on purpose until keys can land on the target |
 | NDS wizard using multiple settings sessions | API exists (`nds_sm_create` / `nds_sm_use`); ISO flow uses the default store |
-| Dropping legacy `.env` | Dual-write remains; **load** prefers `.recipe` |
 
 `sid=$(nds_sm_create …)` runs in a subshell — the parent must `nds_sm_use "$sid"` (covered by `settings_sm` selftest).
