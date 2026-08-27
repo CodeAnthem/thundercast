@@ -2,19 +2,20 @@
 # ==================================================================================================
 # NDS - sops age key enrollment
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-03 | Modified: 2026-08-18
+# Date:          Created: 2026-07-03 | Modified: 2026-08-27
 # Description:   Generate a machine age key, install it on the target, and guide sops enrollment
 # ==================================================================================================
 
-# Run age-keygen via shared tools helper (PATH or nixpkgs#age).
+# Run age-keygen on the live ISO store. Combined nix config (store = /mnt)
+# after nixos-install re-realizes nixpkgs#age into the target store and hangs.
 _nds_sops_run_age_keygen() {
-    local nix_config
-    nix_config=$(_nds_install_nix_combined_nix_config "experimental-features = nix-command flakes")
+    local nix_config="experimental-features = nix-command flakes"
     NDS_PKG_NIX_CONFIG="$nix_config" nds_age_keygen "$@"
 }
 
 # Description: Copy an existing machine age key or generate a new one.
-# Uses SOPS_AGE_REUSE=file + SOPS_AGE_KEY_FILE, or generate (default).
+# Honors SOPS_AGE_REUSE=file + SOPS_AGE_KEY_FILE, or generate (default).
+# No prompts — this runs under nds_step_exec after disk install.
 # Arguments:
 # - key_file: <String> Destination keys.txt path
 _nds_sops_reuse_or_generate_key() {
@@ -27,19 +28,6 @@ _nds_sops_reuse_or_generate_key() {
     if [[ -z "$src" && -n "${NDS_SOPS_AGE_KEY_FILE:-}" ]]; then
         src="${NDS_SOPS_AGE_KEY_FILE}"
         reuse="file"
-    fi
-
-    if [[ "$reuse" != "file" ]] \
-        && declare -f nds_mode_is_unattended &>/dev/null && ! nds_mode_is_unattended \
-        && declare -f nds_cfg_ask_choice &>/dev/null; then
-        nds_cfg_ask_choice SOPS_AGE_REUSE "Machine age key" "generate|file" \
-            "generate=Create a new key (toolkit must updatekeys)|file=Reuse keys.txt from a bundle" \
-            "generate"
-        reuse="$(nds_cfg_get SOPS_AGE_REUSE)"
-        if [[ "$reuse" == "file" ]]; then
-            nds_cfg_ask_path SOPS_AGE_KEY_FILE "Path to existing age keys.txt" "" true
-            src="$(nds_cfg_get SOPS_AGE_KEY_FILE)"
-        fi
     fi
 
     if [[ "$reuse" == "file" ]]; then

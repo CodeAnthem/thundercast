@@ -185,9 +185,15 @@ suite_install() {
         if grep -qE 'env NIX_CONFIG=.*_nds_sops_run_age_keygen' "${SCRIPT_DIR}/install/nix/logic/install_sops.sh" 2>/dev/null; then
             TEST_FAILED=$((TEST_FAILED + 1))
             console "  ✗ sops: age-keygen must not be invoked via env as external command"
+        elif grep -q '_nds_install_nix_combined_nix_config' \
+            "${SCRIPT_DIR}/install/nix/logic/install_sops.sh" \
+            || grep -q 'nds_cfg_ask_choice SOPS_AGE_REUSE' \
+            "${SCRIPT_DIR}/install/nix/logic/install_sops.sh"; then
+            TEST_FAILED=$((TEST_FAILED + 1))
+            console "  ✗ sops: enroll must not prompt or realize age into /mnt"
         else
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ sops: age-keygen invoked as shell function"
+            console "  ✓ sops: age-keygen on live store, no enroll prompt"
         fi
     fi
 
