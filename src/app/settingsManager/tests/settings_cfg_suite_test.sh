@@ -391,19 +391,17 @@ EOF
     local _tk_setup="${SCRIPT_DIR}/actions/toolkit/setup.sh"
     local _if="${SCRIPT_DIR}/app/settingsManager/data/builtin/installFlake.sh"
     if grep -q 'nds_cfg_ask_toggle CAST_TOOLKIT_RESTORE' "$_tk" \
-        && grep -q 'nds_cfg_ask_hostname FLAKE_HOST' "$_tk" \
-        && grep -q 'SCAFFOLD_ROLE "toolkit"' "$_tk" \
+        && ! grep -q 'nds_cfg_ask_hostname FLAKE_HOST' "$_tk" \
         && ! grep -q 'nds_cfg_ask_choice CAST_TOOLKIT_MODE' "$_tk" \
         && grep -q 'nds_cfg_summary_row "Restore"' "$_tk" \
         && grep -q 'nds_cfg_summary_row "Flake"' "$_tk" \
-        && grep -q 'nds_cfg_summary_row "Host"' "$_tk" \
+        && ! grep -q 'nds_cfg_summary_row "Host"' "$_tk" \
         && grep -q 'nds_cfg_preset_set_menu installFlake false' "$_tk_setup" \
-        && grep -q 'nds_flake_scaffold_apply' "$_tk_setup" \
         && grep -q 'nds_cfg_is INSTALL_COMPOSER toolkit' "$_if"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ toolkit: restore toggle, host prompt, role+scaffold, installFlake hidden"
+        console "  ✓ toolkit: restore toggle, no host prompt, installFlake hidden"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ toolkit: missing host/role/scaffold or still shows Your flake"
+        console "  ✗ toolkit: still prompts host/mode or shows Your flake"
     fi
 }

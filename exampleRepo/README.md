@@ -26,7 +26,7 @@ hosts/x86_64-linux/<name>/   # you: configuration.nix + opts.nix; NDS: nds_gener
 ## Bootstrap order
 
 1. Copy this tree to a private GitHub repo and `nix flake lock`.
-2. ISO → **toolkit** (`NDS_ACTION=toolkit`) → host name (default `control-toolkit`) → leave Restore off → this leaf URL (write access). Missing host folders are scaffolded from `.roles/toolkit/`. Local install only. A second ops VM: same leaf, different `FLAKE_HOST`, **Restore** on (same operator key).
+2. ISO → **toolkit** (`NDS_ACTION=toolkit`) → leave Restore off → this leaf URL (write access). Toolkit installs `hosts/…/control-toolkit/` (create that host in git first). Local install only. A second ops VM: copy the host folder, `NDS_FLAKE_HOST=<name>`, Restore on.
 3. ISO → **addRole** (`NDS_ACTION=addRole`) → **manager** → first boot `swarm init`.
 4. On the toolkit: run `toolkit` (menu). Encrypt stubs, harvest tokens, enroll hosts from there. `toolkit-update` pulls a new tools VERSION.
 5. **addRole** gateway / workers (join from sops). Enroll each machine from the toolkit menu.

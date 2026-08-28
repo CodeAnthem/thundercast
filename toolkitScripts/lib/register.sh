@@ -51,41 +51,36 @@ tcast_register_host_config_file() {
     printf '%s/config\n' "$(tcast_register_host_dir "$1")"
 }
 
-# Description: Source a toolkit AA file into a nameref (declare -gA tcast_aa).
+# Description: Source a toolkit AA file into a nameref.
 tcast_aa_load() {
-    local file="$1"
+    local file="$1" k
     local -n _tcast_aa_dest="$2"
-    local k
     _tcast_aa_dest=()
     [[ -f "$file" ]] || return 1
     unset tcast_aa
-    declare -gA tcast_aa=()
     # shellcheck disable=SC1090
     source "$file" || return 1
     for k in "${!tcast_aa[@]}"; do
         _tcast_aa_dest["$k"]="${tcast_aa[$k]}"
     done
     unset tcast_aa
-    return 0
 }
 
-# Description: Write a nameref AA as `declare -gA tcast_aa=(...)` using bash %q.
+# Description: Write a nameref AA via bash `declare -p`.
 tcast_aa_save() {
-    local file="$1"
+    local file="$1" k
     local -n _tcast_aa_src="$2"
-    local k
     mkdir -p "$(dirname "$file")"
+    unset tcast_aa
+    declare -gA tcast_aa=()
+    for k in "${!_tcast_aa_src[@]}"; do
+        tcast_aa["$k"]="${_tcast_aa_src[$k]}"
+    done
     {
         printf '%s\n' '# toolkit AA — sourced, not executed'
-        printf '%s\n' 'declare -gA tcast_aa=('
-        if ((${#_tcast_aa_src[@]} > 0)); then
-            while IFS= read -r k; do
-                [[ -n "$k" ]] || continue
-                printf '  [%q]=%q\n' "$k" "${_tcast_aa_src[$k]}"
-            done < <(printf '%s\n' "${!_tcast_aa_src[@]}" | LC_ALL=C sort)
-        fi
-        printf '%s\n' ')'
+        declare -p tcast_aa | sed 's/^declare -A/declare -gA/'
     } >"$file"
+    unset tcast_aa
 }
 
 tcast_aa_get() {
