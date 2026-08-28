@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Part A: apply a complete settings session (classic or flake, local or remote)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-20 | Modified: 2026-08-27
+# Date:          Created: 2026-08-20 | Modified: 2026-08-28
 # Description:   Disk/install only. Composers (Part B) must validate, then call this.
 # ==================================================================================================
 
@@ -40,12 +40,7 @@ nds_install_open_leaf() {
 
     nds_preflight_apply_disko_strategy "$probe_dir" "${NDS_FLAKE_HOST}" "$host_dir"
 
-    nds_step_start_spin "Verifying git input access"
-    if ! nds_git_ensure_flake_closure_access "$probe_dir" "$(nds_cfg_get FLAKE_REPO_URL)"; then
-        nds_step_fail "Git input access"
-        return 1
-    fi
-    nds_step_complete "Git input access OK"
+    nds_git_ensure_flake_closure_access "$probe_dir" "$(nds_cfg_get FLAKE_REPO_URL)" || return 1
 
     nds_step_start_spin "Verifying leaf write access"
     if ! nds_install_flake_probe_leaf_write "$probe_dir"; then

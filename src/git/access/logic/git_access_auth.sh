@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git SSH auth gate + exit cleanup
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-05 | Modified: 2026-08-26
+# Date:          Created: 2026-07-05 | Modified: 2026-08-28
 # Description:   Exit cleanup + flake-input closure access gate
 # ==================================================================================================
 
@@ -211,6 +211,11 @@ nds_git_ensure_flake_closure_access() {
     nds_git_keys_load_all || true
 
     while true; do
+        if declare -f nds_step_start_spin &>/dev/null \
+            && [[ -z "${NDS_UI_STEP_SPIN_PID:-}" ]]; then
+            nds_step_start_spin "Verifying git input access"
+        fi
+
         failed=()
         for url in "${urls[@]}"; do
             if _nds_git_closure_probe_one "$url" &>/dev/null; then
@@ -222,7 +227,11 @@ nds_git_ensure_flake_closure_access() {
         done
 
         if [[ ${#failed[@]} -eq 0 ]]; then
-            success "Access granted: ${#urls[@]} repositories"
+            if declare -f nds_step_complete &>/dev/null && [[ -n "${NDS_UI_STEP_NAME:-}" ]]; then
+                nds_step_complete "Git input access OK"
+            else
+                success "Access granted: ${#urls[@]} repositories"
+            fi
             nds_install_log "git: closure access OK (${#urls[@]} repos)"
             nds_git_access_mark_verified
             return 0
@@ -234,6 +243,9 @@ nds_git_ensure_flake_closure_access() {
         done
 
         if nds_mode_env_true "${NDS_GIT_AUTH_SKIP:-false}"; then
+            if declare -f nds_step_fail &>/dev/null && [[ -n "${NDS_UI_STEP_NAME:-}" ]]; then
+                nds_step_fail "Git input access"
+            fi
             error "Cannot verify SSH access to all flake git inputs (NDS_GIT_AUTH_SKIP set - unset it and configure keys)"
             return 1
         fi
@@ -253,11 +265,17 @@ nds_git_ensure_flake_closure_access() {
                 fi
             done
             if [[ "$allow" != "true" ]]; then
+                if declare -f nds_step_fail &>/dev/null && [[ -n "${NDS_UI_STEP_NAME:-}" ]]; then
+                    nds_step_fail "Git input access"
+                fi
                 error "Unattended: missing SSH access to flake inputs — configure keys, NDS_GIT_KEY_MODE, or allow GH auth UI"
                 return 1
             fi
         fi
 
+        if declare -f nds_step_cancel &>/dev/null; then
+            nds_step_cancel
+        fi
         nds_git_auth_wizard_step_closure "${failed[@]}"
         rc=$?
         [[ "$rc" -eq "${NDS_ACTION_BACK:-10}" ]] && continue

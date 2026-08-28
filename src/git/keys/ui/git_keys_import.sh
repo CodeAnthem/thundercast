@@ -6,6 +6,40 @@
 # Description:   Path and paste key import (cwd/.ssh auto-scan runs before the wizard)
 # ==================================================================================================
 
+# Description: Probe an imported key. Spins while SSH check runs so paste is not silent.
+# Probe failure warns but still returns 0 (wizard can retry).
+# Arguments:
+# - dest:    <String> Key path on disk
+# - ok_msg:  <String> Step/success line when the probe passes
+# - urls:    <String...> URLs to probe (optional)
+_nds_git_wizard_probe_imported_key() {
+    local dest="$1"
+    local ok_msg="$2"
+    shift 2
+    local -a urls=("$@")
+
+    if [[ ${#urls[@]} -eq 0 ]]; then
+        success "$ok_msg"
+        return 0
+    fi
+    if declare -f nds_step_start_spin &>/dev/null; then
+        nds_step_start_spin "Checking SSH key"
+        if nds_git_discover_probe_urls "$dest" "${urls[@]}"; then
+            nds_step_complete "$ok_msg"
+            return 0
+        fi
+        nds_step_fail "SSH key probe"
+        warn "Key loaded but probe failed for one or more URLs — continue after fixing access."
+        return 0
+    fi
+    if nds_git_discover_probe_urls "$dest" "${urls[@]}"; then
+        success "$ok_msg"
+        return 0
+    fi
+    warn "Key loaded but probe failed for one or more URLs — continue after fixing access."
+    return 0
+}
+
 # Description: Import a private key from an explicit path (or NDS_GIT_IMPORT_KEY_PATH).
 # Auto-discovery of cwd / ~/.ssh happens in _nds_git_auth_try_existing_access before menus.
 # Arguments:
@@ -37,16 +71,7 @@ nds_git_wizard_menu_import_path() {
 
     nds_git_keys_register "$src" || return 1
     nds_git_auth_set_mode imported
-
-    if [[ ${#urls[@]} -gt 0 ]]; then
-        if nds_git_discover_probe_urls "$src" "${urls[@]}"; then
-            success "SSH key works: ${src}"
-            return 0
-        fi
-        warn "Key loaded but probe failed for one or more URLs — continue after fixing access."
-    fi
-    success "SSH key loaded from ${src}"
-    return 0
+    _nds_git_wizard_probe_imported_key "$src" "SSH key works: ${src}" "${urls[@]}"
 }
 
 # Description: Import a private key from hidden paste, NDS_GIT_KEY_BODY[url], or NDS_GIT_IMPORT_KEY.
@@ -88,14 +113,6 @@ nds_git_wizard_menu_import_paste() {
 
     nds_git_key_import_body "$body" "$dest" || return 1
     nds_git_auth_set_mode imported
-
-    if [[ ${#urls[@]} -gt 0 ]]; then
-        if nds_git_discover_probe_urls "$dest" "${urls[@]}"; then
-            success "SSH key works (${src_label}): ${dest}"
-            return 0
-        fi
-        warn "Key loaded but probe failed for one or more URLs — continue after fixing access."
-    fi
-    success "SSH key loaded from ${src_label}: ${dest}"
-    return 0
+    _nds_git_wizard_probe_imported_key "$dest" \
+        "SSH key works (${src_label}): ${dest}" "${urls[@]}"
 }

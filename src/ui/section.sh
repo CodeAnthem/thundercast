@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - UI sections (banner + screen titles)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-06 | Modified: 2026-08-26
+# Date:          Created: 2026-08-06 | Modified: 2026-08-28
 # Description:   Persistent NDS banner and section screen transitions
 # ==================================================================================================
 
@@ -32,7 +32,11 @@ nds_ui_banner() {
 }
 
 # Description: Clear the visible screen (keep scrollback) and redraw the persistent NDS banner.
+# Drops any in-progress step spinner first — a wizard screen owns the TTY.
 nds_ui_new_section() {
+    if declare -f nds_step_cancel &>/dev/null; then
+        nds_step_cancel
+    fi
     printf '\033[2J\033[H' >&2
     nds_ui_banner "${NDS_UI_BANNER_SUBTITLE:-}"
 }

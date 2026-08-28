@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - UI - User prompts and menu input
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-21 | Modified: 2026-08-26
+# Date:          Created: 2025-10-21 | Modified: 2026-08-28
 # Description:   Interactive yes/no/back and numbered-menu prompts
 # ==================================================================================================
 
@@ -225,7 +225,7 @@ nds_ui_read_hidden_block() {
         return 1
     }
 
-    while IFS= read -r line; do
+    while IFS= read -r line || [[ -n "$line" ]]; do
         n=$((n + 1))
         if (( n > 200 )); then
             _nds_ui_hidden_block_finish
@@ -236,11 +236,17 @@ nds_ui_read_hidden_block() {
             break
         fi
         block+="${line}"$'\n'
+        printf '\r\033[K%sreceived %d line(s)' "${NDS_UI_INDENT_B:-  }" "$n" >&2
         [[ "$line" =~ ^-----END\ .*PRIVATE\ KEY-----[[:space:]]*$ ]] && break
     done <"$tty"
 
     _nds_ui_hidden_block_finish
-    printf '\n' >&2
+    printf '\r\033[K' >&2
+    if (( n > 0 )); then
+        nds_ui_i "Key received (${n} line(s))."
+    else
+        printf '\n' >&2
+    fi
 
     [[ -n "$block" ]] || return 1
     printf '%s' "$block"

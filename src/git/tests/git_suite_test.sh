@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git tools tests (read-only / temp dirs)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-05 | Modified: 2026-08-27
+# Date:          Created: 2026-07-05 | Modified: 2026-08-28
 # ==================================================================================================
 
 suite_git() {
@@ -509,6 +509,32 @@ LOCK
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ git_access: probe is still a static line (no start_spin/cancel)"
+    fi
+    if grep -q 'nds_step_start_spin "Verifying git input access"' \
+        "${SCRIPT_DIR}/git/access/logic/git_access_auth.sh" \
+        && grep -B20 'nds_git_auth_wizard_step_closure' \
+            "${SCRIPT_DIR}/git/access/logic/git_access_auth.sh" | grep -q 'nds_step_cancel'; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ git_access: closure spinner cancelled before related-repo wizard"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ git_access: closure wizard can run under Verifying git input access spinner"
+    fi
+    if grep -q 'nds_step_cancel' "${SCRIPT_DIR}/ui/section.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ ui: new_section cancels leftover step spinner"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ ui: new_section does not cancel an in-progress spinner"
+    fi
+    if grep -q 'Key received' "${SCRIPT_DIR}/ui/prompts.sh" \
+        && grep -q 'received %d line' "${SCRIPT_DIR}/ui/prompts.sh" \
+        && grep -q 'Checking SSH key' "${SCRIPT_DIR}/git/keys/ui/git_keys_import.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ git import: paste acks immediately, spinner while probing"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ git import: paste still silent until probe finishes"
     fi
     if grep -q 'nds_ask_user_to_proceed "Show QR codes?"' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
