@@ -135,12 +135,20 @@ nds_git_auth_try_session_key() {
 nds_git_auth_try_import_path() {
     local path="${NDS_GIT_IMPORT_KEY_PATH:-}"
     local dest
+    if [[ -n "$path" && -d "$path" ]] && declare -f nds_git_register_keys_in_dir &>/dev/null; then
+        nds_git_register_keys_in_dir "$path"
+        debug "Loaded SSH keys from import directory"
+        return 0
+    fi
     [[ -n "$path" && -f "$path" ]] || return 1
     dest="$(nds_git_session_key_path)"
     if [[ "$path" == "$dest" ]]; then
         nds_git_key_load "$dest" || return 1
     else
         nds_git_key_import "$path" "$dest" || return 1
+    fi
+    if declare -f nds_git_register_keys_in_dir &>/dev/null; then
+        nds_git_register_keys_in_dir "$(dirname "$path")"
     fi
     debug "Loaded SSH key from import path"
     return 0

@@ -83,13 +83,26 @@ _nds_git_record_url_access() {
 }
 
 _nds_git_closure_probe_one() {
-    local url="$1" key
+    local url="$1" key dest="" parsed host owner repo
 
     if nds_git_probe_public "$url" 2>/dev/null; then
         return 0
     fi
     if declare -f nds_git_access_apply_map &>/dev/null && nds_git_access_apply_map "$url"; then
         return 0
+    fi
+    if parsed=$(_nds_git_url_parse "$(_nds_git_url_toSsh "$url")" 2>/dev/null); then
+        IFS=$'\t' read -r host owner repo <<< "$parsed"
+        dest="$(nds_git_deploy_key_path "$owner" "$repo" 2>/dev/null || true)"
+        if [[ -n "$dest" && -f "$dest" ]] \
+            && declare -f nds_git_probe_access_with_key &>/dev/null \
+            && nds_git_probe_access_with_key "$url" "$dest"; then
+            nds_git_keys_register "$dest" || true
+            if declare -f nds_git_bind_key_to_url &>/dev/null; then
+                nds_git_bind_key_to_url "$dest" "$url" || true
+            fi
+            return 0
+        fi
     fi
     if declare -f nds_git_keys_list &>/dev/null \
         && declare -f nds_git_probe_access_with_key &>/dev/null; then
@@ -313,6 +326,17 @@ _nds_git_auth_try_existing_access() {
 
     nds_git_auth_try_import_path && nds_git_keys_register "$(nds_git_session_key_path)" 2>/dev/null || true
     nds_git_auth_try_import_body && nds_git_keys_register "$(nds_git_session_key_path)" 2>/dev/null || true
+    if declare -f nds_git_register_keys_in_dir &>/dev/null; then
+        nds_git_register_keys_in_dir "$PWD"
+        nds_git_register_keys_in_dir "/root/.ssh"
+        if [[ -n "${NDS_GIT_IMPORT_KEY_PATH:-}" ]]; then
+            if [[ -d "${NDS_GIT_IMPORT_KEY_PATH}" ]]; then
+                nds_git_register_keys_in_dir "${NDS_GIT_IMPORT_KEY_PATH}"
+            elif [[ -f "${NDS_GIT_IMPORT_KEY_PATH}" ]]; then
+                nds_git_register_keys_in_dir "$(dirname "${NDS_GIT_IMPORT_KEY_PATH}")"
+            fi
+        fi
+    fi
     if nds_git_probe_access "$url"; then
         nds_git_auth_set_mode imported
         return 0

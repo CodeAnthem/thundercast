@@ -15,25 +15,44 @@ _nds_git_discover_in_dir() {
     local f base
 
     [[ -d "$dir" ]] || return 0
-    for f in "$dir"/id_* "$dir"/git-*-key "$dir"/deploy-* "$dir"/*_ed25519 "$dir"/*_rsa; do
+    for f in "$dir"/id_* "$dir"/git-*-key "$dir"/deploy-* \
+        "$dir"/nds_deploy_* "$dir"/nds_imported_* \
+        "$dir"/*_ed25519 "$dir"/*_rsa; do
         [[ -f "$f" ]] || continue
         [[ "$f" == *.pub ]] && continue
         printf '%s\n' "$f"
     done
 }
 
+# Description: Register every private key in a directory (restore-bundle secrets/git).
+# Arguments:
+# - dir: <String> Directory to scan
+nds_git_register_keys_in_dir() {
+    local dir="$1" f
+
+    [[ -d "$dir" ]] || return 0
+    while IFS= read -r f; do
+        [[ -f "$f" ]] || continue
+        chmod 600 "$f" 2>/dev/null || true
+        nds_git_keys_register "$f" || true
+    done < <(_nds_git_discover_in_dir "$dir")
+}
+
 # Description: List private key candidates (cwd, then /root/.ssh).
 # Returns:
 # - <String> deduped paths (stdout)
 nds_git_discover_key_candidates() {
-    local owner_key
+    local owner_key import_path="${NDS_GIT_IMPORT_KEY_PATH:-}"
     owner_key="/root/.ssh/$(nds_git_secrets_basename)"
     {
         _nds_git_discover_in_dir "$PWD"
         _nds_git_discover_in_dir "/root/.ssh"
         [[ -f "$owner_key" ]] && printf '%s\n' "$owner_key"
-        if [[ -n "${NDS_GIT_IMPORT_KEY_PATH:-}" && -f "${NDS_GIT_IMPORT_KEY_PATH}" ]]; then
-            printf '%s\n' "${NDS_GIT_IMPORT_KEY_PATH}"
+        if [[ -n "$import_path" && -d "$import_path" ]]; then
+            _nds_git_discover_in_dir "$import_path"
+        elif [[ -n "$import_path" && -f "$import_path" ]]; then
+            printf '%s\n' "$import_path"
+            _nds_git_discover_in_dir "$(dirname "$import_path")"
         fi
     } | awk 'NF' | sort -u
 }

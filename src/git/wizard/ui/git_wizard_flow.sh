@@ -86,7 +86,7 @@ nds_git_wizard_ask_auth_method() {
         nds_ui_b ""
         nds_aa_ask_numbered_choice GIT_AUTH_ROUTE \
             "paste|path" \
-            "paste=Paste a private SSH key (hidden)|path=Path to a private SSH key" \
+            "paste=Paste a private SSH key (hidden)|path=Path to a key file or a folder of nds_deploy_* keys" \
             "$default" \
             true
     elif [[ "$is_gh" == "true" ]]; then
@@ -146,13 +146,13 @@ nds_git_wizard_ask_closure_coverage() {
     if _nds_git_wizard_used_gh; then
         nds_aa_ask_numbered_choice GIT_CLOSURE_COVERAGE \
             "gh|generate|existing" \
-            "gh=Register deploy keys via gh|generate=Create a key per repo and add it yourself|existing=Reuse the key already loaded (or paste one for all remaining repos)" \
+            "gh=Register deploy keys via gh|generate=Create a key per repo and add it yourself|existing=Path/folder of keys, or paste (one file per remaining repo)" \
             "$default" \
             true
     else
         nds_aa_ask_numbered_choice GIT_CLOSURE_COVERAGE \
             "generate|existing" \
-            "generate=Create a key per repo and add it yourself|existing=Reuse the key already loaded (or paste one for all remaining repos)" \
+            "generate=Create a key per repo and add it yourself|existing=Path/folder of keys, or paste (one file per remaining repo)" \
             "$default" \
             true
     fi

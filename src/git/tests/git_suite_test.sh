@@ -239,6 +239,22 @@ suite_git() {
             TEST_FAILED=$((TEST_FAILED + 1))
             console "  ✗ deploy_key_basename: expected nds_deploy_codeanthem_dp_cluster"
         fi
+        if declare -f _nds_git_discover_in_dir &>/dev/null; then
+            local disc_tmp disc_out
+            disc_tmp=$(mktemp -d)
+            : >"${disc_tmp}/nds_deploy_codeanthem_dp_cluster"
+            : >"${disc_tmp}/nds_deploy_codeanthem_dp_cluster.pub"
+            disc_out="$(_nds_git_discover_in_dir "$disc_tmp")"
+            if grep -qx "${disc_tmp}/nds_deploy_codeanthem_dp_cluster" <<<"$disc_out" \
+                && ! grep -q '\.pub' <<<"$disc_out"; then
+                TEST_PASSED=$((TEST_PASSED + 1))
+                console "  ✓ discover_in_dir: nds_deploy_* (skips .pub)"
+            else
+                TEST_FAILED=$((TEST_FAILED + 1))
+                console "  ✗ discover_in_dir: missed nds_deploy_* or included .pub"
+            fi
+            rm -rf "$disc_tmp"
+        fi
         if [[ "$(nds_git_deploy_key_title CodeAnthem dp_cluster)" == "nds_control-toolkit" ]] \
             && [[ "$(nds_git_deploy_key_register_title CodeAnthem dp_cluster false)" == "nds_control-toolkit_write" ]] \
             && [[ "$(nds_git_deploy_key_register_title CodeAnthem dp_cluster true)" == "nds_control-toolkit" ]]; then
@@ -515,6 +531,31 @@ LOCK
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ install: open_leaf missing write/reason args on git access"
+    fi
+    if awk '
+        /nds_install_flake_probe_leaf_write/ { if (!w) w=NR }
+        /nds_git_ensure_flake_closure_access/ { c=NR }
+        END { exit !(w && c && w < c) }
+    ' "${SCRIPT_DIR}/install/apply/logic/install_apply.sh" \
+        && grep -q 'nds_git_auth_wizard_step_repo' \
+            "${SCRIPT_DIR}/install/apply/logic/install_apply.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ install: leaf write is checked before related-repo wizard"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ install: leaf write still runs after flake-input closure"
+    fi
+    if grep -q 'nds_deploy_\*' \
+        "${SCRIPT_DIR}/git/access/logic/git_access_discover.sh" \
+        && grep -q 'nds_git_register_keys_in_dir' \
+        "${SCRIPT_DIR}/git/access/logic/git_access_discover.sh" \
+        && grep -q 'folder of nds_deploy' \
+        "${SCRIPT_DIR}/git/keys/ui/git_keys_import.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ git discover: nds_deploy_* restore-bundle folder"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ git discover: still misses nds_deploy_* / key folders"
     fi
     if grep -q 'nds_step_start_spin "Checking git access"' \
         "${SCRIPT_DIR}/git/access/logic/git_access.sh" \

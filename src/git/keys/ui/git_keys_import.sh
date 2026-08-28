@@ -50,10 +50,11 @@ _nds_git_wizard_probe_imported_key() {
 # - <Bool> 0 on success
 nds_git_wizard_menu_import_path() {
     local -a urls=("$@")
-    local src mapped=""
+    local src mapped="" url key found
 
     if [[ "${_NDS_GIT_RELATED_IMPORT:-}" != "1" ]]; then
-        if [[ -n "${NDS_GIT_IMPORT_KEY_PATH:-}" && -f "${NDS_GIT_IMPORT_KEY_PATH}" ]]; then
+        if [[ -n "${NDS_GIT_IMPORT_KEY_PATH:-}" ]] \
+            && { [[ -f "${NDS_GIT_IMPORT_KEY_PATH}" ]] || [[ -d "${NDS_GIT_IMPORT_KEY_PATH}" ]]; }; then
             src="${NDS_GIT_IMPORT_KEY_PATH}"
         fi
     fi
@@ -62,8 +63,34 @@ nds_git_wizard_menu_import_path() {
         [[ -n "$mapped" && -f "$mapped" ]] && src="$mapped"
     fi
     if [[ -z "${src:-}" ]]; then
-        nds_aa_ask_path GIT_IMPORT_KEY_PATH "Private SSH key path" "" true || return 1
+        nds_aa_ask_path GIT_IMPORT_KEY_PATH \
+            "Private SSH key path (file or folder of nds_deploy_* keys)" "" true || return 1
         src="$(nds_feat_cfg_get GIT_IMPORT_KEY_PATH)"
+    fi
+
+    if [[ -d "$src" ]]; then
+        nds_git_register_keys_in_dir "$src" || return 1
+        if [[ ${#urls[@]} -eq 0 ]]; then
+            success "Loaded keys from ${src}"
+            return 0
+        fi
+        for url in "${urls[@]}"; do
+            found=false
+            while IFS= read -r key; do
+                [[ -f "$key" ]] || continue
+                if nds_git_probe_access_with_key "$url" "$key"; then
+                    nds_git_bind_key_to_url "$key" "$url" || true
+                    found=true
+                    break
+                fi
+            done < <(nds_git_keys_list 2>/dev/null || true)
+            [[ "$found" == true ]] || {
+                error "No key in ${src} can read ${url}"
+                return 1
+            }
+        done
+        success "Loaded keys from ${src}"
+        return 0
     fi
 
     [[ -f "$src" ]] || {
@@ -72,6 +99,9 @@ nds_git_wizard_menu_import_path() {
     }
 
     nds_git_keys_register "$src" || return 1
+    if declare -f nds_git_register_keys_in_dir &>/dev/null; then
+        nds_git_register_keys_in_dir "$(dirname "$src")"
+    fi
     nds_git_auth_set_mode imported
     _nds_git_wizard_probe_imported_key "$src" "SSH key works: ${src}" "${urls[@]}"
 }

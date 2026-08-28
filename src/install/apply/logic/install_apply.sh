@@ -9,7 +9,7 @@
 # Description: Clone the install flake with write access and set NDS_FLAKE_PROBE_DIR.
 # Used by addRole, toolkit, and user remote actions. Not used by installFlake (read-only).
 nds_install_open_leaf() {
-    local host_dir probe_dir injected=0
+    local host_dir probe_dir injected=0 parsed host owner repo key_path
 
     if [[ -z "$(nds_cfg_get FLAKE_REPO_URL)" ]]; then
         error "FLAKE_REPO_URL is required (install flake Git URL)"
@@ -40,14 +40,41 @@ nds_install_open_leaf() {
 
     nds_preflight_apply_disko_strategy "$probe_dir" "${NDS_FLAKE_HOST}" "$host_dir"
 
-    nds_git_ensure_flake_closure_access "$probe_dir" "$(nds_cfg_get FLAKE_REPO_URL)" || return 1
-
     nds_step_start_spin "Verifying leaf write access"
-    if ! nds_install_flake_probe_leaf_write "$probe_dir"; then
-        nds_step_fail "Leaf write access"
-        return 1
+    if nds_install_flake_probe_leaf_write "$probe_dir"; then
+        nds_step_complete "Leaf write access OK"
+    else
+        nds_step_cancel
+        warn "This key cloned the leaf but cannot push (GitHub deploy keys are read-only unless Allow write access is on)."
+        parsed="$(_nds_git_url_parse "$(_nds_git_url_toSsh "$(nds_cfg_get FLAKE_REPO_URL)")" 2>/dev/null || true)"
+        IFS=$'\t' read -r host owner repo <<< "$parsed"
+        if [[ -z "$host" || -z "$owner" || -z "$repo" ]]; then
+            error "Cannot parse FLAKE_REPO_URL for write-key wizard"
+            return 1
+        fi
+        while true; do
+            nds_git_auth_wizard_step_repo "$host" "$owner" "$repo" write \
+                "Need a key that can push host files to this repository." || return $?
+            nds_step_start_spin "Verifying leaf write access"
+            if nds_install_flake_probe_leaf_write "$probe_dir"; then
+                nds_step_complete "Leaf write access OK"
+                break
+            fi
+            nds_step_cancel
+            warn "Still cannot push — generate a write deploy key or paste an account key."
+        done
     fi
-    nds_step_complete "Leaf write access OK"
+
+    if declare -f nds_git_register_keys_in_dir &>/dev/null; then
+        nds_git_register_keys_in_dir "/root/.ssh"
+        nds_git_register_keys_in_dir "$PWD"
+        while IFS= read -r key_path; do
+            [[ -n "$key_path" && -f "$key_path" ]] || continue
+            nds_git_register_keys_in_dir "$(dirname "$key_path")"
+        done < <(nds_git_keys_list 2>/dev/null || true)
+    fi
+
+    nds_git_ensure_flake_closure_access "$probe_dir" "$(nds_cfg_get FLAKE_REPO_URL)" || return 1
 
     export NDS_FLAKE_PREPARED=1
     return 0

@@ -124,11 +124,9 @@ nds_git_access_logic_try() {
 
     if _nds_git_auth_try_existing_access "$url"; then
         success "Git access confirmed for ${owner}/${repo} (existing key)."
-        nds_git_access_mark_verified
         if declare -f nds_git_access_set &>/dev/null; then
             nds_git_access_set method "$url" "import"
         fi
-        _g_try[GIT_ACCESS_VERIFIED]="true"
         _g_try[GIT_ACCESS_METHOD]="import"
         return 0
     fi
