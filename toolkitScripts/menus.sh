@@ -1,7 +1,7 @@
 # ==================================================================================================
 # Thundercast - toolkit menus
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-19 | Modified: 2026-08-20
+# Date:          Created: 2026-08-19 | Modified: 2026-08-28
 # ==================================================================================================
 
 tcast_menu_status() {
@@ -63,11 +63,11 @@ tcast_menu_update() {
 
 tcast_menu_nodes_list() {
     local h role pub
-    tcast_ui_section "Nodes — inventory"
+    tcast_ui_section "Nodes — enrolled"
     tcast_ui_blank
     tcast_ui_line "roles: $(tcast_nodes_roles | tr '\n' ' ')"
     tcast_ui_blank
-    tcast_ui_line "register:"
+    tcast_ui_line "machines:"
     while IFS= read -r h; do
         [[ -n "$h" ]] || continue
         role="$(tcast_register_host_get "$h" role 2>/dev/null || echo ?)"
@@ -113,7 +113,7 @@ tcast_menu_nodes_install() {
     tcast_ui_blank
     tcast_ui_line "Install from this VM (nixos-anywhere) is not in this tools VERSION."
     tcast_ui_line "After Apply & push, run NDS remoteAction on the target with FLAKE_HOST set."
-    tcast_ui_line "Restore: copy the host backup zip onto the ISO; NDS restore uses nds-restore.env."
+    tcast_ui_line "Restore: copy the host backup zip onto the ISO; NDS restore uses nds-restore.recipe."
     tcast_ui_blank
     mapfile -t hosts < <(tcast_nodes_host_dirs)
     if ((${#hosts[@]} == 0)); then

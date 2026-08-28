@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Apply recipe action (Part A only)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-20 | Modified: 2026-08-20
+# Date:          Created: 2026-08-20 | Modified: 2026-08-28
 # Description:   Install NixOS from a complete recipe file (no composer wizard)
 # ==================================================================================================
 
@@ -28,7 +28,7 @@ action_setup() {
     nds_mode_resolve || true
 
     if [[ -n "${NDS_RECIPE_FILE:-}" ]]; then
-        nds_sm_load "$NDS_RECIPE_FILE" || exit 11
+        nds_sm_load_with_env "$NDS_RECIPE_FILE" || exit 11
     fi
 
     if [[ "$(_nds_install_apply_kind)" == "flake" ]]; then

@@ -143,30 +143,10 @@ nds_flake_write_host_nds_env() {
     [[ -n "$hostname" ]] || return 1
     dest="${flake_root}/.nds/hosts/${hostname}.recipe"
     mkdir -p "$(dirname "$dest")"
-    _nds_flake_write_host_inventory "$flake_root" "$hostname"
     if declare -f nds_sm_export &>/dev/null; then
         nds_sm_export --git "$dest" || return 1
     fi
     nds_install_log "leaf: wrote ${dest#"$flake_root"/}"
-}
-
-# Description: Write .nds/hosts/<name>.inventory (hostname, role, age pub path).
-# Arguments:
-# - flake_root: <String> Leaf checkout
-# - hostname:   <String> Host name
-_nds_flake_write_host_inventory() {
-    local flake_root="$1"
-    local hostname="$2"
-    local dest role ssh
-    dest="${flake_root}/.nds/hosts/${hostname}.inventory"
-    role="$(nds_cfg_get SCAFFOLD_ROLE 2>/dev/null || true)"
-    ssh="$(nds_cfg_get NETWORK_IP 2>/dev/null || true)"
-    {
-        echo "host=${hostname}"
-        echo "role=${role}"
-        echo "ssh=${ssh}"
-        echo "age_pub=.nds/hosts/${hostname}.age.pub"
-    } >"$dest"
 }
 
 # Description: Restore a host session from the leaf recipe.
@@ -179,8 +159,8 @@ nds_flake_load_host_restore() {
     local recipe
     [[ -n "$hostname" ]] || return 1
     recipe="${flake_root}/.nds/hosts/${hostname}.recipe"
-    if [[ -f "$recipe" ]] && declare -f nds_sm_load &>/dev/null; then
-        nds_sm_load "$recipe" || return 1
+    if [[ -f "$recipe" ]] && declare -f nds_sm_load_with_env &>/dev/null; then
+        nds_sm_load_with_env "$recipe" || return 1
         info "Loaded NDS recipe from ${recipe}"
         return 0
     fi

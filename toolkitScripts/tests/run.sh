@@ -58,25 +58,40 @@ git -C "$LEAF" -c user.email=t@t -c user.name=t add flake.nix
 git -C "$LEAF" -c user.email=t@t -c user.name=t commit -q -m init
 
 tcast_register_ensure_defaults
+_kvf="${WORKDIR}/kv.conf"
+tcast_kv_set "$_kvf" weird 'secrets/with space/x.yaml'
+if [[ "$(tcast_kv_get "$_kvf" weird)" == 'secrets/with space/x.yaml' ]] \
+    && grep -q 'weird="secrets/with space/x.yaml"' "$_kvf"; then
+    ok "kv quotes values with spaces"
+else
+    fail "kv space quoting"
+fi
+tcast_kv_set "$_kvf" note 'a=b#c'
+if [[ "$(tcast_kv_get "$_kvf" note)" == 'a=b#c' ]]; then
+    ok "kv quotes values with = and #"
+else
+    fail "kv special-char quoting"
+fi
+unset _kvf
 tcast_operator_ready && fail "ready before init" || ok "not ready before init"
 if out="$(tcast_sops_health)"; then
     echo "$out" | grep -q 'not registered' && ok "health empty without operator" || fail "health unregistered message"
 else
     fail "health without operator should pass"
 fi
-mkdir -p "$LEAF/.toolkit/operator"
+mkdir -p "$LEAF/.toolkit/operator/keys"
 "$AGE" -o "$TCAST_TOOLKIT_OP_KEY" >/dev/null 2>&1
-"$AGE" -y "$TCAST_TOOLKIT_OP_KEY" > "$LEAF/.toolkit/operator/age.pub"
+"$AGE" -y "$TCAST_TOOLKIT_OP_KEY" > "$LEAF/.toolkit/operator/keys/age.pub"
 tcast_register_import_leaf
 tcast_operator_ready && fail "pub file skipped Init" || ok "pub file does not skip Init"
-tcast_register_meta_set operator_age_pub "$(tr -d '[:space:]' < "$LEAF/.toolkit/operator/age.pub")"
+tcast_register_meta_set operator_age_pub "$(tr -d '[:space:]' < "$LEAF/.toolkit/operator/keys/age.pub")"
 tcast_operator_ready && fail "register pub skipped Init" || ok "register pub without initialized_at is not ready"
 
 tcast_sops_operator_init
 tcast_operator_ready && ok "ready after init" || fail "ready after init"
 [[ "$(tcast_register_meta_get operator_age_pub)" == age1* ]] && ok "operator init records pub" || fail "operator pub"
 [[ -f "$TCAST_TOOLKIT_OP_KEY" ]] && ok "operator private stays off-leaf" || fail "operator private"
-if grep -q 'AGE-SECRET-KEY-' "$LEAF"/.toolkit/operator/age.pub 2>/dev/null; then
+if grep -q 'AGE-SECRET-KEY-' "$LEAF"/.toolkit/operator/keys/age.pub 2>/dev/null; then
     fail "operator private leaked into leaf pub file"
 else
     ok "leaf operator age.pub is public only"
@@ -100,6 +115,9 @@ fi
 tcast_nodes_scaffold lab-node-a worker x86_64-linux
 [[ -f "$LEAF/hosts/x86_64-linux/lab-node-a/opts.nix" ]] && ok "scaffold from role" || fail "scaffold"
 [[ "$(tcast_register_host_get lab-node-a role)" == worker ]] && ok "register host role" || fail "register host"
+[[ -f "$LEAF/.toolkit/machines/lab-node-a/config" ]] && ok "host config file" || fail "host config file"
+[[ -f "$LEAF/.nds/hosts/lab-node-a.recipe" ]] && ok "scaffold recipe" || fail "scaffold recipe"
+[[ ! -f "$LEAF/.nds/hosts/lab-node-a.env" ]] && ok "no leftover .env" || fail "leftover .env"
 
 HOSTKEY="${WORKDIR}/host.age"
 age-keygen -o "$HOSTKEY" >/dev/null 2>&1
@@ -107,6 +125,9 @@ HOSTPUB="$(age-keygen -y "$HOSTKEY" 2>/dev/null)"
 rm -f "$HOSTKEY"
 tcast_nodes_enroll_age lab-node-a "$HOSTPUB"
 grep -q "$HOSTPUB" "$LEAF/.sops.yaml" && ok "enroll writes pub into .sops.yaml" || fail "enroll policy"
+[[ -f "$LEAF/.toolkit/machines/lab-node-a/keys/age.pub" ]] && ok "enroll writes keys/age.pub" || fail "host age.pub"
+tcast_register_scope_add_member luks lab-node-a
+[[ "$(tcast_register_host_get lab-node-a groups)" == *luks* ]] && ok "groups csv in host config" || fail "groups csv"
 
 tcast_sops_put_value secrets/hosts/lab-node-a.yaml private_key dummy
 grep -q '^sops:' "$LEAF/secrets/hosts/lab-node-a.yaml" && ok "per-host secret encrypts" || fail "host secret"

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git auth wizard GitHub CLI menu
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-27
+# Date:          Created: 2026-07-07 | Modified: 2026-08-28
 # ==================================================================================================
 
 # Description: Print one device-login line with optional color on code/URL.
@@ -53,6 +53,7 @@ _nds_git_wizard_gh_show_device_prompt() {
     nds_ui_section_header "GitHub device login"
     nds_ui_b "gh stores a short-lived session on this ISO (plain text — no credential store on the live image)."
     nds_ui_b "Complete login on your phone using the code below."
+    nds_ui_b "After install, logout is enough. Do not revoke GitHub CLI in Settings → Applications — that deletes SSH keys this session created."
     nds_ui_b ""
     while IFS= read -r line; do
         [[ -n "$line" ]] || continue

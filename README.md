@@ -4,7 +4,7 @@
 
 # ThunderCast
 
-[![Version](https://img.shields.io/badge/version-5.25.2-0267c1?style=flat-square)](https://github.com/CodeAnthem/thundercast)
+[![Version](https://img.shields.io/badge/version-5.28.0-0267c1?style=flat-square)](https://github.com/CodeAnthem/thundercast)
 [![NixOS](https://img.shields.io/badge/NixOS-Live%20ISO-5277C3?style=flat-square&logo=nixos&logoColor=white)](https://nixos.org)
 [![ShellCheck](https://github.com/CodeAnthem/thundercast/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/CodeAnthem/thundercast/actions/workflows/shellcheck.yml)
 [![Self-test](https://github.com/CodeAnthem/thundercast/actions/workflows/selftest.yml/badge.svg)](https://github.com/CodeAnthem/thundercast/actions/workflows/selftest.yml)
@@ -142,7 +142,7 @@ Logs on the live system: `/tmp/nds_session.log` (session events). After install 
 
 ### 6. Back up install package
 
-After install, NDS creates a zip in `/home/nixos/` (owned by the `nixos` user so `scp`/`ssh` work). It includes a personalized **`QUICK_START.md`**, `nds-restore.env`, generated configs, install logs, and unlock material when encryption was enabled (LUKS passphrase, keyfile, and/or initrd SSH host key).
+After install, NDS creates a zip in `/home/nixos/` (owned by the `nixos` user so `scp`/`ssh` work). It includes a personalized **`QUICK_START.md`**, `nds-restore.recipe`, generated configs, install logs, and unlock material when encryption was enabled (LUKS passphrase, keyfile, and/or initrd SSH host key).
 
 If you enabled a **USB key**, the finish screen tells you exactly how to copy `secrets/luks_key.bin` onto a USB stick (raw `dd` to the device, or a file on a mounted USB) before rebooting — the key is never written to the target disk, so you must stage it on the USB yourself.
 

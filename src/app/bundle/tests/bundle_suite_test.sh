@@ -44,13 +44,13 @@ suite_bundle() {
         NDS_CTX_HOSTNAME=testhost _nds_bundle_quickstart "$dest"
         if grep -q "\*\*NDS version:\*\* ${ver}" "$dest" \
             && grep -q '\*\*NixOS version:\*\* ' "$dest" \
-            && grep -q 'nds-restore.env' "$dest" \
+            && grep -q 'nds-restore.recipe' "$dest" \
             && ! grep -q $'\u2014' "$dest"; then
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ bundle: QUICK_START.md records versions, nds-restore.env, no em dash"
+            console "  ✓ bundle: QUICK_START.md records versions, nds-restore.recipe, no em dash"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
-            console "  ✗ bundle: QUICK_START.md missing versions, nds-restore.env, or has em dash"
+            console "  ✗ bundle: QUICK_START.md missing versions, nds-restore.recipe, or has em dash"
         fi
         rm -f "$dest"
 

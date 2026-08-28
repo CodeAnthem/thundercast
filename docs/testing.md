@@ -57,7 +57,7 @@ Env vars (`NDS_ACTION`, `NDS_FLAKE_REPO_URL`, `NDS_TEST`, …) are picked up the
 | | |
 |--|--|
 | **Do** | Action `classicInstall`. DHCP, generated admin password, `DISK_STRATEGY=nds`, `ENCRYPTION=false`. Confirm wipe. Copy `nds_bundle.zip` off the box. Reboot. |
-| **Pass** | Boots. Login as the admin user. SSH if you enabled it. Bundle has `QUICK_START.md` + `nds-restore.env`. |
+| **Pass** | Boots. Login as the admin user. SSH if you enabled it. Bundle has `QUICK_START.md` + `nds-restore.recipe`. |
 | **Fail** | Installer returns before `nixos-install`, or no login after reboot. |
 
 ---

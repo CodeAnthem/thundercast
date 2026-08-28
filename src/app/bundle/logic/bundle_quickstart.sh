@@ -145,7 +145,7 @@ time. **Keep this bundle safe** - it also holds unlock secrets when encryption w
 
 | Path | What |
 |------|------|
-| \`nds-restore.env\` | Settings + runtime exports, then curl. Paste all, or copy the export blocks. |
+| \`nds-restore.recipe\` | Settings recipe. Set \`NDS_RECIPE_FILE\` to this file, then curl. Env \`NDS_*\` overrides the recipe. |
 | \`config/*\` | Generated artifacts (e.g. facter.json, classic configuration.nix) |
 | \`logs/nds.log\` | NDS session, install steps, and diagnostics (no nixos-install dump) |
 | \`logs/nixosInstallation.log\` | Output of \`nixos-install\` / flake build / nixos-anywhere only |
@@ -162,7 +162,7 @@ EOF
         fi
 
         if [[ "$has_git_keys" == "true" ]]; then
-            printf '| `secrets/git/*` | Private SSH keys used for flake git access. Copy to `/root/.ssh/` (chmod 600) before pasting nds-restore.env. |\n'
+            printf '| `secrets/git/*` | Private SSH keys used for flake git access. Copy to `/root/.ssh/` (chmod 600) before restore. |\n'
         fi
 
         if [[ "$has_toolkit_keys" == "true" ]]; then
@@ -335,18 +335,33 @@ EOF
 ## Recreate this install (private git)
 
 This zip includes the SSH keys NDS used to fetch private flakes. Copy them onto the live
-ISO before pasting \`nds-restore.env\` (\`NDS_GIT_KEY_PATH\` already points at \`/root/.ssh/<filename>\`):
+ISO before restore (\`NDS_GIT_KEY_PATH\` already points at \`/root/.ssh/<filename>\`):
 
 \`\`\`bash
 mkdir -p /root/.ssh
 cp secrets/git/* /root/.ssh/
 chmod 600 /root/.ssh/*
 chmod 644 /root/.ssh/*.pub 2>/dev/null || true
+export NDS_RECIPE_FILE="\$PWD/nds-restore.recipe"
+# optional: export NDS_DISK_TARGET=/dev/nvme0n1
+# optional: export NDS_AUTO_CONFIRM=true
+curl -sSL https://raw.githubusercontent.com/CodeAnthem/thundercast/main/start.sh | bash
 \`\`\`
 EOF
         fi
 
         cat <<EOF
+
+## Restore this install
+
+Copy this zip onto a live ISO. Settings live in \`nds-restore.recipe\` (same loader as \`.nds/hosts/<host>.recipe\`). \`NDS_*\` env vars override the recipe. Unattended: \`NDS_AUTO_CONFIRM=true\`.
+
+\`\`\`bash
+export NDS_RECIPE_FILE="\$PWD/nds-restore.recipe"
+# optional: export NDS_DISK_TARGET=/dev/nvme0n1
+# optional: export NDS_AUTO_CONFIRM=true
+curl -sSL https://raw.githubusercontent.com/CodeAnthem/thundercast/main/start.sh | bash
+\`\`\`
 
 ---
 

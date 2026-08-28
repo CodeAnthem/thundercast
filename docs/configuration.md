@@ -12,7 +12,7 @@ Interactive vs unattended is `NDS_AUTO_CONFIRM` / `--auto-confirm` (or `NDS_MODE
 |----------|-------------|
 | `NDS_AUTO_CONFIRM` | Umbrella — skip interactive menus and Y/n prompts (`true`) |
 | `NDS_ACTION` | Action name — skip action picker (e.g. `installFlake`, `addRole`, `toolkit`, `apply`) |
-| `NDS_RECIPE_FILE` | Path to a sectioned `tc-recipe` or `export NDS_*=` file (same as `--recipe`). Secret **values** are ignored; `*_FILE` paths are kept. |
+| `NDS_RECIPE_FILE` | Path to a sectioned `tc-recipe` (same as `--recipe`). After load, `NDS_*` env vars override recipe keys. Secret **values** are ignored; `*_FILE` paths are kept. |
 | `NDS_INSTALL_CONFIRM_SKIP` | Skip disk wipe confirms (format + local + remote). Unattended already skips these. |
 | `NDS_GIT_AUTH_SKIP` | Skip git SSH wizard **and fail** if access is missing (`true`). `NDS_AUTO_CONFIRM` does **not** skip git auth. |
 | `NDS_REBOOT_SKIP` | Interactive only — skip the “Reboot now?” prompt (`true`) |
@@ -195,9 +195,9 @@ sudo -E bash src/app/main.sh --auto-confirm
 
 ### Recreate from the bundle
 
-The install zip includes **`nds-restore.env`**: `# Settings` (exports + git URL maps), `# Runtime`, then live curl. Paste the whole file into a live ISO, or copy only the export blocks and run curl yourself. Do not `source` the file (curl would run).
+The install zip includes **`nds-restore.recipe`**: the same sectioned recipe as `.nds/hosts/<host>.recipe`. Set `NDS_RECIPE_FILE` to it, then curl. `NDS_*` env vars override the recipe. `NDS_AUTO_CONFIRM=true` skips menus.
 
-Private git keys used during the install are copied to **`secrets/git/`**. Copy them to `/root/.ssh/` (`chmod 600`) before starting NDS. Restore `NDS_GIT_KEY_PATH` values point at `/root/.ssh/<filename>` (not the live-ISO path from the original run). Key **text** is never written into `nds-restore.env`.
+Private git keys used during the install are copied to **`secrets/git/`**. Copy them to `/root/.ssh/` (`chmod 600`) before starting NDS. Restore `NDS_GIT_KEY_PATH` values point at `/root/.ssh/<filename>` (not the live-ISO path from the original run). Key **text** is never written into recipes.
 
 Git URL maps cannot ride `sudo` or `curl | bash`. To load maps without pasting curl, copy the Settings and Runtime sections into a `.env` file and set `NDS_SCOPED_CONFIG_FILE`.
 
@@ -282,7 +282,7 @@ declare -gA NDS_GIT_KEY_MODE=(
 installs prompt to paste that repo’s private key (TTY). `path` uses
 `NDS_GIT_KEY_PATH[url]` when the file exists.
 
-`path` asks for a key file. `paste` reads the private key as hidden multiline input (like a password) until the `-----END … PRIVATE KEY-----` line. That TTY paste still works under `NDS_AUTO_CONFIRM` (git auth is not skipped). Without a terminal, set `NDS_GIT_KEY_BODY[url]` or `NDS_GIT_IMPORT_KEY`. Key text is never written to `nds-restore.env`.
+`path` asks for a key file. `paste` reads the private key as hidden multiline input (like a password) until the `-----END … PRIVATE KEY-----` line. That TTY paste still works under `NDS_AUTO_CONFIRM` (git auth is not skipped). Without a terminal, set `NDS_GIT_KEY_BODY[url]` or `NDS_GIT_IMPORT_KEY`. Key text is never written to recipes.
 
 QR codes load only on the **generate** register path (not gh or paste).
 

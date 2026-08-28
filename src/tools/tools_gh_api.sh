@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - GitHub CLI API helpers (keys / deploy / content)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-26
+# Date:          Created: 2026-07-07 | Modified: 2026-08-28
 # Description:   gh api operations — no git key paths, no settings menus.
 #                Title collision: pass overwrite|alternate|cancel (or NDS_GH_KEY_TITLE_COLLISION).
 #                Empty collision when a title clash exists → return 41 (caller asks, then retries).
@@ -206,6 +206,7 @@ nds_gh_register_account_key() {
     if nds_gh_ssh_key_is_readonly "$title" || nds_gh_pubkey_is_readonly "$pub_file"; then
         declare -f nds_install_log &>/dev/null \
             && nds_install_log "gh: account SSH key added read-only (${title})"
+        warn "Do not revoke GitHub CLI under Settings → Applications — GitHub would delete SSH keys this OAuth app created. ISO logout is enough."
         return 0
     fi
 

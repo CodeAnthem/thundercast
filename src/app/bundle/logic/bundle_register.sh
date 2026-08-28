@@ -87,8 +87,8 @@ nds_bundle_contrib_core() {
     local nds_log nixos_log
     local item secret_files=()
 
-    if declare -f nds_cfg_export_restore &>/dev/null; then
-        nds_bundle_register_text "nds-restore.env" "$(nds_cfg_export_restore)"
+    if declare -f nds_sm_export &>/dev/null; then
+        nds_bundle_register_text "nds-restore.recipe" "$(nds_sm_export)"
     fi
 
     if [[ -f "${NDS_RUNTIME_DIR:-}/config/configuration.nix" ]]; then

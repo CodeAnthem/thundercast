@@ -1,4 +1,4 @@
 # NDS hooks for **toolkit** (ISO). ThunderCast already ships operator pub writes.
 
-Add cluster-specific ISO steps here with `nds_hook_register` (see `.nds/addRole/README.md`).
+Functions: `.nds/lib/`. Extra registers for this action only: `nds_hook_register`.
 Do not put private keys in this folder.

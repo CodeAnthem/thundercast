@@ -52,7 +52,7 @@ nds_git_access_onExit() {
     return 0
 }
 
-# Description: Record how this URL was accessed so nds-restore.env lists every closure repo.
+# Description: Record how this URL was accessed so restore recipes list every closure repo.
 _nds_git_record_url_access() {
     local url="$1"
     local method path kind

@@ -22,7 +22,7 @@ nds_cfg_print_backup() {
 
     nds_ui_section_header "Configuration export"
     nds_ui_b "Only values changed from defaults (export NDS_*= lines)."
-    nds_ui_b "The backup bundle has nds-restore.env — paste it into a live ISO to recreate this machine."
+    nds_ui_b "The backup bundle has nds-restore.recipe — set NDS_RECIPE_FILE to it on a live ISO."
     nds_ui_b ""
     while IFS= read -r line; do
         [[ -n "$line" ]] || continue

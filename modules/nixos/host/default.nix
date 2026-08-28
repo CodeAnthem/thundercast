@@ -24,7 +24,7 @@ let
   bootCommitted = hostDir + "/boot.nix";
   generated = hostDir + "/nds_generated.nix";
   flakeRoot = dirOf (dirOf (dirOf hostDir));
-  toolkitSsh = flakeRoot + "/.toolkit/operator/ssh.pub";
+  toolkitSsh = flakeRoot + "/.toolkit/operator/keys/ssh.pub";
   sshPub = if builtins.pathExists toolkitSsh then toolkitSsh else null;
 
   hasFacter = builtins.pathExists facter;

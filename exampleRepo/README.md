@@ -15,11 +15,12 @@ flake.nix
 setup/
 hosts/x86_64-linux/<name>/   # you: configuration.nix + opts.nix; NDS: boot/mounts/guest
 .roles/<id>/                 # templates — see .roles/README.md
-.toolkit/                    # ops state (pubs, machines/, sops map) — not NDS
+.toolkit/                    # shared ops state — see .toolkit/README.md
 .nds/
-  <action>/                  # ISO hooks for that action (nds_hook_register)
-  common/                    # ISO hooks for every action
-  hosts/                     # NDS recipes (disk/encryption defaults; re-askable on restore)
+  lib/                       # ISO functions only (no register)
+  common/                    # nds_hook_register for every action
+  <action>/                  # extra registers for that action
+  hosts/                     # NDS recipes (.recipe)
 ```
 
 ## Bootstrap order

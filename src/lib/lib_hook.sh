@@ -3,7 +3,7 @@
 # NDS - Leaf / action lifecycle hooks
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Date:          Created: 2026-08-28 | Modified: 2026-08-28
-# Description:   Source .nds/<action>/*.sh; files register events (no work at source time)
+# Description:   Source .nds/lib then register from .nds/<action> and .nds/common
 # ==================================================================================================
 
 declare -gA NDS_HOOK_FNS=()
@@ -74,9 +74,11 @@ nds_hook_reset() {
 
 # Description: Source one hook file; auto-register run() when the name/header names an event.
 # Arguments:
-# - path: <String> .sh path
+# - path:     <String> .sh path
+# - lib_only: <String> 1 = functions only (no auto-register)
 _nds_hook_source_file() {
     local path="$1"
+    local lib_only="${2:-0}"
     local base ev header_ev id
     base="$(basename "$path")"
     [[ "$base" == *.sh ]] || return 0
@@ -85,6 +87,7 @@ _nds_hook_source_file() {
 
     NDS_HOOK_FILE_DID_REGISTER=0
     nds_import_file "$path" || return 1
+    [[ "$lib_only" == "1" ]] && return 0
 
     ev="$(_nds_hook_event_from_filename "$base")"
     header_ev="$(_nds_hook_event_from_header "$path" || true)"
@@ -102,19 +105,21 @@ _nds_hook_source_file() {
 
 # Description: Source every *.sh in a directory (non-recursive).
 # Arguments:
-# - dir: <String> Directory
+# - dir:      <String> Directory
+# - lib_only: <String> 1 = functions only
 _nds_hook_source_dir() {
     local dir="$1"
+    local lib_only="${2:-0}"
     local f
     [[ -d "$dir" ]] || return 0
     for f in "$dir"/*.sh; do
         [[ -f "$f" ]] || continue
-        _nds_hook_source_file "$f" || return 1
+        _nds_hook_source_file "$f" "$lib_only" || return 1
     done
     return 0
 }
 
-# Description: Load ThunderCast action pack + leaf .nds/<action> and .nds/common.
+# Description: Load lib functions, then action pack + leaf registers.
 # Arguments:
 # - flake_root: <String> Leaf checkout
 nds_hook_load() {
@@ -127,6 +132,7 @@ nds_hook_load() {
     nds_hook_reset
     NDS_HOOKS_LOADED_KEY="$key"
 
+    _nds_hook_source_dir "${flake_root}/.nds/lib" 1 || return 1
     if [[ -n "$action" && -n "${SCRIPT_DIR:-}" ]]; then
         _nds_hook_source_dir "${SCRIPT_DIR}/actions/${action}/hooks" || return 1
     fi

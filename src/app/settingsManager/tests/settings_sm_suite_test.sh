@@ -110,6 +110,16 @@ suite_settings_sm() {
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ nds_sm_load"
     fi
+    export NDS_DISK_TARGET="/dev/from-env"
+    nds_sm_load_with_env "$recipe"
+    if [[ "$(nds_cfg_get DISK_TARGET)" == "/dev/from-env" ]]; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ nds_sm_load_with_env: NDS_* overrides recipe"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ nds_sm_load_with_env override"
+    fi
+    unset NDS_DISK_TARGET
     if nds_sm_validate encryption; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ nds_sm_validate uses shared preset validators"

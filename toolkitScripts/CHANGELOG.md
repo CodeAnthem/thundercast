@@ -2,6 +2,13 @@
 
 Versions here are **tools only** (this tree). NixOS/comin is a separate channel.
 
+## 0.5.0 — 2026-08-28
+
+- Shared cluster `config` + `state`; pubs in `operator/keys/` and `machines/<host>/keys/`
+- Machine `config` holds `role`, `system`, `groups` (comma-separated)
+- `sops/secrets.map` is `id=path` (quote values that contain space, `=`, `#`, or `"`)
+- Nodes menu lists enrolled machines (not a leftover inventory file)
+
 ## 0.4.1 — 2026-08-28
 
 - Drop layout migration: `.toolkit/` only (no copy from `.nds/toolkit-register`)

@@ -445,6 +445,16 @@ nds_sm_load() {
     return 0
 }
 
+# Description: Load a recipe, then apply NDS_* env so unattended overrides win.
+# Arguments: same as nds_sm_load
+nds_sm_load_with_env() {
+    nds_sm_load "$@" || return 1
+    if declare -f nds_cfg_apply_env_all &>/dev/null; then
+        nds_cfg_apply_env_all
+    fi
+    return 0
+}
+
 _nds_sm_export_body() {
     local mode="$1"
     local key val section

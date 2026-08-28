@@ -77,7 +77,7 @@ nds_git_bundle_key_paths() {
 # Arguments:
 # - path: <String> Absolute path recorded in NDS_GIT_KEY_PATH
 # Returns:
-# - <String> Path to use in nds-restore.env (stdout)
+# - <String> Path to use on the next ISO (stdout)
 nds_git_bundle_restore_key_path() {
     local path="$1" dest
     if [[ -n "$path" ]] && nds_git_bundle_is_private_key "$path"; then

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - GitHub CLI session (login state / cleanup)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-05
+# Date:          Created: 2026-07-07 | Modified: 2026-08-28
 # Description:   Session helpers for the gh CLI — no git key/repo policy
 # ==================================================================================================
 
@@ -185,7 +185,7 @@ nds_gh_session_cleanup() {
     fi
 
     if [[ "$had_session" == "true" ]]; then
-        success "Cleared gh session from this live ISO (SSH keys on GitHub were kept)"
+        success "Cleared gh session from this live ISO (SSH keys on GitHub were kept; do not revoke the GitHub CLI OAuth app)"
         declare -f nds_install_log &>/dev/null \
             && nds_install_log "gh: session cleared from live ISO (SSH key left on GitHub)"
     fi

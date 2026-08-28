@@ -1,0 +1,12 @@
+# Hardware / install-time host facts (local on machine; do not commit)
+hardware-configuration.nix
+*/hardware-configuration.nix
+hosts/*/hardware-configuration.nix
+hosts/**/hardware-configuration.nix
+hosts/**/machine.nix
+hosts/**/nds-boot.nix
+hosts/**/facter.json
+
+# Build results
+result
+result-*

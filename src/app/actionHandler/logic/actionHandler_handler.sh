@@ -84,7 +84,7 @@ _nds_app_actionHandler_configurePresets() {
     nds_cfg_seed_defaults
 
     if [[ -n "${NDS_RECIPE_FILE:-}" && -f "${NDS_RECIPE_FILE}" ]]; then
-        nds_sm_load "$NDS_RECIPE_FILE" || return 1
+        nds_sm_load_with_env "$NDS_RECIPE_FILE" || return 1
         info "Loaded recipe ${NDS_RECIPE_FILE}"
     fi
     return 0

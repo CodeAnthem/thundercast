@@ -8,6 +8,7 @@
 { inputs, ... }: {
   imports = [
     (inputs.thundercast.nixosModules.host { hostDir = ./.; })
+    inputs.thundercast.nixosModules.toolkit
     ./opts.nix
   ];
   networking.hostName = "control-toolkit";
