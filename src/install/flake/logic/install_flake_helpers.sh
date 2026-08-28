@@ -98,6 +98,7 @@ _nds_install_flake_discover_roles() {
     if [[ -d "$roles_dir" ]]; then
         while IFS= read -r name; do
             [[ -f "${roles_dir}/${name}/opts.nix" ]] || continue
+            # toolkit is NDS_ACTION=toolkit (not addRole)
             [[ "$name" == "toolkit" ]] && continue
             names="${names:+$names|}${name}"
         done < <(find "$roles_dir" -maxdepth 1 -mindepth 1 -type d -printf '%f\n' 2>/dev/null | sort)
@@ -217,6 +218,11 @@ _nds_install_flake_scaffold_host_folder() {
         -e "s/__NAMESERVERS__/${nameservers}/g" \
         -e "s/__STATE_VERSION__/${state_version}/g" \
         "$cfg_tmpl" > "${host_dir}/configuration.nix" || return 1
+
+    if [[ "$role" == "toolkit" ]] && ! grep -q 'nixosModules.toolkit' "${host_dir}/configuration.nix"; then
+        sed -i '/nixosModules.host/a\    inputs.thundercast.nixosModules.toolkit' \
+            "${host_dir}/configuration.nix" || return 1
+    fi
 
     local disk disk_by_id fs_type swap_mib encryption enc_bool disk_strategy
     disk=$(nds_cfg_get "DISK_TARGET")

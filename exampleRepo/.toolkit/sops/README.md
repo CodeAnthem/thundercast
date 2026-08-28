@@ -1,6 +1,6 @@
 # sops map (toolkit-managed)
 
-`secrets.map` is `id=path` (quote the path if it has spaces). Toolkit compiles `.sops.yaml` from this plus machine pubs.
+`secrets.map` is a sourced bash AA (`id` → path). Toolkit compiles `.sops.yaml` from this plus machine pubs.
 
 Do not put age public keys here. Membership:
 

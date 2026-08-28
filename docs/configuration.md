@@ -50,7 +50,7 @@ Leaf restore loads `.nds/hosts/<host>.recipe`. Registered secrets (`ACCESS_ADMIN
 | `FLAKE_LOCAL_PATH` | `NDS_FLAKE_LOCAL_PATH` | when set | Local path to flake on live ISO |
 | `FLAKE_LOCATION` | `NDS_FLAKE_LOCATION` | never | Derived — use `FLAKE_REPO_URL` or `FLAKE_LOCAL_PATH` |
 | `FLAKE_SOURCE` | `NDS_FLAKE_SOURCE` | never | Derived `remote` or `local` |
-| `FLAKE_HOST` | `NDS_FLAKE_HOST` | when set | `nixosConfigurations` name. Toolkit does **not** prompt — default `control-toolkit` unless this env is set. |
+| `FLAKE_HOST` | `NDS_FLAKE_HOST` | when set | `nixosConfigurations` name. Toolkit prompts (default `control-toolkit`); extra ops VMs use a different name. |
 | `FLAKE_INSTALL_PATH` | `NDS_FLAKE_INSTALL_PATH` | when set | Flake git root on target (default `/mnt/etc/nixos`) |
 | `FLAKE_HOST_DIR` | `NDS_FLAKE_HOST_DIR` | when set | Host directory under flake (default `hosts/x86_64-linux`) |
 | `FLAKE_HARDWARE_PLACEMENT` | `NDS_FLAKE_HARDWARE_PLACEMENT` | when set | `host-dir`, `flake-root`, or `skip` |
@@ -71,7 +71,7 @@ Toolkit hosts also get `tc-sops`. Use `tc-switch --self-update` (or `nds-switch 
 during NDS development to refresh scripts. Install-time  
 `facter.json` is unstaged and gitignored after the flake build so the checkout stays
 pullable. Structural `nds_generated.nix` is committed (boot + mounts + guest; NDS
-overwrites it). Legacy `boot.nix` + `mounts.nix` still eval if present.
+overwrites it).
 
 ---
 

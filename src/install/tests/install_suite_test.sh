@@ -746,10 +746,11 @@ suite_install() {
     NDS_RUNTIME_DIR="$_saved_runtime"
     rm -rf "$leaf_tmp"
 
-    local scaf_root scaf_host _sv_save guest_snip
+    local scaf_root scaf_host scaf_tk _sv_save guest_snip
     scaf_root=$(mktemp -d)
-    mkdir -p "${scaf_root}/.roles/worker"
+    mkdir -p "${scaf_root}/.roles/worker" "${scaf_root}/.roles/toolkit"
     printf '%s\n' '{ }' > "${scaf_root}/.roles/worker/opts.nix"
+    printf '%s\n' '{ }' > "${scaf_root}/.roles/toolkit/opts.nix"
     nds_cfg_set NETWORK_HOSTNAME "lab-worker-c"
     nds_cfg_set NETWORK_METHOD "dhcp"
     nds_cfg_set NETWORK_IP ""
@@ -776,6 +777,16 @@ suite_install() {
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ scaffold: nds/DHCP host still wrote disko.nix or empty static IP"
+    fi
+    scaf_tk="${scaf_root}/hosts/x86_64-linux/control-toolkit"
+    if _nds_install_flake_scaffold_host_folder "$scaf_root" "control-toolkit" "toolkit" \
+        && grep -q 'nixosModules.toolkit' "${scaf_tk}/configuration.nix" \
+        && grep -q '.roles/toolkit/opts.nix' "${scaf_tk}/opts.nix"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ scaffold: toolkit role imports nixosModules.toolkit"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ scaffold: toolkit host missing nixosModules.toolkit"
     fi
     nds_cfg_set DISK_STRATEGY "disko"
     export NDS_SCAFFOLD_OVERWRITE_SKIP=true

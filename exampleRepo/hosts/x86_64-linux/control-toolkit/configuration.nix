@@ -2,7 +2,7 @@
 # exampleRepo - control-toolkit
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Date: Created: 2026-08-19 | Modified: 2026-08-28
-# Description: Existing ops VM host — toolkit action installs this folder
+# Description: Existing ops VM host — toolkit action / .roles/toolkit
 # ==================================================================================================
 
 { inputs, ... }: {

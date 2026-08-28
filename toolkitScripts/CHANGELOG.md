@@ -2,6 +2,11 @@
 
 Versions here are **tools only** (this tree). NixOS/comin is a separate channel.
 
+## 0.6.0 — 2026-08-28
+
+- Cluster files (`config`, `state`, machine `config`, `sops/secrets.map`) are sourced bash AAs (`declare -gA tcast_aa`)
+- Operator private key path is `/etc/sops/age/operator_sops.key` only (`SOPS_AGE_KEY_FILE` still overrides)
+
 ## 0.5.1 — 2026-08-28
 
 - Operator private key path: `/etc/sops/age/operator_sops.key` (falls back to `operator.txt`)

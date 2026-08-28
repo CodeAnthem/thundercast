@@ -1,0 +1,15 @@
+---
+description: WIP — no backwards compatibility or legacy shims
+alwaysApply: true
+---
+
+# No legacy / no backwards compatibility
+
+This tree is WIP. When a layout, path, or API changes, **replace it**. Do not keep readers, fallbacks, migrators, or dual-write for the old form.
+
+- Do not add `if old file exists, use it` after a rename
+- Do not parse the previous on-disk format "just in case"
+- Do not keep compatibility aliases, shims, or "legacy still works" branches
+- Update exampleRepo and tests to the new form in the same change
+
+Existing machines are expected to be reinstalled or adjusted. Move quickly.

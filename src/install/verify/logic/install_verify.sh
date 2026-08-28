@@ -123,15 +123,9 @@ _nds_install_verify_flake_hardware() {
 
     host_dir="${flake_root}/${host_dir_rel}/${hostname}"
     gen="${host_dir}/nds_generated.nix"
-    if [[ -f "$gen" ]]; then
-        grep -qE 'fileSystems|by-uuid|by-label' "$gen" \
-            || _nds_install_verify_fail "nds_generated.nix missing fileSystems: ${gen}"
-    elif [[ -f "${host_dir}/boot.nix" && -f "${host_dir}/mounts.nix" ]]; then
-        grep -qE 'fileSystems|by-uuid|by-label' "${host_dir}/mounts.nix" \
-            || _nds_install_verify_fail "mounts.nix missing fileSystems mounts: ${host_dir}/mounts.nix"
-    else
-        _nds_install_verify_fail "nds_generated.nix missing: ${gen}"
-    fi
+    [[ -f "$gen" ]] || _nds_install_verify_fail "nds_generated.nix missing: ${gen}"
+    grep -qE 'fileSystems|by-uuid|by-label' "$gen" \
+        || _nds_install_verify_fail "nds_generated.nix missing fileSystems: ${gen}"
 }
 
 # Description: Verify classic-install artifacts on the target.

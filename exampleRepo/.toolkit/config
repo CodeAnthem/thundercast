@@ -1,1 +1,4 @@
-version=1
+# toolkit AA — sourced, not executed
+declare -gA tcast_aa=(
+  [version]=1
+)

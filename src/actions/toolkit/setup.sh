@@ -26,7 +26,7 @@ action_config() {
 action_preview() {
     nds_ui_h "Create or restore the toolkit ops VM"
     nds_ui_b ""
-    nds_ui_b "You will configure restore vs create, the install flake URL, and disk / encryption."
+    nds_ui_b "You will configure the ops hostname, restore vs create, the install flake URL, and disk / encryption."
     nds_ui_b ""
     nds_ui_b "After confirmation, NDS will:"
     nds_ui_i "generate (or restore) operator age + toolkit SSH into secret files"
@@ -51,6 +51,7 @@ nds_toolkit_compose() {
     }
     nds_cfg_set NETWORK_HOSTNAME "$host"
     export NDS_FLAKE_HOST="$host"
+    nds_cfg_set SCAFFOLD_ROLE "toolkit"
 
     nds_step_start_spin "Generating toolkit keys"
     if [[ "$mode" == "restore" ]]; then
@@ -80,8 +81,11 @@ nds_toolkit_compose() {
     nds_cfg_set TOOLKIT_SSH_KEY_FILE "${dest}/toolkit_ssh"
 
     if [[ ! -d "${flake_root}/hosts/${system}/${host}" ]]; then
-        error "Toolkit host ${host} is missing under hosts/${system}/ — add that host in the leaf first"
-        return 1
+        [[ -f "${flake_root}/.roles/toolkit/opts.nix" ]] || {
+            error "Toolkit role missing: ${flake_root}/.roles/toolkit/opts.nix"
+            return 1
+        }
+        nds_flake_scaffold_apply "$flake_root" "$system" || return 1
     fi
 
     nds_flake_write_host_nds_env "$flake_root" "$host" || return 1
@@ -108,6 +112,7 @@ _nds_toolkit_refuse_remote() {
 
 action_setup() {
     nds_mode_resolve || true
+    [[ -n "$(nds_cfg_get SCAFFOLD_ROLE)" ]] || nds_cfg_set SCAFFOLD_ROLE "toolkit"
     [[ -n "$(nds_cfg_get FLAKE_HOST)" ]] || nds_cfg_set FLAKE_HOST "control-toolkit"
     _nds_toolkit_refuse_remote || exit 11
 
@@ -120,7 +125,9 @@ action_setup() {
     fi
 
     nds_install_open_leaf || exit 14
+    nds_cfg_set SCAFFOLD_ROLE "toolkit"
     nds_cfg_set NETWORK_HOSTNAME "$(nds_cfg_get FLAKE_HOST)"
+    nds_flake_apply_role_nds "${NDS_FLAKE_PROBE_DIR:-.}" "toolkit"
     nds_flake_prepare remote
 
     if ! nds_sm_validate; then

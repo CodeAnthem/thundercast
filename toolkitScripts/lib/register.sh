@@ -7,13 +7,13 @@
 # ==================================================================================================
 
 # Layout (all toolkit VMs share this git tree):
-#   config                    cluster data (version=1)
-#   state                     cluster state (initialized_at, last_enrolled_*)
+#   config                    sourced AA (version)
+#   state                     sourced AA (initialized_at, last_enrolled_*)
 #   operator/keys/age.pub     cluster operator age pub
 #   operator/keys/ssh.pub     cluster operator SSH pub
 #   machines/<host>/keys/     that machine's pubs (age.pub)
-#   machines/<host>/config    role, system, groups (comma-separated)
-#   sops/secrets.map          id=path (%s = hostname)
+#   machines/<host>/config    sourced AA (role, system, groups)
+#   sops/secrets.map          sourced AA id -> path (%s = hostname)
 
 tcast_operator_dir() {
     printf '%s/operator\n' "$(tcast_register_dir)"
@@ -51,63 +51,57 @@ tcast_register_host_config_file() {
     printf '%s/config\n' "$(tcast_register_host_dir "$1")"
 }
 
-# Description: Decode a kv value (optional surrounding double quotes).
-tcast_kv_decode() {
-    local v="$1"
-    if [[ "$v" == \"*\" ]]; then
-        v="${v#\"}"
-        v="${v%\"}"
-        v="${v//\\\"/\"}"
-    fi
-    printf '%s\n' "$v"
-}
-
-# Description: Encode a kv value. Quote when it contains space, =, #, or ".
-tcast_kv_encode() {
-    local v="$1"
-    if [[ "$v" == *[=\#\"[:space:]]* ]]; then
-        v="${v//\"/\\\"}"
-        printf '"%s"' "$v"
-    else
-        printf '%s' "$v"
-    fi
-}
-
-tcast_kv_get() {
-    local file="$1" key="$2" line k v
+# Description: Source a toolkit AA file into a nameref (declare -gA tcast_aa).
+tcast_aa_load() {
+    local file="$1"
+    local -n _tcast_aa_dest="$2"
+    local k
+    _tcast_aa_dest=()
     [[ -f "$file" ]] || return 1
-    while IFS= read -r line || [[ -n "$line" ]]; do
-        [[ "$line" == \#* || -z "${line//[[:space:]]/}" ]] && continue
-        [[ "$line" == *=* ]] || continue
-        k="${line%%=*}"
-        v="${line#*=}"
-        [[ "$k" == "$key" ]] || continue
-        tcast_kv_decode "$v"
-        return 0
-    done < "$file"
-    return 1
+    unset tcast_aa
+    declare -gA tcast_aa=()
+    # shellcheck disable=SC1090
+    source "$file" || return 1
+    for k in "${!tcast_aa[@]}"; do
+        _tcast_aa_dest["$k"]="${tcast_aa[$k]}"
+    done
+    unset tcast_aa
+    return 0
 }
 
-tcast_kv_set() {
-    local file="$1" key="$2" value="$3" tmp line k found=0 enc
+# Description: Write a nameref AA as `declare -gA tcast_aa=(...)` using bash %q.
+tcast_aa_save() {
+    local file="$1"
+    local -n _tcast_aa_src="$2"
+    local k
     mkdir -p "$(dirname "$file")"
-    enc="$(tcast_kv_encode "$value")"
-    tmp="$(mktemp)"
-    if [[ -f "$file" ]]; then
-        while IFS= read -r line || [[ -n "$line" ]]; do
-            if [[ "$line" == *=* ]]; then
-                k="${line%%=*}"
-                if [[ "$k" == "$key" ]]; then
-                    printf '%s=%s\n' "$key" "$enc"
-                    found=1
-                    continue
-                fi
-            fi
-            printf '%s\n' "$line"
-        done < "$file" > "$tmp"
-    fi
-    [[ "$found" == 1 ]] || printf '%s=%s\n' "$key" "$enc" >> "$tmp"
-    mv "$tmp" "$file"
+    {
+        printf '%s\n' '# toolkit AA — sourced, not executed'
+        printf '%s\n' 'declare -gA tcast_aa=('
+        if ((${#_tcast_aa_src[@]} > 0)); then
+            while IFS= read -r k; do
+                [[ -n "$k" ]] || continue
+                printf '  [%q]=%q\n' "$k" "${_tcast_aa_src[$k]}"
+            done < <(printf '%s\n' "${!_tcast_aa_src[@]}" | LC_ALL=C sort)
+        fi
+        printf '%s\n' ')'
+    } >"$file"
+}
+
+tcast_aa_get() {
+    local file="$1" key="$2"
+    local -A tmp=()
+    tcast_aa_load "$file" tmp || return 1
+    [[ -n "${tmp[$key]+x}" ]] || return 1
+    printf '%s\n' "${tmp[$key]}"
+}
+
+tcast_aa_set() {
+    local file="$1" key="$2" value="$3"
+    local -A tmp=()
+    tcast_aa_load "$file" tmp || true
+    tmp["$key"]="$value"
+    tcast_aa_save "$file" tmp
 }
 
 tcast_csv_has() {
@@ -146,9 +140,13 @@ tcast_csv_remove() {
 
 tcast_register_ensure() {
     local d
+    local -A cfg=()
     d="$(tcast_register_dir)"
     mkdir -p "$(tcast_operator_keys_dir)" "$(tcast_machines_dir)" "${d}/sops" || return 1
-    [[ -f "$(tcast_cluster_config_file)" ]] || printf 'version=1\n' > "$(tcast_cluster_config_file)"
+    if [[ ! -f "$(tcast_cluster_config_file)" ]]; then
+        cfg[version]="1"
+        tcast_aa_save "$(tcast_cluster_config_file)" cfg
+    fi
 }
 
 tcast_register_meta_get() {
@@ -160,10 +158,10 @@ tcast_register_meta_get() {
             printf '\n'
             ;;
         version)
-            tcast_kv_get "$(tcast_cluster_config_file)" version
+            tcast_aa_get "$(tcast_cluster_config_file)" version
             ;;
         *)
-            tcast_kv_get "$(tcast_cluster_state_file)" "$key"
+            tcast_aa_get "$(tcast_cluster_state_file)" "$key"
             ;;
     esac
 }
@@ -176,10 +174,10 @@ tcast_register_meta_set() {
             printf '%s\n' "$2" > "$(tcast_operator_keys_dir)/age.pub"
             ;;
         version)
-            tcast_kv_set "$(tcast_cluster_config_file)" version "$2"
+            tcast_aa_set "$(tcast_cluster_config_file)" version "$2"
             ;;
         *)
-            tcast_kv_set "$(tcast_cluster_state_file)" "$1" "$2"
+            tcast_aa_set "$(tcast_cluster_state_file)" "$1" "$2"
             ;;
     esac
 }
@@ -194,7 +192,7 @@ tcast_register_host_get() {
             printf '\n'
             ;;
         *)
-            tcast_kv_get "$(tcast_register_host_config_file "$host")" "$key"
+            tcast_aa_get "$(tcast_register_host_config_file "$host")" "$key"
             ;;
     esac
 }
@@ -208,7 +206,7 @@ tcast_register_host_set() {
             printf '%s\n' "$value" > "$(tcast_register_host_keys_dir "$host")/age.pub"
             ;;
         *)
-            tcast_kv_set "$(tcast_register_host_config_file "$host")" "$key" "$value"
+            tcast_aa_set "$(tcast_register_host_config_file "$host")" "$key" "$value"
             ;;
     esac
 }
@@ -221,38 +219,34 @@ tcast_register_host_list() {
 }
 
 tcast_sops_map_default() {
-    cat <<'EOF'
-# id=path  (%s = hostname). Recipients come from pubs, not this file.
-operator=secrets/operator.yaml
-host=secrets/hosts/%s.yaml
-luks=secrets/luks.yaml
-swarm_manager=secrets/swarm/manager.yaml
-swarm_worker=secrets/swarm/worker.yaml
-EOF
+    local -A m=()
+    m[operator]="secrets/operator.yaml"
+    m[host]="secrets/hosts/%s.yaml"
+    m[luks]="secrets/luks.yaml"
+    m[swarm_manager]="secrets/swarm/manager.yaml"
+    m[swarm_worker]="secrets/swarm/worker.yaml"
+    tcast_aa_save "$(tcast_sops_map_file)" m
 }
 
 tcast_register_ensure_defaults() {
     tcast_register_ensure
     if [[ ! -f "$(tcast_sops_map_file)" ]]; then
-        tcast_sops_map_default > "$(tcast_sops_map_file)"
+        tcast_sops_map_default
     fi
 }
 
 tcast_register_scope_list() {
-    local line id
+    local k
+    local -A m=()
     tcast_register_ensure_defaults
-    [[ -f "$(tcast_sops_map_file)" ]] || return 0
-    while IFS= read -r line || [[ -n "$line" ]]; do
-        [[ "$line" == \#* || -z "${line//[[:space:]]/}" ]] && continue
-        [[ "$line" == *=* ]] || continue
-        id="${line%%=*}"
-        [[ -n "$id" ]] && printf '%s\n' "$id"
-    done < "$(tcast_sops_map_file)"
+    tcast_aa_load "$(tcast_sops_map_file)" m || return 0
+    for k in "${!m[@]}"; do
+        printf '%s\n' "$k"
+    done | sort
 }
 
 tcast_register_scope_path_raw() {
-    local want="$1"
-    tcast_kv_get "$(tcast_sops_map_file)" "$want"
+    tcast_aa_get "$(tcast_sops_map_file)" "$1"
 }
 
 tcast_register_scope_get() {

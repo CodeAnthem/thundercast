@@ -37,7 +37,7 @@ _nds_install_nix_inner() {
     done <"$f" | sed '$ { /^[[:space:]]*}[[:space:]]*$/d; }'
 }
 
-# Description: Confirm nds_generated.nix (or legacy boot.nix + mounts.nix).
+# Description: Confirm committed nds_generated.nix has fileSystems.
 # Sibling .nix files are auto-imported by fileStore method=host.
 # Arguments:
 # - host_dir: <String> Host directory (…/hosts/…/hostname)
@@ -54,19 +54,12 @@ _nds_install_ensure_host_imports() {
         return 0
     }
     gen="${host_dir}/$(_nds_install_generated_name)"
-    if [[ -f "$gen" ]]; then
-        grep -qE 'fileSystems|by-uuid|by-label' "$gen" || {
-            error "nds_generated.nix missing fileSystems: ${gen}"
-            return 1
-        }
-        return 0
-    fi
-    [[ -f "${host_dir}/mounts.nix" ]] || {
-        error "mounts.nix missing: ${host_dir}/mounts.nix"
+    [[ -f "$gen" ]] || {
+        error "nds_generated.nix missing: ${gen}"
         return 1
     }
-    [[ -f "${host_dir}/boot.nix" ]] || {
-        error "boot.nix missing: ${host_dir}/boot.nix"
+    grep -qE 'fileSystems|by-uuid|by-label' "$gen" || {
+        error "nds_generated.nix missing fileSystems: ${gen}"
         return 1
     }
     return 0
@@ -111,7 +104,7 @@ _nds_install_flake_write_guest_nix() {
     return 0
 }
 
-# Description: Drop legacy split modules after nds_generated.nix is written.
+# Description: Remove leftover split host modules after nds_generated.nix is written.
 _nds_install_retire_legacy_host_modules() {
     local flake_root="$1" host_dir="$2"
     local f rel

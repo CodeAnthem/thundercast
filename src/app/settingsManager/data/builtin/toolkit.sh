@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - toolkit composer preset (ops VM create / restore)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-20 | Modified: 2026-08-27
+# Date:          Created: 2026-08-20 | Modified: 2026-08-28
 # ==================================================================================================
 
 toolkit_defaults() {
@@ -13,6 +13,7 @@ toolkit_defaults() {
     nds_cfg_set CAST_TOOLKIT_RESTORE "false"
     nds_cfg_set CAST_TOOLKIT_BUNDLE ""
     nds_cfg_set SCAFFOLD_MODE "existing"
+    nds_cfg_set SCAFFOLD_ROLE "toolkit"
     nds_cfg_set FLAKE_HOST "control-toolkit"
     nds_cfg_set FLAKE_INSTALL_PATH "/mnt/etc/nixos"
     nds_cfg_set FLAKE_HOST_DIR "hosts/x86_64-linux"
@@ -24,8 +25,9 @@ toolkit_defaults() {
     [[ -n "$(nds_cfg_get FLAKE_REPO_URL)" ]] || nds_cfg_set FLAKE_REPO_URL ""
 }
 
-# Description: Pin FLAKE_HOST to control-toolkit unless already set (env/recipe).
+# Description: Pin host/role unless already set (env/recipe).
 _nds_toolkit_cfg_ensure_host() {
+    [[ -n "$(nds_cfg_get SCAFFOLD_ROLE)" ]] || nds_cfg_set SCAFFOLD_ROLE "toolkit"
     [[ -n "$(nds_cfg_get FLAKE_HOST)" ]] || nds_cfg_set FLAKE_HOST "control-toolkit"
 }
 
@@ -51,6 +53,8 @@ _nds_toolkit_cfg_apply_restore() {
 toolkit_configure() {
     nds_cfg_section_title "Toolkit VM"
     _nds_toolkit_cfg_ensure_host
+    nds_cfg_ask_hostname FLAKE_HOST "Toolkit host name" "control-toolkit" true
+    nds_cfg_set NETWORK_HOSTNAME "$(nds_cfg_get FLAKE_HOST)"
     _nds_toolkit_cfg_load_restore_flag
     nds_cfg_ask_toggle CAST_TOOLKIT_RESTORE "Restore existing toolkit" false
     _nds_toolkit_cfg_apply_restore
@@ -62,6 +66,7 @@ toolkit_configure() {
 
 toolkit_summary() {
     _nds_toolkit_cfg_load_restore_flag
+    nds_cfg_summary_row "Host" "$(nds_cfg_get FLAKE_HOST)"
     nds_cfg_summary_row "Restore" "$(nds_cfg_display_toggle "$(nds_cfg_get CAST_TOOLKIT_RESTORE)")"
     if nds_cfg_true CAST_TOOLKIT_RESTORE; then
         nds_cfg_summary_row "Bundle" "$(nds_cfg_get CAST_TOOLKIT_BUNDLE)"
@@ -75,6 +80,11 @@ toolkit_prompt_errors() {
     _nds_toolkit_cfg_load_restore_flag
     _nds_toolkit_cfg_apply_restore
     while ! toolkit_validate &>/dev/null; do
+        if [[ -z "$(nds_cfg_get FLAKE_HOST)" ]]; then
+            nds_cfg_ask_hostname FLAKE_HOST "Toolkit host name" "control-toolkit" true
+            nds_cfg_set NETWORK_HOSTNAME "$(nds_cfg_get FLAKE_HOST)"
+            continue
+        fi
         if [[ -z "$(nds_cfg_get FLAKE_REPO_URL)" ]]; then
             nds_cfg_ask_url FLAKE_REPO_URL "Install flake Git URL" "" true
             continue

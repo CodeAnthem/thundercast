@@ -42,7 +42,7 @@ WORKDIR="$(mktemp -d)"
 trap 'rm -rf "$WORKDIR"' EXIT
 LEAF="${WORKDIR}/leaf"
 export TCAST_LEAF_DIR="$LEAF"
-export TCAST_TOOLKIT_OP_KEY="${WORKDIR}/operator.txt"
+export TCAST_TOOLKIT_OP_KEY="${WORKDIR}/operator_sops.key"
 export TCAST_GIT_PUSH=0
 export TCAST_GIT_NAME=test
 export TCAST_GIT_EMAIL=test@test
@@ -58,21 +58,20 @@ git -C "$LEAF" -c user.email=t@t -c user.name=t add flake.nix
 git -C "$LEAF" -c user.email=t@t -c user.name=t commit -q -m init
 
 tcast_register_ensure_defaults
-_kvf="${WORKDIR}/kv.conf"
-tcast_kv_set "$_kvf" weird 'secrets/with space/x.yaml'
-if [[ "$(tcast_kv_get "$_kvf" weird)" == 'secrets/with space/x.yaml' ]] \
-    && grep -q 'weird="secrets/with space/x.yaml"' "$_kvf"; then
-    ok "kv quotes values with spaces"
+_aaf="${WORKDIR}/aa.conf"
+tcast_aa_set "$_aaf" weird 'secrets/with space/x.yaml'
+if [[ "$(tcast_aa_get "$_aaf" weird)" == 'secrets/with space/x.yaml' ]]; then
+    ok "aa roundtrips values with spaces"
 else
-    fail "kv space quoting"
+    fail "aa space roundtrip"
 fi
-tcast_kv_set "$_kvf" note 'a=b#c'
-if [[ "$(tcast_kv_get "$_kvf" note)" == 'a=b#c' ]]; then
-    ok "kv quotes values with = and #"
+tcast_aa_set "$_aaf" note 'a=b#c'
+if [[ "$(tcast_aa_get "$_aaf" note)" == 'a=b#c' ]]; then
+    ok "aa roundtrips values with = and #"
 else
-    fail "kv special-char quoting"
+    fail "aa special-char roundtrip"
 fi
-unset _kvf
+unset _aaf
 tcast_operator_ready && fail "ready before init" || ok "not ready before init"
 if out="$(tcast_sops_health)"; then
     echo "$out" | grep -q 'not registered' && ok "health empty without operator" || fail "health unregistered message"
