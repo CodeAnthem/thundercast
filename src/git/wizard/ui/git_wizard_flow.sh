@@ -80,9 +80,6 @@ nds_git_wizard_ask_auth_method() {
     existing="$(nds_feat_cfg_get GIT_EXISTING_KEY 2>/dev/null || true)"
     default="$(nds_feat_cfg_get GIT_AUTH_ROUTE 2>/dev/null || true)"
 
-    nds_ui_section_header "Git access"
-    nds_ui_b ""
-
     if [[ "$existing" == "true" ]]; then
         [[ "$default" == "path" ]] || default="paste"
         nds_ui_b "How do you want to provide the key?"
@@ -128,11 +125,7 @@ _nds_git_wizard_used_gh() {
 # - Sets GIT_CLOSURE_COVERAGE; NDS_ACTION_BACK on back
 nds_git_wizard_ask_closure_coverage() {
     local n="${1:-0}"
-    local existing rc default
-    existing="$(nds_feat_cfg_get GIT_CLOSURE_COVERAGE 2>/dev/null || true)"
-    if [[ -n "$existing" ]]; then
-        return 0
-    fi
+    local rc default
 
     if [[ "$n" -gt 1 ]]; then
         nds_ui_b "How should NDS get access to these ${n} repositories?"
@@ -145,14 +138,14 @@ nds_git_wizard_ask_closure_coverage() {
         default="gh"
         nds_aa_ask_numbered_choice GIT_CLOSURE_COVERAGE \
             "gh|generate|existing" \
-            "gh=Register deploy keys via gh|generate=Create a key per repo and add it yourself|existing=Paste or path a key for each repo" \
+            "gh=Register deploy keys via gh|generate=Create a key per repo and add it yourself|existing=Paste or path one key (tried on all remaining repos)" \
             "$default" \
             true
     else
         default="generate"
         nds_aa_ask_numbered_choice GIT_CLOSURE_COVERAGE \
             "generate|existing" \
-            "generate=Create a key per repo and add it yourself|existing=Paste or path a key for each repo" \
+            "generate=Create a key per repo and add it yourself|existing=Paste or path one key (tried on all remaining repos)" \
             "$default" \
             true
     fi
@@ -344,8 +337,10 @@ nds_git_wizard_converse_url() {
             nds_feat_cfg_set GIT_EXISTING_KEY false
             nds_feat_cfg_set GIT_KEY_SOURCE new
         fi
-        nds_git_wizard_execute_auth_choice "read" "$ssh_url" || return 1
-        return 0
+        if declare -f _nds_git_closure_probe_one &>/dev/null \
+            && _nds_git_closure_probe_one "$url" &>/dev/null; then
+            return 0
+        fi
     fi
 
     nds_feat_cfg_set GIT_IMPORT_KEY_PATH ""
@@ -358,19 +353,24 @@ nds_git_wizard_converse_url() {
         rc=$?
         [[ "$rc" -eq "${NDS_ACTION_BACK:-10}" ]] && return "$rc"
     fi
-    nds_git_wizard_ask_auth_method "$is_gh"
-    rc=$?
-    [[ "$rc" -eq "${NDS_ACTION_BACK:-10}" ]] && return "$rc"
-    nds_git_wizard_execute_auth_choice "read" "$ssh_url" || return 1
-    return 0
+
+    while true; do
+        nds_git_wizard_ask_auth_method "$is_gh"
+        rc=$?
+        [[ "$rc" -eq "${NDS_ACTION_BACK:-10}" ]] && return "$rc"
+        if nds_git_wizard_execute_auth_choice "read" "$ssh_url"; then
+            return 0
+        fi
+        warn "Try another key, generate one, or press 0 to go back."
+    done
 }
 
 # Description: Repeat the per-repo conversation for each related flake input.
-# Paste/path do not reuse NDS_GIT_IMPORT_KEY from the root repo.
+# After a working paste/path, try that same key on the remaining URLs first.
 # Arguments:
 # - urls: <String...> Git URLs still missing access
 nds_git_wizard_import_each_url() {
-    local url rc=0 nested=false
+    local url rc=0 nested=false last_key=""
     local strategy
 
     if [[ -n "${NDS_CFG_AA_NAME:-}" ]]; then
@@ -385,6 +385,14 @@ nds_git_wizard_import_each_url() {
 
     _NDS_GIT_RELATED_IMPORT=1
     for url in "$@"; do
+        if [[ -n "$last_key" && -f "$last_key" ]] \
+            && declare -f nds_git_probe_access_with_key &>/dev/null \
+            && nds_git_probe_access_with_key "$url" "$last_key"; then
+            if declare -f nds_git_bind_key_to_url &>/dev/null; then
+                nds_git_bind_key_to_url "$last_key" "$url" || true
+            fi
+            continue
+        fi
         nds_git_wizard_converse_url "$url"
         rc=$?
         if [[ "$rc" -eq "${NDS_ACTION_BACK:-10}" || "$rc" -ne 0 ]]; then
@@ -392,6 +400,7 @@ nds_git_wizard_import_each_url() {
             [[ "$nested" == true ]] || _nds_git_wizard_release_aa
             return "$rc"
         fi
+        last_key=$(_nds_git_identity_for_url "$url" 2>/dev/null || true)
     done
     unset _NDS_GIT_RELATED_IMPORT
     [[ "$nested" == true ]] || _nds_git_wizard_release_aa

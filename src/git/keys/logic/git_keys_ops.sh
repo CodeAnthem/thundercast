@@ -170,6 +170,34 @@ nds_git_key_dest_for_import() {
     nds_git_session_key_path
 }
 
+# Description: Point a URL at a working key (copy to the per-repo deploy path when needed).
+# Arguments:
+# - key_path: <String> Private key that already passed ls-remote for this URL
+# - url:      <String> Git URL
+# Returns:
+# - <Bool> 0 when the key is registered for that URL
+nds_git_bind_key_to_url() {
+    local key_path="$1" url="$2"
+    local dest parsed host owner repo
+
+    [[ -f "$key_path" ]] || return 1
+    parsed=$(_nds_git_url_parse "$(_nds_git_url_toSsh "$url")" 2>/dev/null) || return 1
+    IFS=$'\t' read -r host owner repo <<< "$parsed"
+    dest="$(nds_git_deploy_key_path "$owner" "$repo")"
+    if [[ "$key_path" != "$dest" ]]; then
+        mkdir -p "$(dirname "$dest")"
+        cp "$key_path" "$dest"
+        chmod 600 "$dest"
+        [[ -f "${key_path}.pub" ]] && cp "${key_path}.pub" "${dest}.pub"
+        nds_git_keys_register "$dest" || true
+        key_path="$dest"
+    fi
+    if declare -f nds_git_access_set &>/dev/null; then
+        nds_git_access_set key_path "$url" "$key_path"
+    fi
+    return 0
+}
+
 # Description: Write key text to dest (default session path) and register it for this session.
 # Arguments:
 # - body: <String> PEM / OpenSSH private key text

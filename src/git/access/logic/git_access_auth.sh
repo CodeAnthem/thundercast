@@ -83,14 +83,30 @@ _nds_git_record_url_access() {
 }
 
 _nds_git_closure_probe_one() {
-    local url="$1"
+    local url="$1" key
+
     if nds_git_probe_public "$url" 2>/dev/null; then
         return 0
     fi
     if declare -f nds_git_access_apply_map &>/dev/null && nds_git_access_apply_map "$url"; then
         return 0
     fi
-    nds_git_probe_access "$url"
+    if nds_git_probe_access "$url"; then
+        return 0
+    fi
+    if declare -f nds_git_keys_list &>/dev/null \
+        && declare -f nds_git_probe_access_with_key &>/dev/null; then
+        while IFS= read -r key; do
+            [[ -f "$key" ]] || continue
+            if nds_git_probe_access_with_key "$url" "$key"; then
+                if declare -f nds_git_bind_key_to_url &>/dev/null; then
+                    nds_git_bind_key_to_url "$key" "$url" || true
+                fi
+                return 0
+            fi
+        done < <(nds_git_keys_list 2>/dev/null || true)
+    fi
+    return 1
 }
 
 _nds_git_closure_repo_label() {

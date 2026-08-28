@@ -55,7 +55,14 @@ nds_git_discover_probe_urls() {
 
     for url in "${urls[@]}"; do
         [[ -n "$url" ]] || continue
-        nds_git_probe_access "$url" || return 1
+        if declare -f nds_git_probe_access_with_key &>/dev/null; then
+            nds_git_probe_access_with_key "$url" "$key_path" || return 1
+        else
+            nds_git_probe_access "$url" || return 1
+        fi
+        if declare -f nds_git_bind_key_to_url &>/dev/null; then
+            nds_git_bind_key_to_url "$key_path" "$url" || true
+        fi
     done
     return 0
 }

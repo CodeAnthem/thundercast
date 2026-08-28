@@ -6,8 +6,8 @@
 # Description:   Path and paste key import (cwd/.ssh auto-scan runs before the wizard)
 # ==================================================================================================
 
-# Description: Probe an imported key. Spins while SSH check runs so paste is not silent.
-# Probe failure warns but still returns 0 (wizard can retry).
+# Description: Probe an imported key with that file (not some other identity).
+# Returns 1 on probe failure so the wizard stays on this repo.
 # Arguments:
 # - dest:    <String> Key path on disk
 # - ok_msg:  <String> Step/success line when the probe passes
@@ -28,16 +28,18 @@ _nds_git_wizard_probe_imported_key() {
             nds_step_complete "$ok_msg"
             return 0
         fi
-        nds_step_fail "SSH key probe"
-        warn "Key loaded but probe failed for one or more URLs — continue after fixing access."
-        return 0
+        if declare -f nds_step_cancel &>/dev/null; then
+            nds_step_cancel
+        fi
+        warn "This key cannot read that repository (GitHub deploy keys work on one repo only)."
+        return 1
     fi
     if nds_git_discover_probe_urls "$dest" "${urls[@]}"; then
         success "$ok_msg"
         return 0
     fi
-    warn "Key loaded but probe failed for one or more URLs — continue after fixing access."
-    return 0
+    warn "This key cannot read that repository (GitHub deploy keys work on one repo only)."
+    return 1
 }
 
 # Description: Import a private key from an explicit path (or NDS_GIT_IMPORT_KEY_PATH).

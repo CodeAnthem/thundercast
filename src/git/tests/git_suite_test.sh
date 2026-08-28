@@ -536,6 +536,42 @@ LOCK
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ git import: paste still silent until probe finishes"
     fi
+    if grep -q 'nds_git_probe_access_with_key' \
+        "${SCRIPT_DIR}/git/access/logic/git_access_discover.sh" \
+        && grep -q 'nds_git_bind_key_to_url' \
+        "${SCRIPT_DIR}/git/keys/logic/git_keys_ops.sh" \
+        && grep -q 'nds_git_probe_access_with_key' \
+        "${SCRIPT_DIR}/git/access/logic/git_access_auth.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ git probe: pasted key is the identity; reuse on remaining URLs"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ git probe: still probes with identity_for_url instead of the pasted key"
+    fi
+    if grep -q 'deploy keys work on one repo only' \
+        "${SCRIPT_DIR}/git/keys/ui/git_keys_import.sh" \
+        && grep -q 'return 1' \
+        "${SCRIPT_DIR}/git/keys/ui/git_keys_import.sh" \
+        && ! grep -q 'nds_step_fail "SSH key probe"' \
+        "${SCRIPT_DIR}/git/keys/ui/git_keys_import.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ git import: failed probe stays on this repo (no fake FAIL+continue)"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ git import: probe fail still continues as success"
+    fi
+    if grep -q 'Try another key' \
+        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+        && grep -q 'nds_git_probe_access_with_key' \
+        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+        && ! grep -A35 '^nds_git_wizard_ask_auth_method()' \
+            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" | grep -q 'nds_ui_section_header'; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ wizard: retry paste on same screen; reuse key on remaining repos"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ wizard: still skips paste/path or redraws on related-repo retry"
+    fi
     if grep -q 'nds_ask_user_to_proceed "Show QR codes?"' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
         && grep -q 'Show QR codes?' \

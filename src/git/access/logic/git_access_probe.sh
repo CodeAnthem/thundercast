@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git probe and clone (framework)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-05 | Modified: 2026-07-28
+# Date:          Created: 2026-07-05 | Modified: 2026-08-28
 # Description:   Identity-aware probe/clone wrapping standalone helpers
 # ==================================================================================================
 
@@ -28,6 +28,26 @@ nds_git_probe_access() {
         nds_install_log "git: probe failed ${ssh_url} (key=${key_path:-none})"
     fi
     return "$rc"
+}
+
+# Description: Probe a URL with an explicit private key (not identity_for_url).
+# Arguments:
+# - url:      <String> Git URL
+# - key_path: <String> Private key path
+# Returns:
+# - <Bool> 0 when ls-remote succeeds with that identity
+nds_git_probe_access_with_key() {
+    local url="$1" key_path="$2" ssh_url
+    local -a envv=()
+
+    [[ -f "$key_path" ]] || return 1
+    ssh_url=$(_nds_git_url_toSsh "$url")
+    while IFS= read -r line; do envv+=("$line"); done < <(nds_git_ssh_env_for_key "$key_path")
+    if command -v timeout &>/dev/null; then
+        timeout 15 env "${envv[@]}" git -c credential.helper= ls-remote "$ssh_url" &>/dev/null
+    else
+        env "${envv[@]}" git -c credential.helper= ls-remote "$ssh_url" &>/dev/null
+    fi
 }
 
 # Description: Clone a flake using resolved SSH deploy-key auth.

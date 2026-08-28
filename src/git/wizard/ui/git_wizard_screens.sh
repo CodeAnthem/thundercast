@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git auth wizard screens (menu output)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-27
+# Date:          Created: 2026-07-07 | Modified: 2026-08-28
 # ==================================================================================================
 
 declare -ga NDS_GIT_AUTH_REGISTER_URLS=()
@@ -162,4 +162,6 @@ nds_git_wizard_screen_closure() {
     fi
 
     nds_git_wizard_screen_list_repos all_urls failed
+    nds_ui_i "A GitHub deploy key only works on the repo it was added to."
+    nds_ui_b ""
 }
