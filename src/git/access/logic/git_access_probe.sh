@@ -50,7 +50,7 @@ nds_git_probe_access_with_key() {
     fi
 }
 
-# Description: Clone a flake using resolved SSH deploy-key auth.
+# Description: Clone a flake using every registered SSH identity for that URL.
 # Arguments:
 # - url:   <String> Git URL (HTTPS URLs are converted to SSH when parseable)
 # - dest:  <String> Destination directory
@@ -58,7 +58,14 @@ nds_git_probe_access_with_key() {
 # Returns:
 # - <Bool> 0 on success
 nds_git_clone() {
-    local url="$1" dest="$2" depth="${3:-1}" key_path=""
-    key_path=$(_nds_git_identity_for_url "$url" 2>/dev/null || true)
-    nds_git_clone_with_key "$url" "$dest" "$depth" "$key_path"
+    local url="$1" dest="$2" depth="${3:-1}" ssh_url
+    local -a envv=()
+
+    ssh_url=$(_nds_git_url_toSsh "$url")
+    while IFS= read -r line; do envv+=("$line"); done < <(_nds_git_ssh_env_for_url "$url")
+    if [[ "$depth" == "0" ]]; then
+        env "${envv[@]}" git -c credential.helper= clone "$ssh_url" "$dest"
+    else
+        env "${envv[@]}" git -c credential.helper= clone --depth "$depth" "$ssh_url" "$dest"
+    fi
 }

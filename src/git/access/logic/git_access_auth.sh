@@ -91,9 +91,6 @@ _nds_git_closure_probe_one() {
     if declare -f nds_git_access_apply_map &>/dev/null && nds_git_access_apply_map "$url"; then
         return 0
     fi
-    if nds_git_probe_access "$url"; then
-        return 0
-    fi
     if declare -f nds_git_keys_list &>/dev/null \
         && declare -f nds_git_probe_access_with_key &>/dev/null; then
         while IFS= read -r key; do
@@ -105,6 +102,9 @@ _nds_git_closure_probe_one() {
                 return 0
             fi
         done < <(nds_git_keys_list 2>/dev/null || true)
+    fi
+    if nds_git_probe_access "$url"; then
+        return 0
     fi
     return 1
 }

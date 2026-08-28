@@ -2,8 +2,8 @@
 # ==================================================================================================
 # NDS - Git SSH environment
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-05 | Modified: 2026-08-04
-# Description:   Per-repo SSH env for git probes and Nix prefetch (no wrapper, no multi-key SSH)
+# Date:          Created: 2026-07-05 | Modified: 2026-08-28
+# Description:   Per-repo SSH env for git probes and Nix prefetch (registered keys as ssh -i)
 # ==================================================================================================
 
 # Description: No-op — kept for callers after key registration.
@@ -36,6 +36,11 @@ _nds_git_identity_for_url() {
             }
         done < <(nds_git_keys_list 2>/dev/null || true)
     fi
+    while IFS= read -r reg_key; do
+        [[ -f "$reg_key" ]] || continue
+        printf '%s\n' "$reg_key"
+        return 0
+    done < <(nds_git_keys_list 2>/dev/null || true)
     key="$(nds_git_session_key_path 2>/dev/null || true)"
     [[ -n "$key" && -f "$key" ]] && {
         printf '%s\n' "$key"
@@ -44,27 +49,46 @@ _nds_git_identity_for_url() {
     return 1
 }
 
-# Description: GIT_SSH_COMMAND for one repository (single deploy key).
+# Description: Private key paths to offer for a URL (registered keys first, then dest).
+# Arguments:
+# - url: <String|optional> Git remote URL
+# Returns:
+# - <String> paths (stdout, one per line)
+_nds_git_ssh_identity_paths() {
+    local url="${1:-}" key=""
+
+    {
+        nds_git_keys_list 2>/dev/null || true
+        if [[ -n "$url" ]]; then
+            key="$(_nds_git_identity_for_url "$url" 2>/dev/null || true)"
+            [[ -n "$key" && -f "$key" ]] && printf '%s\n' "$key"
+        fi
+    } | awk 'NF && !seen[$0]++'
+}
+
+# Description: GIT_SSH_COMMAND for one repository (all registered keys, then dest).
 # Arguments:
 # - url: <String> Git remote URL
 _nds_git_ssh_env_for_url() {
-    local url="$1" key_path
+    local url="$1"
+    local -a keys=()
 
-    if key_path=$(_nds_git_identity_for_url "$url" 2>/dev/null); then
-        nds_git_ssh_env_for_key "$key_path"
+    mapfile -t keys < <(_nds_git_ssh_identity_paths "$url")
+    if [[ ${#keys[@]} -eq 0 ]]; then
+        _nds_git_ssh_env
         return 0
     fi
-    _nds_git_ssh_env
+    nds_git_ssh_env_for_keys "${keys[@]}"
 }
 
-# Description: GIT_SSH_COMMAND fallback (single session key or bare ssh).
+# Description: GIT_SSH_COMMAND fallback (every registered key, else session, else bare).
 _nds_git_ssh_env() {
     local key_path
     local -a keys=()
 
     mapfile -t keys < <(nds_git_keys_list 2>/dev/null || true)
-    if [[ ${#keys[@]} -eq 1 && -f "${keys[0]}" ]]; then
-        nds_git_ssh_env_for_key "${keys[0]}"
+    if [[ ${#keys[@]} -gt 0 ]]; then
+        nds_git_ssh_env_for_keys "${keys[@]}"
         return 0
     fi
 

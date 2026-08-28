@@ -136,16 +136,23 @@ nds_git_wizard_ask_closure_coverage() {
 
     if _nds_git_wizard_used_gh; then
         default="gh"
+    else
+        default="generate"
+    fi
+    if [[ "$(nds_feat_cfg_get GIT_EXISTING_KEY 2>/dev/null || true)" == "true" ]]; then
+        default="existing"
+    fi
+
+    if _nds_git_wizard_used_gh; then
         nds_aa_ask_numbered_choice GIT_CLOSURE_COVERAGE \
             "gh|generate|existing" \
-            "gh=Register deploy keys via gh|generate=Create a key per repo and add it yourself|existing=Paste or path one key (tried on all remaining repos)" \
+            "gh=Register deploy keys via gh|generate=Create a key per repo and add it yourself|existing=Reuse the key already loaded (or paste one for all remaining repos)" \
             "$default" \
             true
     else
-        default="generate"
         nds_aa_ask_numbered_choice GIT_CLOSURE_COVERAGE \
             "generate|existing" \
-            "generate=Create a key per repo and add it yourself|existing=Paste or path one key (tried on all remaining repos)" \
+            "generate=Create a key per repo and add it yourself|existing=Reuse the key already loaded (or paste one for all remaining repos)" \
             "$default" \
             true
     fi
@@ -366,11 +373,11 @@ nds_git_wizard_converse_url() {
 }
 
 # Description: Repeat the per-repo conversation for each related flake input.
-# After a working paste/path, try that same key on the remaining URLs first.
+# Try every registered key first (the leaf paste) before asking again.
 # Arguments:
 # - urls: <String...> Git URLs still missing access
 nds_git_wizard_import_each_url() {
-    local url rc=0 nested=false last_key=""
+    local url rc=0 nested=false last_key="" key="" reused=false
     local strategy
 
     if [[ -n "${NDS_CFG_AA_NAME:-}" ]]; then
@@ -380,11 +387,29 @@ nds_git_wizard_import_each_url() {
     fi
     strategy="$(nds_feat_cfg_get GIT_ACCESS_STRATEGY 2>/dev/null || true)"
     if [[ -z "$strategy" ]]; then
-        nds_feat_cfg_set GIT_ACCESS_STRATEGY "deploy-this"
+        nds_feat_cfg_set GIT_ACCESS_STRATEGY "account-all"
     fi
 
     _NDS_GIT_RELATED_IMPORT=1
     for url in "$@"; do
+        reused=false
+        if declare -f nds_git_keys_list &>/dev/null \
+            && declare -f nds_git_probe_access_with_key &>/dev/null; then
+            while IFS= read -r key; do
+                [[ -f "$key" ]] || continue
+                if nds_git_probe_access_with_key "$url" "$key"; then
+                    if declare -f nds_git_bind_key_to_url &>/dev/null; then
+                        nds_git_bind_key_to_url "$key" "$url" || true
+                    fi
+                    last_key="$key"
+                    reused=true
+                    break
+                fi
+            done < <(nds_git_keys_list 2>/dev/null || true)
+        fi
+        if [[ "$reused" == true ]]; then
+            continue
+        fi
         if [[ -n "$last_key" && -f "$last_key" ]] \
             && declare -f nds_git_probe_access_with_key &>/dev/null \
             && nds_git_probe_access_with_key "$url" "$last_key"; then
@@ -458,7 +483,7 @@ nds_git_wizard_route_menu_closure() {
                 nds_git_wizard_register_deploy_for_urls "read" "${same_owner[@]}" || return 1
                 ;;
             existing)
-                nds_feat_cfg_set GIT_ACCESS_STRATEGY "deploy-this"
+                nds_feat_cfg_set GIT_ACCESS_STRATEGY "account-all"
                 nds_git_wizard_import_each_url "${same_owner[@]}" || return $?
                 ;;
             *)

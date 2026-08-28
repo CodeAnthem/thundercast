@@ -280,7 +280,7 @@ LOCK
     fi
 
     if declare -f _nds_git_identity_for_url &>/dev/null; then
-        local id_tmp id_key
+        local id_tmp id_key env_out sib
         id_tmp=$(mktemp -d)
         export NDS_RUNTIME_DIR="${id_tmp}/nds-runtime"
         export NDS_GIT_DEPLOY_KEYS_DIR="${id_tmp}/ssh"
@@ -295,6 +295,22 @@ LOCK
         else
             TEST_FAILED=$((TEST_FAILED + 1))
             console "  ✗ identity_for_url: expected ${id_key}, got ${key:-empty}"
+        fi
+        env_out="$(_nds_git_ssh_env_for_url "git@github.com:CodeAnthem/thundercore.git" 2>/dev/null || true)"
+        if grep -Fq "$id_key" <<<"$env_out"; then
+            TEST_PASSED=$((TEST_PASSED + 1))
+            console "  ✓ ssh_env_for_url: offers registered key on same-owner sibling"
+        else
+            TEST_FAILED=$((TEST_FAILED + 1))
+            console "  ✗ ssh_env_for_url: sibling probe does not offer ${id_key}"
+        fi
+        sib=$(_nds_git_identity_for_url "git@github.com:CodeAnthem/thundercore.git" 2>/dev/null || true)
+        if [[ -n "$sib" && -f "$sib" ]]; then
+            TEST_PASSED=$((TEST_PASSED + 1))
+            console "  ✓ identity_for_url: falls back to a registered key for siblings"
+        else
+            TEST_FAILED=$((TEST_FAILED + 1))
+            console "  ✗ identity_for_url: no identity for same-owner sibling"
         fi
         unset NDS_RUNTIME_DIR NDS_GIT_DEPLOY_KEYS_DIR
         rm -rf "$id_tmp"
@@ -536,19 +552,21 @@ LOCK
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ git import: paste still silent until probe finishes"
     fi
-    if grep -q 'nds_git_probe_access_with_key' \
-        "${SCRIPT_DIR}/git/access/logic/git_access_discover.sh" \
-        && grep -q 'nds_git_bind_key_to_url' \
-        "${SCRIPT_DIR}/git/keys/logic/git_keys_ops.sh" \
-        && grep -q 'nds_git_probe_access_with_key' \
-        "${SCRIPT_DIR}/git/access/logic/git_access_auth.sh"; then
+    if grep -q 'nds_git_ssh_env_for_keys' \
+        "${SCRIPT_DIR}/git/lib/git_probe.sh" \
+        && grep -q 'nds_git_keys_list' \
+        "${SCRIPT_DIR}/git/lib/git_ssh.sh" \
+        && grep -q 'nds_git_keys_list' \
+        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+        && grep -q 'GIT_ACCESS_STRATEGY "account-all"' \
+        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ git probe: pasted key is the identity; reuse on remaining URLs"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ git probe: still probes with identity_for_url instead of the pasted key"
     fi
-    if grep -q 'deploy keys work on one repo only' \
+    if grep -q 'That key could not read this repository' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_import.sh" \
         && grep -q 'return 1' \
         "${SCRIPT_DIR}/git/keys/ui/git_keys_import.sh" \

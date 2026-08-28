@@ -31,14 +31,14 @@ _nds_git_wizard_probe_imported_key() {
         if declare -f nds_step_cancel &>/dev/null; then
             nds_step_cancel
         fi
-        warn "This key cannot read that repository (GitHub deploy keys work on one repo only)."
+        warn "That key could not read this repository."
         return 1
     fi
     if nds_git_discover_probe_urls "$dest" "${urls[@]}"; then
         success "$ok_msg"
         return 0
     fi
-    warn "This key cannot read that repository (GitHub deploy keys work on one repo only)."
+    warn "That key could not read this repository."
     return 1
 }
 

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git probe helpers (standalone)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-05 | Modified: 2026-07-28
+# Date:          Created: 2026-07-05 | Modified: 2026-08-28
 # Description:   Argument-driven public probe and clone (optional identity path)
 # ==================================================================================================
 
@@ -13,14 +13,32 @@ nds_git_ssh_env_bare() {
         "GIT_SSH_COMMAND=ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 -o IdentitiesOnly=yes"
 }
 
+# Description: GIT_SSH_COMMAND offering every given private key (ssh -i … -i …).
+# Arguments:
+# - key_path: <String...> Private key paths (missing files skipped; none → bare)
+nds_git_ssh_env_for_keys() {
+    local key_path cmd="ssh"
+    local any=false
+
+    for key_path in "$@"; do
+        [[ -f "$key_path" ]] || continue
+        cmd+=" -i \"${key_path}\""
+        any=true
+    done
+    if [[ "$any" != true ]]; then
+        nds_git_ssh_env_bare
+        return 0
+    fi
+    printf '%s\n' \
+        "GIT_TERMINAL_PROMPT=0" \
+        "GIT_SSH_COMMAND=${cmd} -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30"
+}
+
 # Description: GIT_SSH_COMMAND for an explicit private key path.
 # Arguments:
 # - key_path: <String> Private key path
 nds_git_ssh_env_for_key() {
-    local key_path="$1"
-    printf '%s\n' \
-        "GIT_TERMINAL_PROMPT=0" \
-        "GIT_SSH_COMMAND=ssh -i \"${key_path}\" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30"
+    nds_git_ssh_env_for_keys "$1"
 }
 
 # Description: True when a repo is reachable without SSH keys (public).
