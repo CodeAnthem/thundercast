@@ -69,13 +69,14 @@ _nds_install_find_luks_uuid() {
 # Always rewrite, including committed by-label placeholders from flake eval.
 # Prefer UUID over filesystem labels — VMware hard resets often race by-label in initrd,
 # and Disko may not set the boot/nixos labels the scaffold assumes.
-# Usage: _nds_install_write_mounts_nix "disk" "hostname" "flake_root" "encryption" ["host_dir_rel"]
+# Usage: _nds_install_write_mounts_nix "disk" "hostname" "flake_root" "encryption" ["host_dir_rel"] [dest]
 _nds_install_write_mounts_nix() {
     local disk="$1"
     local hostname="$2"
     local flake_root="$3"
     local use_encryption="${4:-false}"
     local host_dir_rel="${5:-hosts/x86_64-linux}"
+    local dest="${6:-}"
     local host_dir root_dev boot_dev root_uuid boot_uuid luks_uuid=""
     local root_fs=ext4 boot_fs=vfat
     local esp_dev="" esp_uuid="" esp_fs=""
@@ -86,7 +87,8 @@ _nds_install_write_mounts_nix() {
     fi
 
     host_dir="${flake_root}/${host_dir_rel}/${hostname}"
-    mkdir -p "$host_dir"
+    mkdir -p "$host_dir" "$(dirname "${dest:-$host_dir}")"
+    [[ -n "$dest" ]] || dest="${host_dir}/nds_generated.nix"
 
     root_dev="$(_nds_install_findmnt_source /mnt)"
     boot_dev="$(_nds_install_findmnt_source /mnt/boot)"
@@ -134,7 +136,7 @@ _nds_install_write_mounts_nix() {
             "# NDS - ${hostname}" \
             '# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::' \
             "# Date:          Created: $(date -u +%Y-%m-%d) | Modified: $(date -u +%Y-%m-%d)" \
-            '# Description:   NDS install-time mounts (by-uuid) - commit and push after install' \
+            '# Description:   NDS install-time mounts (by-uuid)' \
             '# ==================================================================================================' \
             '' \
             '{ ... }: {' \
@@ -165,9 +167,9 @@ _nds_install_write_mounts_nix() {
             printf '  opts.nixos.security.luks.device = "/dev/disk/by-uuid/%s";\n' "$luks_uuid"
         fi
         printf '%s\n' '}'
-    } >"${host_dir}/mounts.nix"
+    } >"$dest"
 
-    log "Wrote mounts.nix for ${hostname} (root UUID ${root_uuid}, boot UUID ${boot_uuid})"
-    nds_install_log "mounts.nix written for ${hostname} (by-uuid mounts)"
+    log "Wrote mounts for ${hostname} (root UUID ${root_uuid}, boot UUID ${boot_uuid})"
+    nds_install_log "mounts written for ${hostname} (by-uuid)"
     return 0
 }

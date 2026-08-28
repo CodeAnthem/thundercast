@@ -69,9 +69,9 @@ On the installed system NDS writes `nds-git.map` and symlinks `tc-git.map`.
 Public names: `tc-switch`, `tc-clean`, `tc-status`, `tc-git-ssh` (`nds-*` aliases remain).  
 Toolkit hosts also get `tc-sops`. Use `tc-switch --self-update` (or `nds-switch --self-update`)  
 during NDS development to refresh scripts. Install-time  
-`facter.json` is unstaged and gitignored after the flake build so the checkout stays  
-pullable. Structural `mounts.nix` + `boot.nix` are committed (or git-added at install) so  
-flake eval always sees root/boot mounts and the bootloader device.
+`facter.json` is unstaged and gitignored after the flake build so the checkout stays
+pullable. Structural `nds_generated.nix` is committed (boot + mounts + guest; NDS
+overwrites it). Legacy `boot.nix` + `mounts.nix` still eval if present.
 
 ---
 

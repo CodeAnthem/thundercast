@@ -140,7 +140,7 @@ _nds_install_flake_disk_by_id() {
 }
 
 # Description: Scaffold a new host folder (opts.nix, configuration.nix,
-# mounts.nix; disko.nix + import only when DISK_STRATEGY is disko or flake).
+# nds_generated.nix; disko.nix + import only when DISK_STRATEGY is disko or flake).
 # Arguments:
 # - flake_root: <String> Path to the checked-out flake
 # - hostname:   <String> New host name
@@ -200,7 +200,7 @@ _nds_install_flake_scaffold_host_folder() {
 
     sed -e "s/__HOSTNAME__/${hostname}/g" \
         -e "s/__DATE__/$(date -u +%Y-%m-%d)/g" \
-        "${tmpl_dir}/host-mounts.nix.tmpl" > "${host_dir}/mounts.nix" || return 1
+        "${tmpl_dir}/host-generated.nix.tmpl" > "${host_dir}/nds_generated.nix" || return 1
 
     local cfg_tmpl
     if [[ "${method,,}" == "static" ]]; then
@@ -246,8 +246,6 @@ _nds_install_flake_scaffold_host_folder() {
             rm -f "${host_dir}/disko.nix"
             ;;
     esac
-
-    _nds_install_flake_write_guest_nix "$host_dir" || true
 
     log "Scaffolded host folder: $host_dir (role=${role})"
     return 0

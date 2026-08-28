@@ -4,7 +4,7 @@
 
 # ThunderCast
 
-[![Version](https://img.shields.io/badge/version-5.28.0-0267c1?style=flat-square)](https://github.com/CodeAnthem/thundercast)
+[![Version](https://img.shields.io/badge/version-5.29.0-0267c1?style=flat-square)](https://github.com/CodeAnthem/thundercast)
 [![NixOS](https://img.shields.io/badge/NixOS-Live%20ISO-5277C3?style=flat-square&logo=nixos&logoColor=white)](https://nixos.org)
 [![ShellCheck](https://github.com/CodeAnthem/thundercast/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/CodeAnthem/thundercast/actions/workflows/shellcheck.yml)
 [![Self-test](https://github.com/CodeAnthem/thundercast/actions/workflows/selftest.yml/badge.svg)](https://github.com/CodeAnthem/thundercast/actions/workflows/selftest.yml)
@@ -222,7 +222,7 @@ Live ISO → menu → disk prep (or skip if flake owns disko)
 
 **addRole / toolkit / remoteAction** also clone the leaf with **write** access, write `.nds/hosts/<host>.recipe`, then Part A.
 
-NDS clones your flake **directly** — no wrapper flake. Install-time files (`hardware-configuration.nix`, optional `machine.nix` for LUKS) are gitignored on disk. Committed `mounts.nix` + `boot.nix` are the structural files flake eval must see.
+NDS clones your flake **directly** — no wrapper flake. Install-time files (`hardware-configuration.nix`, optional `machine.nix` for LUKS) are gitignored on disk. Committed `nds_generated.nix` is the structural file flake eval must see (NDS overwrites it).
 
 ---
 

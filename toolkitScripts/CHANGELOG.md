@@ -2,6 +2,11 @@
 
 Versions here are **tools only** (this tree). NixOS/comin is a separate channel.
 
+## 0.5.1 — 2026-08-28
+
+- Operator private key path: `/etc/sops/age/operator_sops.key` (falls back to `operator.txt`)
+- Scaffold writes `nds_generated.nix` (NDS-owned boot + mounts)
+
 ## 0.5.0 — 2026-08-28
 
 - Shared cluster `config` + `state`; pubs in `operator/keys/` and `machines/<host>/keys/`

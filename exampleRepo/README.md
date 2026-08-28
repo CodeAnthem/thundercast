@@ -13,7 +13,7 @@ Do **not** install ThunderCast itself as the flake (no real `nixosConfigurations
 ```
 flake.nix
 setup/
-hosts/x86_64-linux/<name>/   # you: configuration.nix + opts.nix; NDS: boot/mounts/guest
+hosts/x86_64-linux/<name>/   # you: configuration.nix + opts.nix; NDS: nds_generated.nix
 .roles/<id>/                 # templates — see .roles/README.md
 .toolkit/                    # shared ops state — see .toolkit/README.md
 .nds/

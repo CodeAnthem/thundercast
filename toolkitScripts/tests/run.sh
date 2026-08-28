@@ -113,7 +113,7 @@ else
 fi
 
 tcast_nodes_scaffold lab-node-a worker x86_64-linux
-[[ -f "$LEAF/hosts/x86_64-linux/lab-node-a/opts.nix" ]] && ok "scaffold from role" || fail "scaffold"
+[[ -f "$LEAF/hosts/x86_64-linux/lab-node-a/nds_generated.nix" ]] && ok "scaffold nds_generated.nix" || fail "scaffold generated"
 [[ "$(tcast_register_host_get lab-node-a role)" == worker ]] && ok "register host role" || fail "register host"
 [[ -f "$LEAF/.toolkit/machines/lab-node-a/config" ]] && ok "host config file" || fail "host config file"
 [[ -f "$LEAF/.nds/hosts/lab-node-a.recipe" ]] && ok "scaffold recipe" || fail "scaffold recipe"

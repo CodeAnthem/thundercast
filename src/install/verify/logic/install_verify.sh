@@ -98,7 +98,7 @@ _nds_install_verify_bootloader() {
 # - hostname: <String> Flake host name
 _nds_install_verify_flake_hardware() {
     local hostname="$1"
-    local hw_artifact host_dir_rel host_dir dest flake_root
+    local hw_artifact host_dir_rel host_dir dest flake_root gen
 
     _nds_install_gather_flake_context
     [[ "$NDS_CTX_HW_PLACEMENT" != "skip" ]] || return 0
@@ -122,13 +122,15 @@ _nds_install_verify_flake_hardware() {
     fi
 
     host_dir="${flake_root}/${host_dir_rel}/${hostname}"
-    if [[ ! -f "${host_dir}/boot.nix" ]]; then
-        _nds_install_verify_fail "Boot module missing: ${host_dir}/boot.nix"
-    fi
-    if [[ ! -f "${host_dir}/mounts.nix" ]]; then
-        _nds_install_verify_fail "mounts.nix missing (root/boot mounts): ${host_dir}/mounts.nix"
-    elif ! grep -qE 'fileSystems|by-uuid|by-label' "${host_dir}/mounts.nix" 2>/dev/null; then
-        _nds_install_verify_fail "mounts.nix missing fileSystems mounts: ${host_dir}/mounts.nix"
+    gen="${host_dir}/nds_generated.nix"
+    if [[ -f "$gen" ]]; then
+        grep -qE 'fileSystems|by-uuid|by-label' "$gen" \
+            || _nds_install_verify_fail "nds_generated.nix missing fileSystems: ${gen}"
+    elif [[ -f "${host_dir}/boot.nix" && -f "${host_dir}/mounts.nix" ]]; then
+        grep -qE 'fileSystems|by-uuid|by-label' "${host_dir}/mounts.nix" \
+            || _nds_install_verify_fail "mounts.nix missing fileSystems mounts: ${host_dir}/mounts.nix"
+    else
+        _nds_install_verify_fail "nds_generated.nix missing: ${gen}"
     fi
 }
 

@@ -5,7 +5,17 @@
 # Description:   Leaf git lives under TCAST_LEAF_DIR — not /etc/nixos
 # ==================================================================================================
 
-TCAST_TOOLKIT_OP_KEY="${SOPS_AGE_KEY_FILE:-/etc/sops/age/operator.txt}"
+if [[ -z "${TCAST_TOOLKIT_OP_KEY:-}" ]]; then
+    if [[ -n "${SOPS_AGE_KEY_FILE:-}" ]]; then
+        TCAST_TOOLKIT_OP_KEY="$SOPS_AGE_KEY_FILE"
+    elif [[ -f /etc/sops/age/operator_sops.key ]]; then
+        TCAST_TOOLKIT_OP_KEY=/etc/sops/age/operator_sops.key
+    elif [[ -f /etc/sops/age/operator.txt ]]; then
+        TCAST_TOOLKIT_OP_KEY=/etc/sops/age/operator.txt
+    else
+        TCAST_TOOLKIT_OP_KEY=/etc/sops/age/operator_sops.key
+    fi
+fi
 TCAST_LEAF_DIR="${TCAST_LEAF_DIR:-/var/lib/nds-toolkit/leaf}"
 TCAST_LEAF_BRANCH="${TCAST_LEAF_BRANCH:-main}"
 TCAST_REGISTER_REL=".toolkit"

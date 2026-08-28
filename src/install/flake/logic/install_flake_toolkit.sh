@@ -126,8 +126,8 @@ nds_toolkit_install_keys_to_target() {
     [[ -f "${dest}/operator_age.txt" ]] || return 0
     [[ -d "${target_root}/etc" ]] || return 0
     mkdir -p "${target_root}/etc/sops/age" "${target_root}/root/.ssh"
-    cp "${dest}/operator_age.txt" "${target_root}/etc/sops/age/operator.txt"
-    chmod 600 "${target_root}/etc/sops/age/operator.txt"
+    cp "${dest}/operator_age.txt" "${target_root}/etc/sops/age/operator_sops.key"
+    chmod 600 "${target_root}/etc/sops/age/operator_sops.key"
     if [[ -f "${dest}/toolkit_ssh" ]]; then
         cp "${dest}/toolkit_ssh" "${target_root}/root/.ssh/id_ed25519"
         cp "${dest}/toolkit_ssh.pub" "${target_root}/root/.ssh/id_ed25519.pub"

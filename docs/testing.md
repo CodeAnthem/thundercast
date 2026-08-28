@@ -64,7 +64,7 @@ Env vars (`NDS_ACTION`, `NDS_FLAKE_REPO_URL`, `NDS_TEST`, …) are picked up the
 
 ### V2 — installFlake, local, existing host
 
-Use a host that already exists in the leaf (`nixosConfigurations.<name>`), with committed `mounts.nix` + `boot.nix`.
+Use a host that already exists in the leaf (`nixosConfigurations.<name>`), with committed `nds_generated.nix` (or legacy `mounts.nix` + `boot.nix`).
 
 | | |
 |--|--|

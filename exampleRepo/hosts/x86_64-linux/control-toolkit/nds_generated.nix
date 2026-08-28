@@ -1,16 +1,19 @@
 # ==================================================================================================
-# NDS - __HOSTNAME__
+# exampleRepo - control-toolkit
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: __DATE__ | Modified: __DATE__
-# Description:   Standard NDS disk labels (boot / nixos) - committed for flake eval
+# Date: Created: 2026-08-28 | Modified: 2026-08-28
+# Description: NDS generated — do not edit (boot + mounts)
 # ==================================================================================================
 
-{ ... }: {
+{ lib, ... }: {
+  boot.loader.grub = {
+    enable = lib.mkForce true;
+    device = lib.mkForce "/dev/sda";
+  };
   fileSystems."/" = {
     device = "/dev/disk/by-label/nixos";
     fsType = "ext4";
   };
-
   fileSystems."/boot" = {
     device = "/dev/disk/by-label/boot";
     fsType = "vfat";

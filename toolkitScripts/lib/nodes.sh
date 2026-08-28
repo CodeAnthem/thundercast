@@ -45,16 +45,17 @@ tcast_nodes_scaffold() {
     mkdir -p "$host_dir"
     today="$(date -u +%Y-%m-%d)"
     printf '(import ../../../.roles/%s/opts.nix)\n' "$role" > "${host_dir}/opts.nix"
-    cat > "${host_dir}/boot.nix" << EOF
+    cat > "${host_dir}/nds_generated.nix" << EOF
+# ==================================================================================================
+# Date:          Created: ${today} | Modified: ${today}
+# Description:   NDS generated — do not edit (boot + mounts)
+# ==================================================================================================
+
 { lib, ... }: {
   boot.loader.grub = {
     enable = lib.mkForce true;
     device = lib.mkForce "/dev/sda";
   };
-}
-EOF
-    cat > "${host_dir}/mounts.nix" << EOF
-{ ... }: {
   fileSystems."/" = {
     device = "/dev/disk/by-label/nixos";
     fsType = "ext4";

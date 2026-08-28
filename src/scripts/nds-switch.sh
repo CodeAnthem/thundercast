@@ -162,7 +162,7 @@ behind=$(git rev-list --count "HEAD..${REMOTE_REF}" 2>/dev/null || echo 0)
 if [[ "${ahead:-0}" -gt 0 ]]; then
     _nds_switch_die "local branch is ahead of ${REMOTE_REF} by ${ahead} commit(s).
 Install-time secrets (facter.json) must stay untracked/gitignored.
-Legacy nds-boot.nix / machine.nix are obsolete — use committed mounts.nix + boot.nix.
+Legacy nds-boot.nix / machine.nix are obsolete — use committed nds_generated.nix.
 To match remote:  git reset --hard ${REMOTE_REF}
 (Keep host facts as untracked files.)"
 fi

@@ -746,7 +746,7 @@ suite_install() {
     NDS_RUNTIME_DIR="$_saved_runtime"
     rm -rf "$leaf_tmp"
 
-    local scaf_root scaf_host _sv_save
+    local scaf_root scaf_host _sv_save guest_snip
     scaf_root=$(mktemp -d)
     mkdir -p "${scaf_root}/.roles/worker"
     printf '%s\n' '{ }' > "${scaf_root}/.roles/worker/opts.nix"
@@ -790,14 +790,16 @@ suite_install() {
     unset NDS_SCAFFOLD_OVERWRITE_SKIP
     nds_cfg_set PLATFORM_VM_GUEST_TOOLS "true"
     nds_cfg_set PLATFORM_VM_TYPE "vmware"
-    if _nds_install_flake_write_guest_nix "$scaf_host" \
-        && grep -q 'virtualisation.vmware.guest.enable' "${scaf_host}/guest.nix"; then
+    guest_snip="${scaf_host}/.guest-snip.nix"
+    if _nds_install_flake_write_guest_nix "$scaf_host" "$guest_snip" \
+        && grep -q 'virtualisation.vmware.guest.enable' "$guest_snip"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ guest.nix: VMware guest tools from PLATFORM_VM_*"
+        console "  ✓ guest tools: VMware snippet from PLATFORM_VM_*"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ guest.nix: VMware guest tools missing"
+        console "  ✗ guest tools: VMware snippet missing"
     fi
+    rm -f "$guest_snip"
     nds_cfg_set PLATFORM_VM_GUEST_TOOLS "false"
     if [[ -n "$_sv_save" ]]; then
         export NDS_NIXOS_STATE_VERSION="$_sv_save"

@@ -92,15 +92,9 @@ nds_nixos_install_flake() {
         log "Skipping hardware artifact (FLAKE_HARDWARE_PLACEMENT=skip)"
     fi
 
-    nds_step_exec "Writing boot module from preset" \
-        nds_nixcfg_write_boot_module "${host_dir}/boot.nix" || return 1
-    nds_install_log "boot: wrote ${host_dir}/boot.nix from boot preset"
-
-    nds_step_exec "Writing mounts (root/boot UUID)" \
-        _nds_install_write_mounts_nix "$NDS_CTX_DISK" "$hostname" "$flake_root" "$NDS_CTX_ENCRYPTION" "$host_dir_rel" || return 1
-
-    nds_step_exec "Writing hypervisor guest tools" \
-        _nds_install_flake_write_guest_nix "$host_dir" || return 1
+    nds_step_exec "Writing NDS generated host module" \
+        _nds_install_write_generated_nix "$host_dir" "$NDS_CTX_DISK" "$hostname" \
+            "$flake_root" "$NDS_CTX_ENCRYPTION" "$host_dir_rel" || return 1
 
     nds_step_exec "Verifying host structural files" \
         _nds_install_ensure_host_imports "$host_dir" || return 1

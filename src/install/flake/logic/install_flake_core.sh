@@ -248,7 +248,7 @@ _nds_install_flake_host_fact_paths() {
 
 # Description: Stage install-time host files into the flake Git tree for nix eval.
 # Gitignored secrets (facter.json) are invisible to flake eval unless git add -f.
-# Committed mounts.nix / boot.nix are staged separately and stay tracked.
+# Committed nds_generated.nix is staged separately and stays tracked.
 # Arguments:
 # - flake_root: <String> Flake checkout root
 # - host_dir:   <String> Host directory (…/hosts/…/hostname)

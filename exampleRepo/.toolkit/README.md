@@ -2,7 +2,7 @@
 
 Owned by the **toolkit** on the ops VM. Git-safe: public keys and membership only. Private age/SSH keys stay in the install zip / on the VM.
 
-All toolkit VMs share this git tree. The only private key they must share is the **operator age private** (`/etc/sops/age/operator.txt` on each ops VM — never in git).
+All toolkit VMs share this git tree. The only private key they must share is the **operator age private** (`/etc/sops/age/operator_sops.key` on each ops VM — never in git).
 
 | Path | What |
 |------|------|
