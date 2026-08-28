@@ -21,7 +21,6 @@ let
 
   facter = hostDir + "/facter.json";
   hardwareNix = hostDir + "/hardware-configuration.nix";
-  bootCommitted = hostDir + "/boot.nix";
   generated = hostDir + "/nds_generated.nix";
   flakeRoot = dirOf (dirOf (dirOf hostDir));
   toolkitSsh = flakeRoot + "/.toolkit/operator/keys/ssh.pub";
@@ -29,8 +28,8 @@ let
 
   hasFacter = builtins.pathExists facter;
   hasHardwareNix = builtins.pathExists hardwareNix;
-  hasBoot = builtins.pathExists bootCommitted || builtins.pathExists generated;
-  needEvalStub = !hasFacter && !hasHardwareNix && !hasBoot;
+  hasGenerated = builtins.pathExists generated;
+  needEvalStub = !hasFacter && !hasHardwareNix && !hasGenerated;
 
   sshEnabled = lib.attrByPath [ "opts" "nixos" "ssh" "enable" ] false config;
 in {

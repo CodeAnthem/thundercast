@@ -7,7 +7,7 @@
 # ==================================================================================================
 
 action_presets() {
-    printf '%s\n' toolkit installFlake boot disk encryption
+    printf '%s\n' toolkit installFlake boot disk encryption platform
 }
 
 action_config() {
@@ -17,6 +17,7 @@ action_config() {
     nds_cfg_preset_set_priority boot 21
     nds_cfg_preset_set_priority disk 22
     nds_cfg_preset_set_priority encryption 23
+    nds_cfg_preset_set_priority platform 24
     nds_cfg_preset_set_menu installFlake false
     nds_cfg_set INSTALL_KIND "flake"
     nds_cfg_set INSTALL_COMPOSER "toolkit"

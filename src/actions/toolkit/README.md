@@ -38,6 +38,6 @@ The settings menu has one **Toolkit** category (flake URL + restore). Disk / enc
 
 After boot: `toolkit` menu, `tc-sops`, `toolkit-update` (tools fetch — not `nixos-rebuild` / comin).
 
-ISO hooks: leaf `.nds/toolkit/*.sh` plus ThunderCast `src/actions/toolkit/hooks/` (operator pubs go to `.toolkit/operator/`). `.nds/common/` runs for every action.
+ISO hooks: leaf `.nds/hooks/toolkit/*.sh` plus ThunderCast `src/actions/toolkit/hooks/` (operator pubs go to `.toolkit/operator/`).
 
 Leaf skeleton: [exampleRepo](../../../exampleRepo/README.md).

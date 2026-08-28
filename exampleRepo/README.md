@@ -17,9 +17,8 @@ hosts/x86_64-linux/<name>/   # you: configuration.nix + opts.nix; NDS: nds_gener
 .roles/<id>/                 # templates — see .roles/README.md
 .toolkit/                    # shared ops state — see .toolkit/README.md
 .nds/
-  lib/                       # ISO functions only (no register)
-  common/                    # nds_hook_register for every action
-  <action>/                  # extra registers for that action
+  hooks/lib/                 # ISO functions only (no register)
+  hooks/<action>/            # nds_hook_register for that action only
   hosts/                     # NDS recipes (.recipe)
 ```
 

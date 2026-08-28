@@ -182,50 +182,50 @@ suite_standalone() {
         local hook_leaf
         hook_leaf=$(mktemp -d)
         nds_hook_reset
-        mkdir -p "${hook_leaf}/.nds/addRole"
+        mkdir -p "${hook_leaf}/.nds/hooks/addRole"
         printf '%s\n' \
             '# nds-hook: post_install' \
             '_nds_hook_test_fn() { printf ran >"${NDS_HOOK_TEST_OUT}"; }' \
             'nds_hook_register post_install _nds_hook_test_fn' \
-            > "${hook_leaf}/.nds/addRole/note.sh"
+            > "${hook_leaf}/.nds/hooks/addRole/note.sh"
         NDS_HOOK_TEST_OUT="${hook_leaf}/out"
         NDS_CURRENT_ACTION=addRole nds_hook_run "$hook_leaf" post_install
         if [[ "$(<"${hook_leaf}/out")" == "ran" ]]; then
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ hooks: .nds/<action>/*.sh register + run"
+            console "  ✓ hooks: .nds/hooks/<action>/*.sh register + run"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
-            console "  ✗ hooks: .nds/<action> did not run"
+            console "  ✗ hooks: .nds/hooks/<action> did not run"
         fi
         nds_hook_reset
-        mkdir -p "${hook_leaf}/.nds/lib" "${hook_leaf}/.nds/common"
+        mkdir -p "${hook_leaf}/.nds/hooks/lib" "${hook_leaf}/.nds/hooks/installFlake"
         printf '%s\n' \
             'dp_hook_lib_fn() { printf lib >"${NDS_HOOK_TEST_OUT}"; }' \
-            > "${hook_leaf}/.nds/lib/note.sh"
+            > "${hook_leaf}/.nds/hooks/lib/note.sh"
         printf '%s\n' \
             'nds_hook_register post_install dp_hook_lib_fn' \
-            > "${hook_leaf}/.nds/common/post_install.sh"
+            > "${hook_leaf}/.nds/hooks/installFlake/post_install.sh"
         NDS_HOOK_TEST_OUT="${hook_leaf}/out-lib"
         NDS_CURRENT_ACTION=installFlake nds_hook_run "$hook_leaf" post_install
         if [[ "$(<"${hook_leaf}/out-lib")" == "lib" ]]; then
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ hooks: .nds/lib functions + .nds/common register"
+            console "  ✓ hooks: .nds/hooks/lib functions + .nds/hooks/<action> register"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
-            console "  ✗ hooks: lib/common did not run"
+            console "  ✗ hooks: lib/action did not run"
         fi
         nds_hook_reset
-        rm -rf "${hook_leaf}/.nds/lib" "${hook_leaf}/.nds/common"
-        mkdir -p "${hook_leaf}/.nds/lib"
+        rm -rf "${hook_leaf}/.nds/hooks"
+        mkdir -p "${hook_leaf}/.nds/hooks/lib"
         printf '%s\n' \
             'run() { printf auto >"${NDS_HOOK_TEST_OUT}"; }' \
-            > "${hook_leaf}/.nds/lib/post_install.sh"
+            > "${hook_leaf}/.nds/hooks/lib/post_install.sh"
         NDS_HOOK_TEST_OUT="${hook_leaf}/out-libonly"
         : >"${NDS_HOOK_TEST_OUT}"
         NDS_CURRENT_ACTION=installFlake nds_hook_run "$hook_leaf" post_install
         if [[ ! -s "${hook_leaf}/out-libonly" ]]; then
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ hooks: .nds/lib does not auto-register"
+            console "  ✓ hooks: .nds/hooks/lib does not auto-register"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
             console "  ✗ hooks: lib auto-registered run()"

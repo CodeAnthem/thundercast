@@ -3,7 +3,7 @@
 # NDS - Leaf / action lifecycle hooks
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Date:          Created: 2026-08-28 | Modified: 2026-08-28
-# Description:   Source .nds/lib then register from .nds/<action> and .nds/common
+# Description:   Source .nds/hooks/lib, then registers from .nds/hooks/<action>
 # ==================================================================================================
 
 declare -gA NDS_HOOK_FNS=()
@@ -132,14 +132,13 @@ nds_hook_load() {
     nds_hook_reset
     NDS_HOOKS_LOADED_KEY="$key"
 
-    _nds_hook_source_dir "${flake_root}/.nds/lib" 1 || return 1
+    _nds_hook_source_dir "${flake_root}/.nds/hooks/lib" 1 || return 1
     if [[ -n "$action" && -n "${SCRIPT_DIR:-}" ]]; then
         _nds_hook_source_dir "${SCRIPT_DIR}/actions/${action}/hooks" || return 1
     fi
     if [[ -n "$action" ]]; then
-        _nds_hook_source_dir "${flake_root}/.nds/${action}" || return 1
+        _nds_hook_source_dir "${flake_root}/.nds/hooks/${action}" || return 1
     fi
-    _nds_hook_source_dir "${flake_root}/.nds/common" || return 1
 
     role="$(nds_cfg_get SCAFFOLD_ROLE 2>/dev/null || true)"
     if [[ -n "$role" ]]; then

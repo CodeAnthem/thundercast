@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - sops age key enrollment
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-03 | Modified: 2026-08-27
+# Date:          Created: 2026-07-03 | Modified: 2026-08-28
 # Description:   Generate a machine age key, install it on the target, and guide sops enrollment
 # ==================================================================================================
 
@@ -103,7 +103,7 @@ _nds_sops_enroll_key() {
     local secrets_dir="${NDS_RUNTIME_DIR}/secrets"
     local age_dir="${secrets_dir}/age"
     local key_file="${age_dir}/keys.txt"
-    local pubkey
+    local pubkey probe dest
 
     if [[ -z "$flake_root" || ! -d "$flake_root" ]]; then
         debug "No flake root — skipping sops enrollment"
@@ -136,6 +136,14 @@ _nds_sops_enroll_key() {
     cp "$key_file" "${secrets_dir}/machine_age_key.txt"
     chmod 600 "${secrets_dir}/machine_age_key.txt"
     _nds_sops_write_enroll_note "${secrets_dir}/sops_enroll.md" "$hostname" "$pubkey"
+
+    probe="${NDS_FLAKE_PROBE_DIR:-$flake_root}"
+    if [[ -d "${probe}/.toolkit" ]]; then
+        dest="${probe}/.toolkit/machines/${hostname}/keys/age.pub"
+        mkdir -p "$(dirname "$dest")"
+        printf '%s\n' "$pubkey" > "$dest"
+        log "Recorded machine age pubkey at ${dest#"$probe"/}"
+    fi
 
     log "Machine age public key: $pubkey"
 
