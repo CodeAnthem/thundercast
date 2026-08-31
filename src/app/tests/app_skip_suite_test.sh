@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Menu skip env tests
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-06 | Modified: 2026-08-20
+# Date:          Created: 2026-07-06 | Modified: 2026-08-30
 # ==================================================================================================
 
 suite_skip() {
@@ -132,7 +132,7 @@ suite_skip() {
     # Fresh process mimics main.sh: backbone only — no pre-sourced git/install.
     local prepare_out=""
     if prepare_out=$(
-        env SCRIPT_DIR="$SCRIPT_DIR" bash -euo pipefail -c '
+        env SCRIPT_DIR="$SCRIPT_DIR" "$BASH" -euo pipefail -c '
             source "${SCRIPT_DIR}/app/main.sh"
             nds_app_bootstrap "$SCRIPT_DIR" || exit 1
             nds_app_prepareAction || exit 1

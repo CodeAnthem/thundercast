@@ -34,6 +34,8 @@ Basename starts with the feature: `git_host.sh`, `bundle_paths.sh`. Forbidden: `
 
 `nds_<feature>_<subfeature>_<purpose>` (private: `_nds_…`, never `_git_*` / `_install_*`). App: `nds_app_<feature>_<layer>_<camelAction>`. Store: `nds_cfg_*`. Validators: `validate_<type>_<action>`. Preset hooks: `<preset>_defaults|_configure|_validate|_summary`. Logger wrappers stay `info`/`warn`/`error`.
 
+Do not add shortcut wrappers that only call another function. Use the real name.
+
 Generic helpers live in `lib/` (`nds_lib_getHostIP`, `nds_lib_key_bodyLooksValid`, `nds_lib_env_is_true`, `nds_lib_urandom_chars`). App backbone uses `nds_app_*`; domain features keep `nds_git_*` / `nds_install_*`. Bound-AA wrappers: `nds_feat_cfg_*` / `nds_aa_ask_*`. Indent via `nds_ui_indent_push` / `pop` — never assign `NDS_UI_INDENT_*` in a feature.
 
 ## Logic vs UI

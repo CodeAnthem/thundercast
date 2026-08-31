@@ -1,2 +1,4 @@
 # Framework globals (PRESET_CONTEXT, NDS_ACTION_CONFIG_*, test fixtures)
 disable=SC2034
+# Bash 5.3 ${ command; } — ShellCheck 0.10 still flags this as ksh-only (SC2127)
+disable=SC2127

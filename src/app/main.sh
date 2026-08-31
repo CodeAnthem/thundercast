@@ -2,10 +2,16 @@
 # ==================================================================================================
 # DPS Project - Bootstrap NixOS - App entry point
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-12 | Modified: 2026-08-20
+# Date:          Created: 2025-10-12 | Modified: 2026-08-30
 # ==================================================================================================
 # shellcheck disable=SC2162
 set -euo pipefail
+
+# ${ command; } (stdout in the current shell) needs Bash 5.3+.
+if (( BASH_VERSINFO[0] < 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] < 3) )); then
+    printf 'NDS requires Bash 5.3 or newer (found %s).\n' "${BASH_VERSION}" >&2
+    exit 1
+fi
 
 _nds_app_here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd || exit 1)"
 : "${APP_DIR:=${_nds_app_here}}"

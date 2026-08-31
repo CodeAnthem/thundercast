@@ -1,0 +1,42 @@
+---
+description: Bash 5.3 ${ command; } capture, nameref for arrays, no shortcut wrappers
+globs: "**/*.sh"
+alwaysApply: true
+---
+
+# Bash 5.3: capture without a subshell
+
+Require **Bash 5.3+**. NDS `src/app/main.sh` and `src/utilities/git/main.sh` must refuse older bash.
+
+Do **not** capture our functions with `$(fn)` / backticks. That is a subshell: namerefs and locals do not write back.
+
+```bash
+# BAD
+key="$(git_store_getKeyPath url)"
+
+# GOOD — current shell, stdout → variable
+key=${ git_store_getKeyPath url; }
+```
+
+`${| command; }` assigns from `REPLY` instead of stdout. Prefer `${ command; }` with `printf`.
+
+`$(external)` is fine for **other processes** (`git`, `gh`, `ssh-keygen`).
+
+# Nameref — arrays only
+
+`local -n` is for passing or filling associative/indexed arrays (repoID). Do not add a dest nameref just to return a string.
+
+```bash
+_git_url_tryParse id "$url" # fills the array
+# pass the original array name into callees ("$1"), not the local nameref name
+```
+
+Pass the **original** array name into callees (`"$1"`), not the local nameref name. Do not `local` a name that might be the caller's array (`local parsed` while dest is `parsed`).
+
+# Function names
+
+Public names must say the verb: `get`, `set`, `has`, `is`. A bare `accountUseGh` reads as a setter. Use `isAccountUsingGh` / `setAccountUsingGh`.
+
+# No shortcut wrappers
+
+Do not add a function that only forwards to another (`git_store_pull` → `git_generic_pull`). Call the real name. No aliases, no one-line shims.
