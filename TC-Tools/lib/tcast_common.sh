@@ -21,7 +21,7 @@ tcast_info() {
 
 # Description: Require root (or effective uid 0) for rebuild / generation ops.
 tcast_need_root() {
-    [[ "$(id -u)" -eq 0 ]] || tcast_die "run as root (e.g. sudo tcastast $*)"
+    [[ "$(id -u)" -eq 0 ]] || tcast_die "run as root (e.g. sudo tcast $*)"
 }
 
 # Description: Load switch.conf then apply built-in defaults (env already set wins).
