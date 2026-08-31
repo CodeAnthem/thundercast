@@ -62,6 +62,7 @@ tcast_conf_apply_switch_env() {
         v="$(tcast_conf_get switch FLAKE_REF)"
         [[ -n "$v" ]] && TCAST_FLAKE_REF="$v"
     fi
+    return 0
 }
 
 # Description: Fill TCAST_CLEAN_* from clean.conf when unset.
@@ -75,4 +76,5 @@ tcast_conf_apply_clean_env() {
         v="$(tcast_conf_get clean OLDER_THAN)"
         [[ -n "$v" ]] && TCAST_CLEAN_OLDER_THAN="$v"
     fi
+    return 0
 }

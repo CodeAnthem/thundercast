@@ -15,7 +15,7 @@ tcast_cmd_status() {
     if [[ -f /etc/os-release ]]; then
         # shellcheck disable=SC1091
         . /etc/os-release
-        echo "os:       ${PRETTY_NAME:-$NAME}"
+        echo "os:       ${PRETTY_NAME:-${NAME:-unknown}}"
     fi
     if command -v nixos-version >/dev/null 2>&1; then
         echo "nixos:    $(nixos-version 2>/dev/null || true)"
