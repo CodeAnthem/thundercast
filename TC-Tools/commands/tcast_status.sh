@@ -22,7 +22,8 @@ tcast_cmd_status() {
     fi
     if [[ -d "$flake_root/.git" ]]; then
         echo "flake:    ${flake_root}  $(git -C "$flake_root" rev-parse --short HEAD 2>/dev/null || echo '?')"
-        git -C "$flake_root" status -sb 2>/dev/null | head -5 | sed 's/^/  /'
+        # head closes early → SIGPIPE under pipefail; do not fail status
+        git -C "$flake_root" status -sb 2>/dev/null | head -5 | sed 's/^/  /' || true
     else
         echo "flake:    ${flake_root} (not a git checkout)"
     fi

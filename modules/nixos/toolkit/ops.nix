@@ -203,7 +203,14 @@ in {
       unitConfig.ConditionPathExists = "!${scfg.dest}/current/toolkit.sh";
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${updater}/bin/toolkit-update --yes --seed";
+        # Soft-fail: missing deploy key / network must not fail nixos-rebuild switch.
+        ExecStart = pkgs.writeShellScript "toolkit-scripts-seed" ''
+          set -euo pipefail
+          if ! ${updater}/bin/toolkit-update --yes --seed; then
+            echo "toolkit-scripts-seed: failed — run later: toolkit-update --yes --seed" >&2
+            exit 0
+          fi
+        '';
       };
     };
   };
