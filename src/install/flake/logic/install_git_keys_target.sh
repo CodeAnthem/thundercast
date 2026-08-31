@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Install git SSH keys and nds-git-ssh onto the target
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-20
+# Date:          Created: 2026-07-07 | Modified: 2026-08-31
 # Description:   Copy deploy keys, known_hosts, and helper CLIs under /mnt
 # ==================================================================================================
 
@@ -292,7 +292,7 @@ nds_git_verify_target_ro_access() {
 # - flake_root: <String|optional> Flake checkout (map + verify)
 # Returns:
 # - <Bool> 0 on success; 1 when private inputs need keys but none installed
-nds_git_install_keys_to_target() {
+nds_install_git_keys_to_target() {
     local mount_root="${1:-/mnt}"
     local flake_root="${2:-${NDS_CTX_FLAKE_INSTALL_PATH:-${NDS_FLAKE_INSTALL_PATH:-}}}"
     local -a keys=()

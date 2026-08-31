@@ -2,14 +2,14 @@
 # ==================================================================================================
 # NDS - Git tools tests (read-only / temp dirs)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-05 | Modified: 2026-08-28
+# Date:          Created: 2026-07-05 | Modified: 2026-08-31
 # ==================================================================================================
 
 suite_git() {
     local parsed host owner repo urls tmpdir key_src dest out perms repos register_url
 
     if declare -f nds_git_access_logic_selfcheck &>/dev/null || \
-        nds_import_file "${SCRIPT_DIR}/git/tests/git_access_test.sh" 2>/dev/null; then
+        nds_import_file "${SCRIPT_DIR}/gitAccess/tests/git_access_test.sh" 2>/dev/null; then
         if nds_git_access_logic_selfcheck; then
             TEST_PASSED=$((TEST_PASSED + 1))
             console "  ✓ git_access_logic: normalize + wants_gh + write need"
@@ -19,7 +19,7 @@ suite_git() {
         fi
     fi
 
-    if nds_import_file "${SCRIPT_DIR}/git/tests/git_auth_prompts_test.sh" 2>/dev/null \
+    if nds_import_file "${SCRIPT_DIR}/gitAccess/tests/git_auth_prompts_test.sh" 2>/dev/null \
         && nds_git_auth_prompts_selfcheck; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ git_auth_prompts: AA keys + wizard dispatch"
@@ -138,7 +138,7 @@ suite_git() {
 
     printf '%s\n' '{"nodes":{"t":{"locked":{"type":"git","url":"ssh://git@github.com/CodeAnthem/thundercore.git"}}}}' \
         > "${tmpdir}/flake.lock.ssh"
-    urls=$(_nds_git_flake_lock_ssh_urls "${tmpdir}/flake.lock.ssh")
+    urls=$(_flake_lock_ssh_urls "${tmpdir}/flake.lock.ssh")
     if grep -q 'ssh://git@github.com/CodeAnthem/thundercore.git' <<<"$urls"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ flake.lock: parses ssh://git@ URLs"
@@ -266,7 +266,7 @@ suite_git() {
         fi
     fi
 
-    if declare -f _nds_git_flake_lock_git_entries &>/dev/null; then
+    if declare -f flake_listLockGitEntries &>/dev/null; then
         local lock_tmp lock_file
         lock_tmp=$(mktemp -d)
         lock_file="${lock_tmp}/flake.lock"
@@ -285,12 +285,12 @@ suite_git() {
   }
 }
 LOCK
-        if _nds_git_flake_lock_git_entries "$lock_file" | grep -q $'ssh://git@github.com/CodeAnthem/thundercast\tabc123def456\tsha256-TEST'; then
+        if flake_listLockGitEntries "$lock_file" | grep -q $'ssh://git@github.com/CodeAnthem/thundercast\tabc123def456\tsha256-TEST'; then
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ flake_lock_git_entries: parses git inputs from flake.lock"
+            console "  ✓ flake_listLockGitEntries: parses git inputs from flake.lock"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
-            console "  ✗ flake_lock_git_entries: parse failed"
+            console "  ✗ flake_listLockGitEntries: parse failed"
         fi
         rm -rf "$lock_tmp"
     fi
@@ -453,9 +453,9 @@ LOCK
 
     if declare -f nds_git_wizard_ask_key_source | grep -q 'Have an existing private key' \
         && grep -q 'nds_ask_user_to_proceed "Have an existing private key?"' \
-            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+            "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh" \
         && ! grep -q 'nds_aa_ask_toggle GIT_EXISTING_KEY' \
-            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+            "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh" \
         && declare -f nds_git_wizard_ask_auth_method | grep -q 'paste|path' \
         && declare -f nds_git_wizard_ask_auth_method | grep -q 'gh|generate'; then
         TEST_PASSED=$((TEST_PASSED + 1))
@@ -465,13 +465,13 @@ LOCK
         console "  ✗ wizard: missing y/n existing-key or paste/path/gh/generate menus"
     fi
     if grep -q 'GIT_ACCESS_STRATEGY "deploy-this"' \
-        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+        "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh" \
         && grep -q 'nds_git_wizard_ask_closure_coverage' \
-            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+            "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh" \
         && ! grep -q 'nds_git_wizard_ask_access_strategy' \
-            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+            "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh" \
         && ! grep -q 'Deploy key: read-only' \
-            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh"; then
+            "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ wizard: first repo is this-repo only; related coverage asked at closure"
     else
@@ -479,19 +479,19 @@ LOCK
         console "  ✗ wizard: early SSH key strategy menu still present"
     fi
     if grep -q 'nds_ui_section_header "Git access"' \
-        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
+        "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_screens.sh" \
         && grep -q 'is private.' \
-        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
+        "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_screens.sh" \
         && grep -q 'nds_ui_kv_row "Permission"' \
-        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
+        "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_screens.sh" \
         && grep -q 'nds_git_access_normalize_need' \
-        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
+        "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_screens.sh" \
         && grep -q 'Related private repositories still need SSH access' \
-        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
+        "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_screens.sh" \
         && ! grep -q 'nds_ui_kv_row "Repository"' \
-            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh" \
+            "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_screens.sh" \
         && ! grep -q 'NDS already probes keys' \
-            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh"; then
+            "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_screens.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ wizard: Git access intro names the repo once"
     else
@@ -499,19 +499,19 @@ LOCK
         console "  ✗ wizard: missing Git access header or repo named twice"
     fi
     if grep -q 'nds_git_access_deploy_read_only' \
-        "${SCRIPT_DIR}/git/keys/ui/git_keys_new.sh" \
+        "${SCRIPT_DIR}/gitAccess/keys/ui/git_keys_new.sh" \
         && grep -q 'tick the checkbox' \
-        "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
+        "${SCRIPT_DIR}/gitAccess/keys/ui/git_keys_manual.sh" \
         && grep -q 'nds_git_deploy_key_register_title' \
-        "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
+        "${SCRIPT_DIR}/gitAccess/keys/ui/git_keys_manual.sh" \
         && grep -q 'nds_gh_register_deploy_key' \
-        "${SCRIPT_DIR}/git/keys/logic/git_keys_gh.sh" \
+        "${SCRIPT_DIR}/gitAccess/keys/logic/git_keys_gh.sh" \
         && grep -q 'read_only' \
-        "${SCRIPT_DIR}/git/keys/logic/git_keys_gh.sh" \
+        "${SCRIPT_DIR}/gitAccess/keys/logic/git_keys_gh.sh" \
         && ! grep -q 'NDS_GH_DEPLOY_READ_ONLY' \
-            "${SCRIPT_DIR}/git/keys/logic/git_keys_gh.sh" \
+            "${SCRIPT_DIR}/gitAccess/keys/logic/git_keys_gh.sh" \
         && ! grep -q 'NDS_CURRENT_ACTION.*remoteAction' \
-            "${SCRIPT_DIR}/git/keys/logic/git_keys_gh.sh"; then
+            "${SCRIPT_DIR}/gitAccess/keys/logic/git_keys_gh.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ wizard: write deploy keys follow per-call need, not env or remoteAction"
     else
@@ -546,11 +546,11 @@ LOCK
         console "  ✗ install: leaf write still runs after flake-input closure"
     fi
     if grep -q 'nds_deploy_\*' \
-        "${SCRIPT_DIR}/git/access/logic/git_access_discover.sh" \
+        "${SCRIPT_DIR}/gitAccess/access/logic/git_access_discover.sh" \
         && grep -q 'nds_git_register_keys_in_dir' \
-        "${SCRIPT_DIR}/git/access/logic/git_access_discover.sh" \
+        "${SCRIPT_DIR}/gitAccess/access/logic/git_access_discover.sh" \
         && grep -q 'folder of nds_deploy' \
-        "${SCRIPT_DIR}/git/keys/ui/git_keys_import.sh"; then
+        "${SCRIPT_DIR}/gitAccess/keys/ui/git_keys_import.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ git discover: nds_deploy_* restore-bundle folder"
     else
@@ -558,9 +558,9 @@ LOCK
         console "  ✗ git discover: still misses nds_deploy_* / key folders"
     fi
     if grep -q 'nds_step_start_spin "Checking git access"' \
-        "${SCRIPT_DIR}/git/access/logic/git_access.sh" \
+        "${SCRIPT_DIR}/gitAccess/access/logic/git_access.sh" \
         && grep -q 'nds_step_cancel' \
-        "${SCRIPT_DIR}/git/access/logic/git_access.sh"; then
+        "${SCRIPT_DIR}/gitAccess/access/logic/git_access.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ git_access: spinner while probing, cancel before wizard"
     else
@@ -568,9 +568,9 @@ LOCK
         console "  ✗ git_access: probe is still a static line (no start_spin/cancel)"
     fi
     if grep -q 'nds_step_start_spin "Verifying git input access"' \
-        "${SCRIPT_DIR}/git/access/logic/git_access_auth.sh" \
+        "${SCRIPT_DIR}/gitAccess/access/logic/git_access_auth.sh" \
         && grep -B20 'nds_git_auth_wizard_step_closure' \
-            "${SCRIPT_DIR}/git/access/logic/git_access_auth.sh" | grep -q 'nds_step_cancel'; then
+            "${SCRIPT_DIR}/gitAccess/access/logic/git_access_auth.sh" | grep -q 'nds_step_cancel'; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ git_access: closure spinner cancelled before related-repo wizard"
     else
@@ -586,7 +586,7 @@ LOCK
     fi
     if grep -q 'Key received' "${SCRIPT_DIR}/ui/prompts.sh" \
         && grep -q 'received %d line' "${SCRIPT_DIR}/ui/prompts.sh" \
-        && grep -q 'Checking SSH key' "${SCRIPT_DIR}/git/keys/ui/git_keys_import.sh"; then
+        && grep -q 'Checking SSH key' "${SCRIPT_DIR}/gitAccess/keys/ui/git_keys_import.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ git import: paste acks immediately, spinner while probing"
     else
@@ -594,13 +594,13 @@ LOCK
         console "  ✗ git import: paste still silent until probe finishes"
     fi
     if grep -q 'nds_git_ssh_env_for_keys' \
-        "${SCRIPT_DIR}/git/lib/git_probe.sh" \
+        "${SCRIPT_DIR}/gitAccess/lib/git_probe.sh" \
         && grep -q 'nds_git_keys_list' \
-        "${SCRIPT_DIR}/git/lib/git_ssh.sh" \
+        "${SCRIPT_DIR}/gitAccess/lib/git_ssh.sh" \
         && grep -q 'nds_git_keys_list' \
-        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+        "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh" \
         && grep -q 'GIT_ACCESS_STRATEGY "account-all"' \
-        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh"; then
+        "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ git probe: pasted key is the identity; reuse on remaining URLs"
     else
@@ -608,11 +608,11 @@ LOCK
         console "  ✗ git probe: still probes with identity_for_url instead of the pasted key"
     fi
     if grep -q 'That key could not read this repository' \
-        "${SCRIPT_DIR}/git/keys/ui/git_keys_import.sh" \
+        "${SCRIPT_DIR}/gitAccess/keys/ui/git_keys_import.sh" \
         && grep -q 'return 1' \
-        "${SCRIPT_DIR}/git/keys/ui/git_keys_import.sh" \
+        "${SCRIPT_DIR}/gitAccess/keys/ui/git_keys_import.sh" \
         && ! grep -q 'nds_step_fail "SSH key probe"' \
-        "${SCRIPT_DIR}/git/keys/ui/git_keys_import.sh"; then
+        "${SCRIPT_DIR}/gitAccess/keys/ui/git_keys_import.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ git import: failed probe stays on this repo (no fake FAIL+continue)"
     else
@@ -620,11 +620,11 @@ LOCK
         console "  ✗ git import: probe fail still continues as success"
     fi
     if grep -q 'Try another key' \
-        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+        "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh" \
         && grep -q 'nds_git_probe_access_with_key' \
-        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+        "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh" \
         && ! grep -A35 '^nds_git_wizard_ask_auth_method()' \
-            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" | grep -q 'nds_ui_section_header'; then
+            "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh" | grep -q 'nds_ui_section_header'; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ wizard: retry paste on same screen; reuse key on remaining repos"
     else
@@ -632,15 +632,15 @@ LOCK
         console "  ✗ wizard: still skips paste/path or redraws on related-repo retry"
     fi
     if grep -q 'nds_ask_user_to_proceed "Show QR codes?"' \
-        "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
+        "${SCRIPT_DIR}/gitAccess/keys/ui/git_keys_manual.sh" \
         && grep -q 'Show QR codes?' \
-        "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
+        "${SCRIPT_DIR}/gitAccess/keys/ui/git_keys_manual.sh" \
         && grep -q 'Please add this key, see info below' \
-        "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
+        "${SCRIPT_DIR}/gitAccess/keys/ui/git_keys_manual.sh" \
         && grep -q 'I added this deploy key' \
-        "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh" \
+        "${SCRIPT_DIR}/gitAccess/keys/ui/git_keys_manual.sh" \
         && ! grep -q 'nds_aa_ask_toggle GIT_SSH_KEY_USE_QR' \
-            "${SCRIPT_DIR}/git/keys/ui/git_keys_manual.sh"; then
+            "${SCRIPT_DIR}/gitAccess/keys/ui/git_keys_manual.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ wizard: add-key card + QR y/n (default n)"
     else
@@ -649,7 +649,7 @@ LOCK
     fi
     if grep -q '_nds_ui_drain_tty' "${SCRIPT_DIR}/ui/input.sh" \
         && grep -q 'nds_ask_user_to_proceed "Have an existing private key?"' \
-            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh"; then
+            "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ wizard: TTY drain + proceed helper for existing-key prompt"
     else
@@ -657,11 +657,11 @@ LOCK
         console "  ✗ wizard: missing TTY drain / guarded read"
     fi
     if grep -q 'nds_ui_section_header "Git access"' \
-        "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+        "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh" \
         && grep -q 'How do you want to create the key?' \
-            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+            "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh" \
         && grep -q 'How do you want to provide the key?' \
-            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+            "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh" \
         && grep -q 'nds_ui_read_menu_digit digit' \
             "${SCRIPT_DIR}/app/settingsManager/ui/settings_ask.sh" \
         && grep -A30 '^nds_ui_read_menu_digit()' \
@@ -675,16 +675,16 @@ LOCK
         console "  ✗ wizard: missing section jump or numbered menu still uses subshell digit read"
     fi
     if grep -q 'Clear the gh session from this ISO?" n' \
-            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_screens.sh"; then
+            "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_screens.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ leftover gh: Enter defaults to keep session"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ leftover gh: prompt still has no default (blocks on failure)"
     fi
-    if grep -q 'nested=true' "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh" \
+    if grep -q 'nested=true' "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh" \
         && grep -q '_nds_git_wizard_ensure_aa' \
-            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh"; then
+            "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ wizard: import_each_url binds AA when unbound"
     else
@@ -694,7 +694,7 @@ LOCK
     if declare -f nds_git_wizard_converse_url &>/dev/null \
         && declare -f nds_git_wizard_import_each_url &>/dev/null \
         && ! grep -q 'missing repositories' \
-            "${SCRIPT_DIR}/git/wizard/ui/git_wizard_flow.sh"; then
+            "${SCRIPT_DIR}/gitAccess/wizard/ui/git_wizard_flow.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ wizard: per-repo conversation, no lumped missing-repositories label"
     else
@@ -754,7 +754,7 @@ LOCK
     fi
 
     if grep -q 'no TTY paste in unattended' \
-        "${SCRIPT_DIR}/git/keys/ui/git_keys_import.sh"; then
+        "${SCRIPT_DIR}/gitAccess/keys/ui/git_keys_import.sh"; then
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ paste: still forbids TTY paste under AUTO_CONFIRM"
     else
@@ -866,7 +866,7 @@ LOCK
     nds_git_keys_register "$NDS_GIT_SESSION_KEY_PATH" || true
     # Unit test: install keys without network RO probe (no flake checkout)
     unset NDS_CTX_FLAKE_INSTALL_PATH NDS_FLAKE_INSTALL_PATH NDS_FLAKE_REPO_URL NDS_CTX_FLAKE_REPO_URL
-    if nds_git_install_keys_to_target "${tmpdir}/mnt" "" \
+    if nds_install_git_keys_to_target "${tmpdir}/mnt" "" \
         && [[ -f "${tmpdir}/mnt/root/.ssh/nds_deploy_org_repo" ]] \
         && [[ -x "${tmpdir}/mnt/root/.ssh/nds-git-ssh" ]] \
         && [[ -x "${tmpdir}/mnt/root/.nds/bin/nds-switch" ]] \
@@ -896,7 +896,7 @@ LOCK
 
     nds_cfg_set GIT_PERSIST_ACCESS "false"
     mkdir -p "${tmpdir}/mnt-ephemeral"
-    if nds_git_install_keys_to_target "${tmpdir}/mnt-ephemeral" "" \
+    if nds_install_git_keys_to_target "${tmpdir}/mnt-ephemeral" "" \
         && [[ ! -x "${tmpdir}/mnt-ephemeral/root/.nds/bin/nds-switch" ]] \
         && [[ ! -f "${tmpdir}/mnt-ephemeral/root/.ssh/nds_deploy_org_repo" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
@@ -910,7 +910,7 @@ LOCK
     export NDS_GIT_PERSIST_ACCESS=false
     mkdir -p "${tmpdir}/mnt-env"
     if ! nds_git_persist_access \
-        && nds_git_install_keys_to_target "${tmpdir}/mnt-env" "" \
+        && nds_install_git_keys_to_target "${tmpdir}/mnt-env" "" \
         && [[ ! -x "${tmpdir}/mnt-env/root/.nds/bin/nds-switch" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ persist env: NDS_GIT_PERSIST_ACCESS=false skips nds-switch"

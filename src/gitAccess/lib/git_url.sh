@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git URL utilities (standalone)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-05 | Modified: 2026-08-16
+# Date:          Created: 2026-07-05 | Modified: 2026-08-31
 # Description:   Parse and normalize git remote URLs (argument-only; no NDS config)
 # ==================================================================================================
 
@@ -64,32 +64,12 @@ nds_git_owner_slug() {
 # Returns:
 # - <String> SSH URL on stdout (unchanged when unparseable)
 _nds_git_url_toSsh() {
-    local url="$1" parsed host owner repo
-
-    case "$url" in
-        git+ssh://*) url="${url#git+ssh://}" ;;
-    esac
-    case "$url" in
-        *@*) ;;
-        */*)
-            url="git@${url}"
-            ;;
-    esac
-    case "$url" in
-        git@*:*/*) ;;
-        git@*/*)
-            local rest="${url#git@}"
-            url="git@${rest%%/*}:${rest#*/}"
-            ;;
-    esac
-
-    if parsed=$(_nds_git_url_parse "$url"); then
-        IFS=$'\t' read -r host owner repo <<< "$parsed"
-        _nds_git_url_formatSsh "$host" "$owner" "$repo"
+    local url="$1" out
+    out=${ git_url_toSsh "$url"; } || {
+        printf '%s\n' "$url"
         return 0
-    fi
-
-    printf '%s\n' "$url"
+    }
+    printf '%s\n' "$out"
 }
 
 # Description: True when every URL resolves to a GitHub host.

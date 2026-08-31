@@ -2,9 +2,16 @@
 # ==================================================================================================
 # NDS - System variables (NDS_* env bridge)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-28 | Modified: 2026-08-16
+# Date:          Created: 2026-07-28 | Modified: 2026-08-31
 # Description:   Map process env NDS_* into settings store; sync derived flake keys
 # ==================================================================================================
+
+# Description: List exported NDS_* names (portable; no compgen required).
+# Returns:
+# - <String> One env name per line (stdout)
+_nds_cfg_list_nds_env_names() {
+    export -p | sed -n 's/^declare -x \(NDS_[A-Za-z0-9_]*\)=.*/\1/p'
+}
 
 # Description: Sync FLAKE_LOCATION / FLAKE_SOURCE from FLAKE_REPO_URL or FLAKE_LOCAL_PATH.
 nds_cfg_sync_derived_flake() {
@@ -74,7 +81,7 @@ nds_cfg_apply_env_all() {
         [[ -n "${!env_name:-}" ]] || continue
         CONFIG_DATA["$key"]="${!env_name}"
         debug "Env: ${env_name}=${!env_name}"
-    done < <(compgen -e | grep '^NDS_' || true)
+    done < <(_nds_cfg_list_nds_env_names || true)
 
     nds_cfg_sync_derived_flake
 }

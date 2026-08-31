@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Flake install pipeline (local + remote nixos-anywhere)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-06 | Modified: 2026-08-27
+# Date:          Created: 2026-07-06 | Modified: 2026-08-31
 # ==================================================================================================
 
 # Description: Full flake-based NixOS install.
@@ -116,7 +116,7 @@ nds_nixos_install_flake() {
         _nds_install_nixos_flake "$flake_root" "$hostname" "$NDS_CTX_HW_PLACEMENT" || return 1
 
     nds_step_exec "Installing git SSH keys on target" \
-        nds_git_install_keys_to_target "/mnt" "$flake_root" || return 1
+        nds_install_git_keys_to_target "/mnt" "$flake_root" || return 1
 
     nds_step_exec "Enrolling sops age key" \
         _nds_sops_enroll_key "$flake_root" "$hostname" "/mnt" || return 1

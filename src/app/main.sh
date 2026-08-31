@@ -82,16 +82,17 @@ nds_app_loadSettingsManager() {
     return 0
 }
 
-# Description: Load git, bundle, and install after an action is chosen.
+# Description: Load utilities, NDS gitAccess, bundle, and install after an action is chosen.
 nds_app_loadFeatures() {
     [[ "${NDS_FEATURES_LOADED}" == "true" ]] && return 0
-    # Legacy NDS git feature (until actions rewire to store API).
-    nds_import_tree "${SCRIPT_DIR}/git" || return 1
-    # Standalone git utility (hooks via nds_requireUtility).
+    # Standalone utilities first (hooks via nds_requireUtility; sourcing does no work).
     nds_requireUtility git || return 1
+    nds_requireUtility flake || return 1
     if declare -f nds_mode_is_unattended >/dev/null && nds_mode_is_unattended; then
         export GIT_INTERACTIVE=0
     fi
+    # NDS git orchestration (wizard/keys/maps) — calls store/flake APIs.
+    nds_import_tree "${SCRIPT_DIR}/gitAccess" || return 1
     nds_import_tree "${SCRIPT_DIR}/app/bundle" || return 1
     nds_import_tree "${SCRIPT_DIR}/install" || return 1
     if declare -f nds_install_logs_init &>/dev/null; then

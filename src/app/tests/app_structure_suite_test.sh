@@ -2,19 +2,36 @@
 # ==================================================================================================
 # NDS - Structure / layout selfchecks (CI-safe)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-07 | Modified: 2026-08-28
+# Date:          Created: 2026-08-07 | Modified: 2026-08-31
 # Description:   Post-refactor layout invariants — no TTY, no disk wipe
 # ==================================================================================================
 
 suite_structure() {
     local f missing=0
 
-    if [[ -d "${SCRIPT_DIR}/git/github" ]]; then
+    if [[ -d "${SCRIPT_DIR}/utilities/git" && -f "${SCRIPT_DIR}/utilities/git/main.sh" \
+        && -d "${SCRIPT_DIR}/utilities/flake" && -f "${SCRIPT_DIR}/utilities/flake/main.sh" ]]; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ utilities/git + utilities/flake present"
+    else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ git/github still present"
+        console "  ✗ missing utilities/git or utilities/flake"
+    fi
+
+    if [[ -d "${SCRIPT_DIR}/git" ]]; then
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ leftover src/git (must be gitAccess/)"
     else
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ no src/git/github (GH lives in tools/)"
+        console "  ✓ no src/git (gitAccess/ + utilities/)"
+    fi
+
+    if [[ -d "${SCRIPT_DIR}/gitAccess/github" ]]; then
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ gitAccess/github still present"
+    else
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ no gitAccess/github (GH lives in tools/)"
     fi
 
     if [[ -d "${SCRIPT_DIR}/app/core" || -d "${SCRIPT_DIR}/app/lifecycle" || -d "${SCRIPT_DIR}/app/runtime" ]]; then
@@ -110,12 +127,12 @@ suite_structure() {
         console "  ✓ install nested like git (disk/flake/classic/nix/verify)"
     fi
 
-    if [[ -d "${SCRIPT_DIR}/git/logic" || -d "${SCRIPT_DIR}/git/ui" ]]; then
+    if [[ -d "${SCRIPT_DIR}/gitAccess/logic" || -d "${SCRIPT_DIR}/gitAccess/ui" ]]; then
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ leftover git/logic or git/ui (must be access/keys/wizard)"
+        console "  ✗ leftover gitAccess/logic or gitAccess/ui (must be access/keys/wizard)"
     else
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ git uses access/keys/wizard (no flat logic/ui)"
+        console "  ✓ gitAccess uses access/keys/wizard (no flat logic/ui)"
     fi
 
     if find "${SCRIPT_DIR}" -type f \( -name 'hosts.sh' -o -name 'key.sh' -o -name 'store.sh' \
@@ -128,9 +145,10 @@ suite_structure() {
         console "  ✓ no generic featureless basenames"
     fi
 
+    # NDS feature trees use _nds_*; utilities/ may use _git_ / _flake_ (NDS-free libs).
     if rg -n --glob '*.sh' \
         '^(_git_|_bundle_|_install_|_nixcfg_|_flake_|_sops_|_settings_|_switch_|_clean_)' \
-        "${SCRIPT_DIR}" 2>/dev/null | grep -q .; then
+        "${SCRIPT_DIR}" 2>/dev/null | grep -v '/utilities/' | grep -q .; then
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ private helpers still use _git_/_install_/… (must be _nds_…)"
     else
@@ -140,12 +158,12 @@ suite_structure() {
 
     for f in \
         "${SCRIPT_DIR}/lib" \
-        "${SCRIPT_DIR}/git/lib" \
-        "${SCRIPT_DIR}/git/access/logic" \
-        "${SCRIPT_DIR}/git/access/ui" \
-        "${SCRIPT_DIR}/git/keys/logic" \
-        "${SCRIPT_DIR}/git/keys/ui" \
-        "${SCRIPT_DIR}/git/wizard/ui" \
+        "${SCRIPT_DIR}/gitAccess/lib" \
+        "${SCRIPT_DIR}/gitAccess/access/logic" \
+        "${SCRIPT_DIR}/gitAccess/access/ui" \
+        "${SCRIPT_DIR}/gitAccess/keys/logic" \
+        "${SCRIPT_DIR}/gitAccess/keys/ui" \
+        "${SCRIPT_DIR}/gitAccess/wizard/ui" \
         "${SCRIPT_DIR}/install/lib" \
         "${SCRIPT_DIR}/install/disk/logic" \
         "${SCRIPT_DIR}/install/disk/ui" \
@@ -242,8 +260,8 @@ suite_structure() {
     if command -v rg &>/dev/null; then
         local hits
         hits=$(rg -n '^\s*(nds_ui_|nds_ask_user)' \
-            "${SCRIPT_DIR}/git/access/logic" \
-            "${SCRIPT_DIR}/git/keys/logic" \
+            "${SCRIPT_DIR}/gitAccess/access/logic" \
+            "${SCRIPT_DIR}/gitAccess/keys/logic" \
             "${SCRIPT_DIR}/install/classic/logic" \
             "${SCRIPT_DIR}/install/disk/logic" \
             "${SCRIPT_DIR}/install/flake/logic" \

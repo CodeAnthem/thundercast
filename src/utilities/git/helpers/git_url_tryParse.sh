@@ -15,6 +15,18 @@ git_url_validate() {
     _git_url_tryParse id "${1:-}"
 }
 
+# Description: Canonical SSH URL git@host:owner/repo.git from a parseable remote.
+# Arguments:
+# - url: <String> Raw git URL
+# Returns:
+# - <String> SSH URL (stdout)
+# - <Bool> 0 when parseable
+git_url_toSsh() {
+    local -A id=()
+    _git_url_tryParse id "${1:-}" || return 1
+    printf 'git@%s:%s/%s.git\n' "${id[host]}" "${id[owner]}" "${id[repoName]}"
+}
+
 # Description: Validate and parse a git URL in one pass. On success fills dest
 # with host, owner, repoName, provider. Provider is the host label before the
 # first dot (github.com → github); dispatch falls back to generic when no

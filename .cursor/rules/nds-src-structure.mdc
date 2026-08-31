@@ -19,7 +19,8 @@ Audit like a reviewer: **one concern per file/folder**, no duplicate capability.
 | `app/` | Backbone + core features: `actionHandler/`, `settingsManager/`, `session/`, `bundle/` |
 | `ui/` | Shared terminal chrome only |
 | `tools/` | CLI capability (`nds_pkg_*`, `nds_gh_*`, …) — no domain policy |
-| `git/` | Nested: `lib/`, `access/`, `keys/`, `wizard/` |
+| `utilities/<name>/` | NDS-free libraries (`git`, `flake`, …) via `nds_requireUtility` |
+| `gitAccess/` | NDS git orchestration: `lib/`, `access/`, `keys/`, `wizard/`, `bridge/` |
 | `install/` | Nested: `disk/` `flake/` `classic/` `nix/` `verify/` + `nixcfg/` |
 | `actions/<name>/` | Single `setup.sh` — not logic/ui |
 | `tests/` (src root) | Runner only |

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git SSH auth gate + exit cleanup
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-05 | Modified: 2026-08-28
+# Date:          Created: 2026-07-05 | Modified: 2026-08-31
 # Description:   Exit cleanup + flake-input closure access gate
 # ==================================================================================================
 
@@ -85,39 +85,41 @@ _nds_git_record_url_access() {
 _nds_git_closure_probe_one() {
     local url="$1" key dest="" parsed host owner repo
 
-    if nds_git_probe_public "$url" 2>/dev/null; then
+    nds_git_env_syncKeyFromNds "$url" 2>/dev/null || true
+    nds_git_env_bindFromStore "$url" 2>/dev/null || true
+    git_store_needWrite "$url" false || return 1
+    if _nds_git_env_verifyQuiet "$url"; then
         return 0
     fi
+
     if declare -f nds_git_access_apply_map &>/dev/null && nds_git_access_apply_map "$url"; then
-        return 0
+        nds_git_env_syncKeyFromNds "$url" 2>/dev/null || true
+        _nds_git_env_verifyQuiet "$url" && return 0
     fi
     if parsed=$(_nds_git_url_parse "$(_nds_git_url_toSsh "$url")" 2>/dev/null); then
         IFS=$'\t' read -r host owner repo <<< "$parsed"
         dest="$(nds_git_deploy_key_path "$owner" "$repo" 2>/dev/null || true)"
         if [[ -n "$dest" && -f "$dest" ]] \
-            && declare -f nds_git_probe_access_with_key &>/dev/null \
             && nds_git_probe_access_with_key "$url" "$dest"; then
             nds_git_keys_register "$dest" || true
             if declare -f nds_git_bind_key_to_url &>/dev/null; then
                 nds_git_bind_key_to_url "$dest" "$url" || true
             fi
+            nds_git_env_setKeyPath "$url" "$dest" 2>/dev/null || true
             return 0
         fi
     fi
-    if declare -f nds_git_keys_list &>/dev/null \
-        && declare -f nds_git_probe_access_with_key &>/dev/null; then
+    if declare -f nds_git_keys_list &>/dev/null; then
         while IFS= read -r key; do
             [[ -f "$key" ]] || continue
             if nds_git_probe_access_with_key "$url" "$key"; then
                 if declare -f nds_git_bind_key_to_url &>/dev/null; then
                     nds_git_bind_key_to_url "$key" "$url" || true
                 fi
+                nds_git_env_setKeyPath "$url" "$key" 2>/dev/null || true
                 return 0
             fi
         done < <(nds_git_keys_list 2>/dev/null || true)
-    fi
-    if nds_git_probe_access "$url"; then
-        return 0
     fi
     return 1
 }
@@ -247,9 +249,15 @@ nds_git_ensure_flake_closure_access() {
 
         failed=()
         for url in "${urls[@]}"; do
-            if _nds_git_closure_probe_one "$url" &>/dev/null; then
+            nds_git_env_syncKeyFromNds "$url" 2>/dev/null || true
+            nds_git_env_bindFromStore "$url" 2>/dev/null || true
+            git_store_needWrite "$url" false || true
+
+            if _nds_git_env_verifyQuiet "$url" \
+                || _nds_git_closure_probe_one "$url" &>/dev/null; then
                 debug "Git access OK: $url"
                 _nds_git_record_url_access "$url"
+                nds_git_env_syncKeyFromNds "$url" 2>/dev/null || true
             else
                 failed+=("$url")
             fi
@@ -311,6 +319,9 @@ nds_git_ensure_flake_closure_access() {
         [[ "$rc" -ne 0 ]] && continue
         nds_git_keys_load_all || true
         nds_git_ssh_config_refresh || true
+        for url in "${urls[@]}"; do
+            nds_git_env_syncKeyFromNds "$url" 2>/dev/null || true
+        done
         _nds_git_closure_preapply_strategy "$root_url" "${urls[@]}" || true
     done
 }

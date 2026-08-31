@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git access logic + feature entry (no TTY in logic_*)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-27
+# Date:          Created: 2026-08-05 | Modified: 2026-08-31
 # Description:   Normalize/probe from config AA; entry may call prompts then verify
 # ==================================================================================================
 
@@ -107,33 +107,41 @@ nds_git_access_logic_try() {
 
     [[ -n "$url" ]] || return 1
 
-    if nds_git_probe_public "$url" 2>/dev/null; then
-        success "Public repository ${owner}/${repo} — no SSH key required."
-        nds_install_log "git: public repo ${owner}/${repo}"
+    nds_git_env_syncKeyFromNds "$url" 2>/dev/null || true
+    nds_git_env_bindFromStore "$url" 2>/dev/null || true
+
+    if _nds_git_env_verifyQuiet "$url"; then
+        success "Git access confirmed for ${owner}/${repo}."
         nds_git_access_mark_verified
         _g_try[GIT_ACCESS_VERIFIED]="true"
         return 0
     fi
 
     if declare -f nds_git_access_apply_map &>/dev/null && nds_git_access_apply_map "$url"; then
-        success "Git access confirmed for ${owner}/${repo} (configured map)."
-        nds_git_access_mark_verified
-        _g_try[GIT_ACCESS_VERIFIED]="true"
-        return 0
+        nds_git_env_syncKeyFromNds "$url" 2>/dev/null || true
+        if _nds_git_env_verifyQuiet "$url"; then
+            success "Git access confirmed for ${owner}/${repo} (configured map)."
+            nds_git_access_mark_verified
+            _g_try[GIT_ACCESS_VERIFIED]="true"
+            return 0
+        fi
     fi
 
     if _nds_git_auth_try_existing_access "$url"; then
-        success "Git access confirmed for ${owner}/${repo} (existing key)."
-        if declare -f nds_git_access_set &>/dev/null; then
-            nds_git_access_set method "$url" "import"
+        nds_git_env_syncKeyFromNds "$url" 2>/dev/null || true
+        if _nds_git_env_verifyQuiet "$url"; then
+            success "Git access confirmed for ${owner}/${repo} (existing key)."
+            if declare -f nds_git_access_set &>/dev/null; then
+                nds_git_access_set method "$url" "import"
+            fi
+            _g_try[GIT_ACCESS_METHOD]="import"
+            return 0
         fi
-        _g_try[GIT_ACCESS_METHOD]="import"
-        return 0
     fi
     return 1
 }
 
-# Description: Probe the flake URL and mark GIT_ACCESS_VERIFIED when SSH works.
+# Description: Probe the flake URL via store and mark GIT_ACCESS_VERIFIED when OK.
 nds_git_access_logic_verify() {
     local -n _g_ver=$1
     local url="${_g_ver[FLAKE_REPO_URL]:-}"
@@ -141,7 +149,9 @@ nds_git_access_logic_verify() {
     local repo="${_g_ver[GIT_ACCESS_REPO]:-}"
 
     nds_git_keys_load_all || true
-    if nds_git_probe_access "$url"; then
+    nds_git_env_syncKeyFromNds "$url" 2>/dev/null || true
+    nds_git_env_bindFromStore "$url" 2>/dev/null || true
+    if _nds_git_env_verifyQuiet "$url"; then
         success "Git access confirmed for ${owner}/${repo}."
         nds_git_access_mark_verified
         _g_ver[GIT_ACCESS_VERIFIED]="true"
@@ -169,17 +179,24 @@ nds_git_access_wants_gh_ui() {
 nds_git_access_run() {
     local mode="${1:-interactive}"
     local -n _g_run=$2
-    local need reason owner repo rc
+    local need reason owner repo rc url need_bool
     local prev_aa="${NDS_CFG_AA_NAME:-}"
 
     need="$(nds_git_access_normalize_need "${3:-read}")"
     reason="${4:-}"
+    need_bool=false
+    [[ "$need" == "write" ]] && need_bool=true
 
     nds_git_access_logic_normalize _g_run || return 0
     owner="${_g_run[GIT_ACCESS_OWNER]:-}"
     repo="${_g_run[GIT_ACCESS_REPO]:-}"
-    export NDS_FLAKE_REPO_URL="${_g_run[FLAKE_REPO_URL]:-}"
+    url="${_g_run[FLAKE_REPO_URL]:-}"
+    export NDS_FLAKE_REPO_URL="$url"
     export NDS_FLAKE_SOURCE="${_g_run[FLAKE_SOURCE]:-remote}"
+
+    nds_git_env_syncKeyFromNds "$url" 2>/dev/null || true
+    nds_git_env_bindFromStore "$url" 2>/dev/null || true
+    git_store_needWrite "$url" "$need_bool" || return 1
 
     if declare -f nds_step_start_spin &>/dev/null; then
         nds_step_start_spin "Checking git access"
@@ -219,6 +236,10 @@ nds_git_access_run() {
         rc=$?
         [[ "$rc" -eq "${NDS_ACTION_BACK:-10}" ]] && continue
         [[ "$rc" -ne 0 ]] && continue
+
+        url="${_g_run[FLAKE_REPO_URL]:-}"
+        nds_git_env_syncKeyFromNds "$url" 2>/dev/null || true
+        git_store_needWrite "$url" "$need_bool" || true
 
         if declare -f nds_step_start_spin &>/dev/null; then
             nds_step_start_spin "Verifying git access"

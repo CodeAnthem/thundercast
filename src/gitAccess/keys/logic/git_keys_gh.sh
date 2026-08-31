@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git ↔ GitHub orchestration (uses tools nds_gh_*)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-26
+# Date:          Created: 2026-08-05 | Modified: 2026-08-31
 # Description:   Git owns key paths / titles; collision UI in git/keys/ui; GH API in tools/
 # ==================================================================================================
 
@@ -115,19 +115,19 @@ nds_git_urls_to_github_repos() {
 # Description: Fetch flake.lock git URLs from GitHub via gh API.
 _nds_git_lock_git_urls() {
     local gh_repo="$1"
-    local owner repo tmp
+    local owner repo tmpdir
 
     owner="${gh_repo%%/*}"
     repo="${gh_repo##*/}"
     [[ -n "$owner" && -n "$repo" ]] || return 0
 
-    tmp="$(mktemp)"
-    if ! nds_gh_repo_file_content "$owner" "$repo" "flake.lock" >"$tmp" 2>/dev/null; then
-        rm -f "$tmp"
+    tmpdir="$(mktemp -d)"
+    if ! nds_gh_repo_file_content "$owner" "$repo" "flake.lock" >"${tmpdir}/flake.lock" 2>/dev/null; then
+        rm -rf "$tmpdir"
         return 0
     fi
-    _nds_git_flake_lock_ssh_urls "$tmp"
-    rm -f "$tmp"
+    flake_listGitUrls "$tmpdir"
+    rm -rf "$tmpdir"
 }
 
 # Description: Merge root repo(s) with GitHub repos referenced in their flake.lock.

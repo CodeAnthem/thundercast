@@ -47,7 +47,7 @@ source "${SCRIPT_DIR}/app/tests/app_structure_suite_test.sh"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/app/tests/app_actions_suite_test.sh"
 # shellcheck disable=SC1091
-source "${SCRIPT_DIR}/git/tests/git_suite_test.sh"
+source "${SCRIPT_DIR}/gitAccess/tests/git_suite_test.sh"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/tools/tests/tools_suite_test.sh"
 # shellcheck disable=SC1091

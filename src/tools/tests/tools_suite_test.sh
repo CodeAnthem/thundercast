@@ -20,7 +20,7 @@ suite_tools_lib() {
         console "  ✗ tools: helpers missing"
     fi
 
-    if [[ -d "${SCRIPT_DIR}/git/github" ]]; then
+    if [[ -d "${SCRIPT_DIR}/gitAccess/github" ]]; then
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ git/github still present (should be tools nds_gh_*)"
     else
