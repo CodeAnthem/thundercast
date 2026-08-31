@@ -38,6 +38,14 @@
 
   updater = pkgs.writeShellScriptBin "toolkit-update" ''
     set -euo pipefail
+    export PATH="${lib.makeBinPath [
+      pkgs.git
+      pkgs.openssh
+      pkgs.coreutils
+      pkgs.gnugrep
+      pkgs.gnused
+    ]}:$PATH"
+
     DEST='${scfg.dest}'
     REPO='${scfg.repo}'
     BRANCH='${scfg.branch}'

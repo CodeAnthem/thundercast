@@ -6,7 +6,9 @@
 # ==================================================================================================
 set -euo pipefail
 
-_TCAST_BIN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve through /run/current-system/sw symlinks to the real package root.
+_TCAST_SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+_TCAST_BIN="$(cd "$(dirname "${_TCAST_SELF}")" && pwd)"
 _TCAST_ROOT="$(cd "${_TCAST_BIN}/.." && pwd)"
 if [[ -d "${_TCAST_ROOT}/lib" ]]; then
     TCAST_LIB="${TCAST_LIB:-${_TCAST_ROOT}/lib}"
