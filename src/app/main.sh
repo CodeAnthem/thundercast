@@ -2,7 +2,7 @@
 # ==================================================================================================
 # DPS Project - Bootstrap NixOS - App entry point
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-12 | Modified: 2026-08-30
+# Date:          Created: 2025-10-12 | Modified: 2026-08-31
 # ==================================================================================================
 # shellcheck disable=SC2162
 set -euo pipefail
@@ -85,12 +85,19 @@ nds_app_loadSettingsManager() {
 # Description: Load git, bundle, and install after an action is chosen.
 nds_app_loadFeatures() {
     [[ "${NDS_FEATURES_LOADED}" == "true" ]] && return 0
+    # Legacy NDS git feature (until actions rewire to store API).
     nds_import_tree "${SCRIPT_DIR}/git" || return 1
+    # Standalone git utility (hooks via nds_requireUtility).
+    nds_requireUtility git || return 1
+    if declare -f nds_mode_is_unattended >/dev/null && nds_mode_is_unattended; then
+        export GIT_INTERACTIVE=0
+    fi
     nds_import_tree "${SCRIPT_DIR}/app/bundle" || return 1
     nds_import_tree "${SCRIPT_DIR}/install" || return 1
     if declare -f nds_install_logs_init &>/dev/null; then
         nds_install_logs_init || true
     fi
+    nds_utilities_runLoadHooks || return 1
     NDS_FEATURES_LOADED=true
     return 0
 }

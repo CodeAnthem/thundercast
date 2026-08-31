@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - App exit and trap helpers
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-29 | Modified: 2026-08-20
+# Date:          Created: 2026-07-29 | Modified: 2026-08-31
 # Description:   Exit hooks, fatal handling, and trap-safe shutdown output
 # ==================================================================================================
 
@@ -54,12 +54,14 @@ _nds_app_session_onExit() {
     if [[ "$exit_code" -ne 0 ]]; then
         nds_app_session_ui_showFailure "$exit_code"
         # Ask last so Ctrl+C / failure still offers clearing a leftover gh session.
+        declare -f nds_utilities_runExitHooks >/dev/null && nds_utilities_runExitHooks
         _nds_app_session_callHook "exit_cleanup" "$exit_code" || true
         return 0
     fi
 
     info "Cleaning up session"
     nds_runtime_purge
+    declare -f nds_utilities_runExitHooks >/dev/null && nds_utilities_runExitHooks
     _nds_app_session_callHook "exit_cleanup" "$exit_code" || true
     if [[ "${NDS_REBOOT_IN_PROGRESS:-}" != "1" ]] \
         && declare -f nds_bundle_print_reboot_hint &>/dev/null; then
