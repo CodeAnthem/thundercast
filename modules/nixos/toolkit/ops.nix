@@ -63,10 +63,10 @@
 
     if command -v tc-git-ssh >/dev/null 2>&1; then
       export GIT_SSH_COMMAND="tc-git-ssh"
-    elif command -v nds-git-ssh >/dev/null 2>&1; then
-      export GIT_SSH_COMMAND="nds-git-ssh"
-    elif [[ -x /root/.ssh/nds-git-ssh ]]; then
-      export GIT_SSH_COMMAND="/root/.ssh/nds-git-ssh"
+    elif [[ -x /root/.tc/bin/tc-git-ssh ]]; then
+      export GIT_SSH_COMMAND="/root/.tc/bin/tc-git-ssh"
+    elif [[ -x /root/.ssh/tc-git-ssh ]]; then
+      export GIT_SSH_COMMAND="/root/.ssh/tc-git-ssh"
     fi
 
     read_ver() {

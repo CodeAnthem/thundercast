@@ -9,6 +9,22 @@
 suite_structure() {
     local f missing=0
 
+    if [[ -d "${SCRIPT_DIR}/../tc/bin" && -f "${SCRIPT_DIR}/../tc/bin/tc" ]]; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ tc/ host CLI present (repo-root, not src/)"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ missing tc/ host CLI"
+    fi
+
+    if [[ -d "${SCRIPT_DIR}/scripts" ]]; then
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ leftover src/scripts (moved to tc/)"
+    else
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ no src/scripts"
+    fi
+
     if [[ -d "${SCRIPT_DIR}/utilities/git" && -f "${SCRIPT_DIR}/utilities/git/main.sh" \
         && -d "${SCRIPT_DIR}/utilities/flake" && -f "${SCRIPT_DIR}/utilities/flake/main.sh" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))

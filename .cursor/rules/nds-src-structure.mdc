@@ -20,6 +20,7 @@ Audit like a reviewer: **one concern per file/folder**, no duplicate capability.
 | `ui/` | Shared terminal chrome only |
 | `tools/` | CLI capability (`nds_pkg_*`, `nds_gh_*`, …) — no domain policy |
 | `utilities/<name>/` | NDS-free libraries (`git`, `flake`, …) via `nds_requireUtility` |
+| `tc/` | Host CLI package (`tc`, `tc-git-ssh`) — not under `src/`; flake `packages.tc` |
 | `gitAccess/` | NDS git orchestration: `lib/`, `access/`, `keys/`, `wizard/`, `bridge/` |
 | `install/` | Nested: `disk/` `flake/` `classic/` `nix/` `verify/` + `nixcfg/` |
 | `actions/<name>/` | Single `setup.sh` — not logic/ui |

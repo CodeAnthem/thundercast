@@ -54,7 +54,7 @@ NDS install kit for ${HOST}
      export NDS_SKIP_MENU=true
      sudo -E bash src/app/main.sh --auto-confirm
 
-After install, per-repo deploy keys are installed under /root/.ssh/nds_deploy_* with nds-git-ssh.
+After install, per-repo deploy keys are installed under /root/.ssh/nds_deploy_* with tc-git-ssh.
 
 Public key (for reference):
 $(cat "${KEY_BASE}.pub")

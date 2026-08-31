@@ -22,8 +22,8 @@ install/
 
 ## Related modules
 
-- `src/git/` — SSH, clone, closure (calls `tools/` for gh)
+- `src/gitAccess/` — NDS git orchestration (wizard/keys; calls utilities)
 - `src/app/bundle/` — Post-install backup zip + hooks
 - `src/lib/` — Generic helpers (host IP, key-text markers)
 - `src/tools/` — Capability helpers (pkg, qr, gh, age, facter)
-- `src/scripts/` — Target-machine CLIs (`tc-switch`, `tc-clean`, `tc-status`, `tc-git-ssh`, `tc-nds`, `tc-sops`; `nds-*` aliases)
+- `tc/` — Host CLI package (`tc switch|clean|status|config|…`; not under src/)

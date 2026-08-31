@@ -18,7 +18,7 @@ ThunderCore → Thunderstorm (modules) → your private leaf
 ThunderCast  → ISO / NDS actions / toolkit scripts
 ```
 
-Public names after install: **`tc-nds`**, **`tc-switch`**, **`tc-clean`**, **`tc-status`**, **`tc-git-ssh`**, **`tc-sops`**. `nds-*` aliases remain.
+Public names after install: **`tc`** (`switch` / `clean` / `status` / `config`), **`tc-git-ssh`**, **`tc-sops`** (toolkit). Run NDS from the ISO / `bash src/app/main.sh`.
 
 ---
 
@@ -166,17 +166,19 @@ Every install produces a backup zip in `/home/nixos/` with a personalized
 remote unlock, all filled in for the machine you just built. Copy the zip off the box
 before rebooting, then follow that file.
 
-Flake installs copy helpers to `/root/.nds/bin` (and `/root/bin`) when git persist is on:
+Flake installs seed the host CLI under `/root/.tc` (and `/root/bin`) when git persist is on.
+Prefer `inputs.thundercast.packages.*.tc` / `nixosModules.tc` on the leaf for lock-based updates.
 
 | Command | What it does |
 |---------|----------------|
-| `tc-switch` | Pull flake + `nixos-rebuild switch` (`nds-switch`) |
-| `tc-clean` | Drop old generations / collect garbage (`nds-clean`) |
-| `tc-status` | Host / flake / comin snapshot (not the toolkit Status menu) |
-| `tc-git-ssh` | `GIT_SSH_COMMAND` + `init owner/repo /abs/key` (works without NDS) |
+| `tc switch` | Pull flake + `nixos-rebuild switch` |
+| `tc clean` | Drop old generations / collect garbage |
+| `tc status` | Host / flake / git-ssh summary |
+| `tc config` | Manage `tc-git.map` (private flake inputs) |
+| `tc-git-ssh` | `GIT_SSH_COMMAND` + `init owner/repo /abs/key` |
 | `tc-sops` | Toolkit sops ops without the menu (toolkit hosts) |
 
-Map lookup for git SSH: `NDS_GIT_SSH_MAP` / `TC_GIT_SSH_MAP`, then `~/.ssh/tc-git.map`, `~/.ssh/nds-git.map`, `/root/.ssh/tc-git.map`, `/root/.ssh/nds-git.map`.
+Map lookup: `TC_GIT_SSH_MAP`, then `~/.ssh/tc-git.map`, `/root/.ssh/tc-git.map`.
 
 Post-install details live in each action's guide:
 

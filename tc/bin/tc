@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+# ==================================================================================================
+# ThunderCast host CLI — dispatcher (tc <command>)
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Date:          Created: 2026-08-31 | Modified: 2026-08-31
+# ==================================================================================================
+set -euo pipefail
+
+_TC_BIN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Installed layout: $out/bin/tc + $out/lib/*.sh  — or checkout: tc/bin + tc/lib
+if [[ -d "${_TC_BIN}/../lib" ]]; then
+    TC_LIB="${TC_LIB:-$(cd "${_TC_BIN}/../lib" && pwd)}"
+elif [[ -n "${TC_LIB:-}" ]]; then
+    :
+else
+    printf 'tc: cannot find lib/ (set TC_LIB)\n' >&2
+    exit 1
+fi
+
+# shellcheck disable=SC1091
+source "${TC_LIB}/tc_common.sh"
+# shellcheck disable=SC1091
+source "${TC_LIB}/tc_git_ssh.sh"
+# shellcheck disable=SC1091
+source "${TC_LIB}/tc_switch.sh"
+# shellcheck disable=SC1091
+source "${TC_LIB}/tc_clean.sh"
+# shellcheck disable=SC1091
+source "${TC_LIB}/tc_status.sh"
+# shellcheck disable=SC1091
+source "${TC_LIB}/tc_config.sh"
+# shellcheck disable=SC1091
+source "${TC_LIB}/tc_menu.sh"
+
+_tc_usage() {
+    cat <<'EOF'
+tc — ThunderCast host CLI (NDS-free)
+
+Usage:
+  tc <command> [args]
+
+Commands:
+  switch      Pull flake checkout + nixos-rebuild switch
+  clean       Drop old generations + nix GC
+  status      Host / flake / git-ssh summary
+  git-ssh     Deploy-key SSH wrapper (prefer binary tc-git-ssh for GIT_SSH_COMMAND)
+  config      Manage tc-git.map (menu or list/add/remove)
+  restore     Save/load map profiles
+  menu        Interactive command menu
+  version     Print tc version
+  help        This help
+
+Update path: pin ThunderCast in flake.lock and rebuild (no curl self-update).
+EOF
+}
+
+cmd="${1:-}"
+if [[ -n "$cmd" ]]; then
+    shift
+fi
+
+case "$cmd" in
+    ""|menu)
+        tc_cmd_menu "$@"
+        ;;
+    switch)
+        tc_cmd_switch "$@"
+        ;;
+    clean)
+        tc_cmd_clean "$@"
+        ;;
+    status)
+        tc_cmd_status "$@"
+        ;;
+    git-ssh)
+        tc_git_ssh_exec "$@"
+        ;;
+    config)
+        tc_cmd_config "$@"
+        ;;
+    restore)
+        tc_cmd_restore "$@"
+        ;;
+    version|--version)
+        if [[ -f "${TC_LIB}/../VERSION" ]]; then
+            cat "${TC_LIB}/../VERSION"
+        elif [[ -f "${_TC_BIN}/../VERSION" ]]; then
+            cat "${_TC_BIN}/../VERSION"
+        else
+            echo "unknown"
+        fi
+        ;;
+    -h|--help|help)
+        _tc_usage
+        ;;
+    *)
+        tc_die "unknown command: ${cmd} (try: tc help)"
+        ;;
+esac

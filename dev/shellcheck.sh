@@ -59,9 +59,10 @@ _shellcheck_platform() {
 
 _shellcheck_collect_scripts() {
     mapfile -t _NDS_LINT_SCRIPTS < <(
-        find "${ROOT}/src" -name '*.sh' \
-            ! -path '*/tests/*' \
-            | sort
+        {
+            find "${ROOT}/src" -name '*.sh' ! -path '*/tests/*'
+            find "${ROOT}/tc" \( -name '*.sh' -o -name 'tc' -o -name 'tc-git-ssh' \)
+        } | sort -u
     )
     _NDS_LINT_SCRIPTS+=("${ROOT}/start.sh")
 }

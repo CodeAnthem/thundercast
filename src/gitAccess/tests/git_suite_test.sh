@@ -868,26 +868,26 @@ LOCK
     unset NDS_CTX_FLAKE_INSTALL_PATH NDS_FLAKE_INSTALL_PATH NDS_FLAKE_REPO_URL NDS_CTX_FLAKE_REPO_URL
     if nds_install_git_keys_to_target "${tmpdir}/mnt" "" \
         && [[ -f "${tmpdir}/mnt/root/.ssh/nds_deploy_org_repo" ]] \
-        && [[ -x "${tmpdir}/mnt/root/.ssh/nds-git-ssh" ]] \
-        && [[ -x "${tmpdir}/mnt/root/.nds/bin/nds-switch" ]] \
-        && [[ -f "${tmpdir}/mnt/root/.ssh/nds-git.map" ]]; then
+        && [[ -x "${tmpdir}/mnt/root/.tc/bin/tc-git-ssh" ]] \
+        && [[ -x "${tmpdir}/mnt/root/.tc/bin/tc" ]] \
+        && [[ -f "${tmpdir}/mnt/root/.ssh/tc-git.map" ]]; then
         perms=$(stat -c '%a' "${tmpdir}/mnt/root/.ssh/nds_deploy_org_repo" 2>/dev/null || echo "")
         if [[ "$perms" == "600" ]] \
-            && grep -q 'org/repo' "${tmpdir}/mnt/root/.ssh/nds-git.map" \
+            && grep -q 'org/repo' "${tmpdir}/mnt/root/.ssh/tc-git.map" \
             && grep -qF 'Wi0dh2l9GKJl' "${tmpdir}/mnt/root/.ssh/known_hosts"; then
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ SSH keys + nds-git-ssh + nds-switch installed on target"
+            console "  ✓ SSH keys + tc-git-ssh + tc installed on target"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
             console "  ✗ SSH key target map/perms/hostkeys (got ${perms})"
         fi
-        if [[ -L "${tmpdir}/mnt/root/.nds/bin/tc-switch" ]] \
-            && [[ -L "${tmpdir}/mnt/root/.ssh/tc-git.map" ]]; then
+        if [[ -x "${tmpdir}/mnt/root/.ssh/tc-git-ssh" ]] \
+            && [[ -f "${tmpdir}/mnt/root/.ssh/tc-git.map" ]]; then
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ target: tc-switch + tc-git.map aliases"
+            console "  ✓ target: tc-git-ssh + tc-git.map"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
-            console "  ✗ target: missing tc-switch or tc-git.map"
+            console "  ✗ target: missing tc-git-ssh or tc-git.map"
         fi
     else
         TEST_FAILED=$((TEST_FAILED + 1))
@@ -897,13 +897,13 @@ LOCK
     nds_cfg_set GIT_PERSIST_ACCESS "false"
     mkdir -p "${tmpdir}/mnt-ephemeral"
     if nds_install_git_keys_to_target "${tmpdir}/mnt-ephemeral" "" \
-        && [[ ! -x "${tmpdir}/mnt-ephemeral/root/.nds/bin/nds-switch" ]] \
+        && [[ ! -x "${tmpdir}/mnt-ephemeral/root/.tc/bin/tc" ]] \
         && [[ ! -f "${tmpdir}/mnt-ephemeral/root/.ssh/nds_deploy_org_repo" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ persist=false: no keys and no nds-switch"
+        console "  ✓ persist=false: no keys and no tc"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ persist=false: expected no keys and no nds-switch"
+        console "  ✗ persist=false: expected no keys and no tc"
     fi
     nds_cfg_set GIT_PERSIST_ACCESS ""
     unset NDS_GIT_PERSIST_ACCESS
@@ -911,12 +911,12 @@ LOCK
     mkdir -p "${tmpdir}/mnt-env"
     if ! nds_git_persist_access \
         && nds_install_git_keys_to_target "${tmpdir}/mnt-env" "" \
-        && [[ ! -x "${tmpdir}/mnt-env/root/.nds/bin/nds-switch" ]]; then
+        && [[ ! -x "${tmpdir}/mnt-env/root/.tc/bin/tc" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ persist env: NDS_GIT_PERSIST_ACCESS=false skips nds-switch"
+        console "  ✓ persist env: NDS_GIT_PERSIST_ACCESS=false skips tc"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ persist env: NDS_GIT_PERSIST_ACCESS=false should skip nds-switch"
+        console "  ✗ persist env: NDS_GIT_PERSIST_ACCESS=false should skip tc"
     fi
     unset NDS_GIT_PERSIST_ACCESS
 
@@ -941,12 +941,12 @@ LOCK
         fi
     fi
 
-    if [[ -f "$(_nds_git_tool_src nds-switch.sh 2>/dev/null || true)" ]]; then
+    if [[ -f "$(_nds_tc_src bin/tc 2>/dev/null || true)" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ nds-switch.sh present in tools/"
+        console "  ✓ tc/bin/tc present"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ nds-switch.sh missing"
+        console "  ✗ tc/bin/tc missing"
     fi
 
     if declare -f nds_git_discover_key_candidates &>/dev/null; then
