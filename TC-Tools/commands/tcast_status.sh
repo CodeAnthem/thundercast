@@ -5,12 +5,13 @@
 # Date:          Created: 2026-08-31 | Modified: 2026-08-31
 # ==================================================================================================
 
-tc_cmd_status() {
-    local flake_root="${TC_FLAKE_ROOT}"
-    local host_name="${TC_FLAKE_HOST}"
+tcast_cmd_status() {
+    local flake_root="${TCAST_FLAKE_ROOT}"
+    local host_name="${TCAST_FLAKE_HOST}"
 
     echo "host:     ${host_name}"
     echo "hostname: $(hostname 2>/dev/null || true)"
+    echo "config:   ${TCAST_CONFIG_DIR:-/var/lib/tcast}"
     if [[ -f /etc/os-release ]]; then
         # shellcheck disable=SC1091
         . /etc/os-release
@@ -25,9 +26,9 @@ tc_cmd_status() {
     else
         echo "flake:    ${flake_root} (not a git checkout)"
     fi
-    if wrap="$(tc_resolve_git_ssh 2>/dev/null)"; then
+    if wrap="$(tcast_resolve_git_ssh 2>/dev/null)"; then
         echo "git-ssh:  ${wrap}"
-        echo "map:      $(tc_git_map_path)"
+        echo "map:      $(tcast_git_map_path)"
     else
         echo "git-ssh:  (not on PATH)"
     fi

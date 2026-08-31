@@ -9,17 +9,18 @@
 suite_structure() {
     local f missing=0
 
-    if [[ -d "${SCRIPT_DIR}/../tc/bin" && -f "${SCRIPT_DIR}/../tc/bin/tc" ]]; then
+    if [[ -d "${SCRIPT_DIR}/../TC-Tools/bin" && -f "${SCRIPT_DIR}/../TC-Tools/bin/tcast" \
+        && -d "${SCRIPT_DIR}/../TC-Tools/commands" && -d "${SCRIPT_DIR}/../TC-Tools/lib" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ tc/ host CLI present (repo-root, not src/)"
+        console "  ✓ TC-Tools/ host CLI present (bin + commands + lib)"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ missing tc/ host CLI"
+        console "  ✗ missing TC-Tools/ host CLI layout"
     fi
 
     if [[ -d "${SCRIPT_DIR}/scripts" ]]; then
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ leftover src/scripts (moved to tc/)"
+        console "  ✗ leftover src/scripts (moved to TC-Tools/)"
     else
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ no src/scripts"

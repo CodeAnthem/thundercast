@@ -155,13 +155,12 @@ _nds_install_verify_git_key() {
     done
     [[ ${#deploy_keys[@]} -gt 0 ]] || return 0
 
-    wrap="/mnt/root/.tc/bin/tc-git-ssh"
-    map_file="/mnt/root/.ssh/tc-git.map"
-    switch_bin="/mnt/root/.tc/bin/tc"
-    [[ -x "$wrap" ]] || wrap="/mnt/root/.ssh/tc-git-ssh"
-    [[ -x "$wrap" ]] || _nds_install_verify_fail "tc-git-ssh missing on target: ${wrap}"
-    [[ -f "$map_file" ]] || _nds_install_verify_fail "tc-git.map missing on target: ${map_file}"
-    [[ -x "$switch_bin" ]] || _nds_install_verify_fail "tc missing on target: ${switch_bin}"
+    wrap="/mnt/var/lib/tcast/bin/tcast-git-ssh"
+    map_file="/mnt/var/lib/tcast/git.map"
+    switch_bin="/mnt/var/lib/tcast/bin/tcast"
+    [[ -x "$wrap" ]] || _nds_install_verify_fail "tcast-git-ssh missing on target: ${wrap}"
+    [[ -f "$map_file" ]] || _nds_install_verify_fail "git.map missing on target: ${map_file}"
+    [[ -x "$switch_bin" ]] || _nds_install_verify_fail "tcast missing on target: ${switch_bin}"
 
     for key_path in "${deploy_keys[@]}"; do
         base="$(basename "$key_path")"

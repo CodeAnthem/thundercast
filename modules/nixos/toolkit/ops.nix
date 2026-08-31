@@ -61,13 +61,12 @@
     CURRENT="$DEST/current"
     mkdir -p "$DEST"
 
-    if command -v tc-git-ssh >/dev/null 2>&1; then
-      export GIT_SSH_COMMAND="tc-git-ssh"
-    elif [[ -x /root/.tc/bin/tc-git-ssh ]]; then
-      export GIT_SSH_COMMAND="/root/.tc/bin/tc-git-ssh"
-    elif [[ -x /root/.ssh/tc-git-ssh ]]; then
-      export GIT_SSH_COMMAND="/root/.ssh/tc-git-ssh"
+    if command -v tcast-git-ssh >/dev/null 2>&1; then
+      export GIT_SSH_COMMAND="tcast-git-ssh"
+    elif [[ -x /var/lib/tcast/bin/tcast-git-ssh ]]; then
+      export GIT_SSH_COMMAND="/var/lib/tcast/bin/tcast-git-ssh"
     fi
+    export TCAST_GIT_SSH_MAP="${TCAST_GIT_SSH_MAP:-/var/lib/tcast/git.map}"
 
     read_ver() {
       local file="$1"

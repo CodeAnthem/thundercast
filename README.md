@@ -18,7 +18,7 @@ ThunderCore → Thunderstorm (modules) → your private leaf
 ThunderCast  → ISO / NDS actions / toolkit scripts
 ```
 
-Public names after install: **`tc`** (`switch` / `clean` / `status` / `config`), **`tc-git-ssh`**, **`tc-sops`** (toolkit). Run NDS from the ISO / `bash src/app/main.sh`.
+Public names after install: **`tc`** (`switch` / `clean` / `status` / `config`), **`tcast-git-ssh`**, **`tc-sops`** (toolkit). Run NDS from the ISO / `bash src/app/main.sh`.
 
 ---
 
@@ -166,19 +166,22 @@ Every install produces a backup zip in `/home/nixos/` with a personalized
 remote unlock, all filled in for the machine you just built. Copy the zip off the box
 before rebooting, then follow that file.
 
-Flake installs seed the host CLI under `/root/.tc` (and `/root/bin`) when git persist is on.
-Prefer `inputs.thundercast.packages.*.tc` / `nixosModules.tc` on the leaf for lock-based updates.
+Flake installs seed the host CLI under `/var/lib/tcast` (PATH via `/etc/profile.d/tcast.sh`) when git persist is on.
+Prefer `inputs.thundercast.packages.*.tcast` / `nixosModules.tcast` on the leaf for lock-based updates.
 
 | Command | What it does |
 |---------|----------------|
-| `tc switch` | Pull flake + `nixos-rebuild switch` |
-| `tc clean` | Drop old generations / collect garbage |
-| `tc status` | Host / flake / git-ssh summary |
-| `tc config` | Manage `tc-git.map` (private flake inputs) |
-| `tc-git-ssh` | `GIT_SSH_COMMAND` + `init owner/repo /abs/key` |
+| `tcast switch` | Pull flake + `nixos-rebuild switch` |
+| `tcast switch --force` | Discard local drift; match remote then rebuild |
+| `tcast switch --config` | Map / flake settings under `/var/lib/tcast/` |
+| `tcast restore` | Menu of NixOS system generations |
+| `tcast clean` | Drop old generations / collect garbage |
+| `tcast clean --config` | Durable GC defaults |
+| `tcast status` | Host / flake / git-ssh summary |
+| `tcast-git-ssh` | `GIT_SSH_COMMAND` + `init owner/repo /abs/key` |
 | `tc-sops` | Toolkit sops ops without the menu (toolkit hosts) |
 
-Map lookup: `TC_GIT_SSH_MAP`, then `~/.ssh/tc-git.map`, `/root/.ssh/tc-git.map`.
+Map: `TCAST_GIT_SSH_MAP` or `/var/lib/tcast/git.map`.
 
 Post-install details live in each action's guide:
 

@@ -868,26 +868,26 @@ LOCK
     unset NDS_CTX_FLAKE_INSTALL_PATH NDS_FLAKE_INSTALL_PATH NDS_FLAKE_REPO_URL NDS_CTX_FLAKE_REPO_URL
     if nds_install_git_keys_to_target "${tmpdir}/mnt" "" \
         && [[ -f "${tmpdir}/mnt/root/.ssh/nds_deploy_org_repo" ]] \
-        && [[ -x "${tmpdir}/mnt/root/.tc/bin/tc-git-ssh" ]] \
-        && [[ -x "${tmpdir}/mnt/root/.tc/bin/tc" ]] \
-        && [[ -f "${tmpdir}/mnt/root/.ssh/tc-git.map" ]]; then
+        && [[ -x "${tmpdir}/mnt/var/lib/tcast/bin/tcast-git-ssh" ]] \
+        && [[ -x "${tmpdir}/mnt/var/lib/tcast/bin/tcast" ]] \
+        && [[ -f "${tmpdir}/mnt/var/lib/tcast/git.map" ]]; then
         perms=$(stat -c '%a' "${tmpdir}/mnt/root/.ssh/nds_deploy_org_repo" 2>/dev/null || echo "")
         if [[ "$perms" == "600" ]] \
-            && grep -q 'org/repo' "${tmpdir}/mnt/root/.ssh/tc-git.map" \
+            && grep -q 'org/repo' "${tmpdir}/mnt/var/lib/tcast/git.map" \
             && grep -qF 'Wi0dh2l9GKJl' "${tmpdir}/mnt/root/.ssh/known_hosts"; then
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ SSH keys + tc-git-ssh + tc installed on target"
+            console "  ✓ SSH keys + tcast-git-ssh + tcast installed on target"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
             console "  ✗ SSH key target map/perms/hostkeys (got ${perms})"
         fi
-        if [[ -x "${tmpdir}/mnt/root/.ssh/tc-git-ssh" ]] \
-            && [[ -f "${tmpdir}/mnt/root/.ssh/tc-git.map" ]]; then
+        if [[ -x "${tmpdir}/mnt/var/lib/tcast/bin/tcast-git-ssh" ]] \
+            && [[ -f "${tmpdir}/mnt/var/lib/tcast/git.map" ]]; then
             TEST_PASSED=$((TEST_PASSED + 1))
-            console "  ✓ target: tc-git-ssh + tc-git.map"
+            console "  ✓ target: tcast-git-ssh + git.map"
         else
             TEST_FAILED=$((TEST_FAILED + 1))
-            console "  ✗ target: missing tc-git-ssh or tc-git.map"
+            console "  ✗ target: missing tcast-git-ssh or git.map"
         fi
     else
         TEST_FAILED=$((TEST_FAILED + 1))
@@ -897,13 +897,13 @@ LOCK
     nds_cfg_set GIT_PERSIST_ACCESS "false"
     mkdir -p "${tmpdir}/mnt-ephemeral"
     if nds_install_git_keys_to_target "${tmpdir}/mnt-ephemeral" "" \
-        && [[ ! -x "${tmpdir}/mnt-ephemeral/root/.tc/bin/tc" ]] \
+        && [[ ! -x "${tmpdir}/mnt-ephemeral/var/lib/tcast/bin/tcast" ]] \
         && [[ ! -f "${tmpdir}/mnt-ephemeral/root/.ssh/nds_deploy_org_repo" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ persist=false: no keys and no tc"
+        console "  ✓ persist=false: no keys and no tcast"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ persist=false: expected no keys and no tc"
+        console "  ✗ persist=false: expected no keys and no tcast"
     fi
     nds_cfg_set GIT_PERSIST_ACCESS ""
     unset NDS_GIT_PERSIST_ACCESS
@@ -911,12 +911,12 @@ LOCK
     mkdir -p "${tmpdir}/mnt-env"
     if ! nds_git_persist_access \
         && nds_install_git_keys_to_target "${tmpdir}/mnt-env" "" \
-        && [[ ! -x "${tmpdir}/mnt-env/root/.tc/bin/tc" ]]; then
+        && [[ ! -x "${tmpdir}/mnt-env/var/lib/tcast/bin/tcast" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ persist env: NDS_GIT_PERSIST_ACCESS=false skips tc"
+        console "  ✓ persist env: NDS_GIT_PERSIST_ACCESS=false skips tcast"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ persist env: NDS_GIT_PERSIST_ACCESS=false should skip tc"
+        console "  ✗ persist env: NDS_GIT_PERSIST_ACCESS=false should skip tcast"
     fi
     unset NDS_GIT_PERSIST_ACCESS
 
@@ -941,12 +941,12 @@ LOCK
         fi
     fi
 
-    if [[ -f "$(_nds_tc_src bin/tc 2>/dev/null || true)" ]]; then
+    if [[ -f "$(_nds_tc_src bin/tcast 2>/dev/null || true)" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ tc/bin/tc present"
+        console "  ✓ TC-Tools/bin/tcast present"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ tc/bin/tc missing"
+        console "  ✗ TC-Tools/bin/tcast missing"
     fi
 
     if declare -f nds_git_discover_key_candidates &>/dev/null; then

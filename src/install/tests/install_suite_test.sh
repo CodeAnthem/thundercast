@@ -885,7 +885,7 @@ EOF
         && [[ -x "${seed_mnt}/var/lib/nds-toolkit/current/toolkit.sh" ]] \
         && [[ "$(readlink "${seed_mnt}/var/lib/nds-toolkit/current")" == "src/toolkitScripts" ]] \
         && [[ "$(git -C "${seed_mnt}/var/lib/nds-toolkit/src" remote get-url origin 2>/dev/null)" == "$NDS_CAST_DEFAULT_URL" ]] \
-        && [[ -L "${seed_mnt}/root/.nds/bin/tc-sops" ]]; then
+        && [[ -L "${seed_mnt}/root/.nds/bin/tcast-sops" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ toolkit seed: relative symlink to toolkitScripts"
     else

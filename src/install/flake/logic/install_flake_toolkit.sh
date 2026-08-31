@@ -213,9 +213,9 @@ nds_toolkit_seed_scripts_to_target() {
     mkdir -p "${target_root}/root/.nds/bin" "${target_root}/root/bin"
     if [[ -x "${dest}/src/toolkitScripts/tc-sops.sh" ]]; then
         ln -sfn /var/lib/nds-toolkit/current/tc-sops.sh \
-            "${target_root}/root/.nds/bin/tc-sops"
+            "${target_root}/root/.nds/bin/tcast-sops"
         ln -sfn /var/lib/nds-toolkit/current/tc-sops.sh \
-            "${target_root}/root/bin/tc-sops"
+            "${target_root}/root/bin/tcast-sops"
     fi
     info "Seeded toolkitScripts at ${dest}/current"
     return 0

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# ==================================================================================================
+# ThunderCast — tcast-git-ssh (GIT_SSH_COMMAND entry; argv0 must be a real binary)
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Date:          Created: 2026-08-31 | Modified: 2026-08-31
+# ==================================================================================================
+set -euo pipefail
+
+_TCAST_BIN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -d "${_TCAST_BIN}/../lib" ]]; then
+    TCAST_LIB="${TCAST_LIB:-$(cd "${_TCAST_BIN}/../lib" && pwd)}"
+fi
+[[ -n "${TCAST_LIB:-}" && -f "${TCAST_LIB}/tcast_common.sh" ]] || {
+    printf 'tcast-git-ssh: cannot find lib/ (set TCAST_LIB)\n' >&2
+    exit 1
+}
+# shellcheck disable=SC1091
+source "${TCAST_LIB}/tcast_common.sh"
+# shellcheck disable=SC1091
+source "${TCAST_LIB}/tcast_git_ssh.sh"
+tcast_git_ssh_exec "$@"

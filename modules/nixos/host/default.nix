@@ -1,14 +1,14 @@
 # ==================================================================================================
 # ThunderCast - NixOS installer and operator toolkit by CodeAnthem
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date: Created: 2026-08-28 | Modified: 2026-08-28
+# Date: Created: 2026-08-28 | Modified: 2026-09-01
 # Description: Per-host NDS contract — facter / hardware-configuration.nix / nds_generated.nix / toolkit SSH pub
 # ==================================================================================================
 #
 # Leaf: imports = [ (inputs.thundercast.nixosModules.host { hostDir = ./.; }) ];
 # Expects hosts/<system>/<name>/ (three levels below the flake root).
 
-hostDir:
+{ hostDir }:
 { config, lib, ... }:
 let
   inherit (lib) mkIf optional optionals;

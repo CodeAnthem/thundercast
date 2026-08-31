@@ -26,4 +26,4 @@ install/
 - `src/app/bundle/` — Post-install backup zip + hooks
 - `src/lib/` — Generic helpers (host IP, key-text markers)
 - `src/tools/` — Capability helpers (pkg, qr, gh, age, facter)
-- `tc/` — Host CLI package (`tc switch|clean|status|config|…`; not under src/)
+- `tc/` — Host CLI package (`tcast switch|clean|status|config|…`; not under src/)

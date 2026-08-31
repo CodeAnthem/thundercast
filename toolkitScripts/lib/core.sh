@@ -41,13 +41,12 @@ tcast_register_dir() {
 }
 
 tcast_git_ssh_env() {
-    if command -v tc-git-ssh >/dev/null 2>&1; then
-        export GIT_SSH_COMMAND="tc-git-ssh"
-    elif command -v nds-git-ssh >/dev/null 2>&1; then
-        export GIT_SSH_COMMAND="nds-git-ssh"
-    elif [[ -x /root/.ssh/nds-git-ssh ]]; then
-        export GIT_SSH_COMMAND="/root/.ssh/nds-git-ssh"
+    if command -v tcast-git-ssh >/dev/null 2>&1; then
+        export GIT_SSH_COMMAND="tcast-git-ssh"
+    elif [[ -x /var/lib/tcast/bin/tcast-git-ssh ]]; then
+        export GIT_SSH_COMMAND="/var/lib/tcast/bin/tcast-git-ssh"
     fi
+    export TCAST_GIT_SSH_MAP="${TCAST_GIT_SSH_MAP:-/var/lib/tcast/git.map}"
 }
 
 # Description: Clone or reuse TCAST_LEAF_DIR. Never the NixOS or comin checkout.

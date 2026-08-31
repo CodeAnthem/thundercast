@@ -62,11 +62,12 @@ Leaf restore loads `.nds/hosts/<host>.recipe`. Registered secrets (`ACCESS_ADMIN
 | `SOPS_AGE_KEY_FILE` | `NDS_SOPS_AGE_KEY_FILE` | when set | Existing machine age key path |
 
 After install, per-repo deploy keys land under `/root/.ssh/nds_deploy_<owner>_<repo>` with  
-`tc-git-ssh` + `tc-git.map` so stock `git+ssh://git@github.com/...` flake URLs keep working  
-via `GIT_SSH_COMMAND`. Map lookup: `TC_GIT_SSH_MAP`, then `~/.ssh/tc-git.map`, `/root/.ssh/tc-git.map`.  
-Host CLI: `tc switch`, `tc clean`, `tc status`, `tc config` (seeded under `/root/.tc` or via  
-`inputs.thundercast.packages.*.tc` / `nixosModules.tc`). Update with flake lock + rebuild —  
-no curl self-update. Toolkit hosts also get `tc-sops` from the toolkit module. Install-time  
+`tcast-git-ssh` + `/var/lib/tcast/git.map` so stock `git+ssh://git@github.com/...` flake URLs keep working  
+via `GIT_SSH_COMMAND`. Map: `TCAST_GIT_SSH_MAP` or `/var/lib/tcast/git.map`.  
+Host CLI: `tcast switch [--force|--config]`, `tcast restore`, `tcast clean [--config]`, `tcast status`  
+(seeded under `/var/lib/tcast` or via `inputs.thundercast.packages.*.tcast` / `nixosModules.tcast`).  
+Source tree: `TC-Tools/`. Update with flake lock + rebuild —  
+no curl self-update. Toolkit hosts also get `tc-sops` from the toolkit module. Install-time   
 `facter.json` is unstaged and gitignored after the flake build so the checkout stays
 pullable. Structural `nds_generated.nix` is committed (boot + mounts + guest; NDS
 overwrites it).

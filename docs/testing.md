@@ -12,7 +12,7 @@ Run from a ThunderCast checkout. No root, no VM.
 
 ```bash
 bash dev/selftest.sh             # NDS suites (settings sessions, actions, git, apply, …)
-bash dev/shellcheck.sh           # every shipped .sh including tc/
+bash dev/shellcheck.sh           # every shipped .sh including TC-Tools/
 bash toolkitScripts/tests/run.sh # toolkit + tc-sops — needs age-keygen and sops on PATH
 ```
 
@@ -69,7 +69,7 @@ Use a host that already exists in the leaf (`nixosConfigurations.<name>`), with 
 | | |
 |--|--|
 | **Do** | `NDS_ACTION=installFlake` (or pick it). Private flake URL → git wizard → pick host → **local** disk → menu → confirm. Reboot. |
-| **Pass** | `findmnt /boot` is mounted. `tc status` prints host + flake rev. `tc switch` rebuilds without a GRUB/ESP error. `GIT_SSH_COMMAND` / `tc-git-ssh` can `git ls-remote` private inputs. |
+| **Pass** | `findmnt /boot` is mounted. `tcast status` prints host + flake rev. `tcast switch` rebuilds without a GRUB/ESP error. `GIT_SSH_COMMAND` / `tcast-git-ssh` can `git ls-remote` private inputs. |
 | **Fail** | `/boot` missing after reboot, rebuild wants EFI on a BIOS disk, or private git fails on the installed system. |
 
 Headless sketch (git auth still runs unless access is already proven):
@@ -152,18 +152,19 @@ Take a `.recipe` from V2/V4 (or export after a menu **X**). Point `*_FILE` at fi
 
 ---
 
-### V9 — `tc-git-ssh init` without NDS
+### V9 — `tcast-git-ssh init` without NDS
 
 On any NixOS/Linux box (GUI install included). No live ISO required.
 
 ```bash
 # from this repo
-./tc/bin/tc-git-ssh init owner/repo /absolute/path/to/ed25519
-export GIT_SSH_COMMAND="$(pwd)/tc/bin/tc-git-ssh"
+./TC-Tools/bin/tcast-git-ssh init owner/repo /absolute/path/to/ed25519
+export GIT_SSH_COMMAND="$(pwd)/TC-Tools/bin/tcast-git-ssh"
+export TCAST_GIT_SSH_MAP="${TCAST_GIT_SSH_MAP:-$HOME/.config/tc-test/git.map}"
 git ls-remote git@github.com:owner/repo.git
 ```
 
-| **Pass** | Writes `~/.ssh/tc-git.map`. `ls-remote` works with that key. |
+| **Pass** | Writes map (default `/var/lib/tcast/git.map` when run as root). `ls-remote` works with that key. |
 | **Fail** | Requires a previous NDS install, or looks only at `nds-git.map`. |
 
 ---
@@ -190,7 +191,7 @@ Same as V1 with `ENCRYPTION=true` (passphrase and/or USB keyfile). If remote unl
 
 1. Automated three commands (green).
 2. **V3** (abort) before any addRole that pushes.
-3. **V2** (`/boot` + `tc switch`) — highest value flake regression.
+3. **V2** (`/boot` + `tcast switch`) — highest value flake regression.
 4. **V5** toolkit local, then **V6** refuse remote.
 5. **V8** empty catalog, **V7** apply, **V9** git-ssh init.
 6. **V1** / **V4** / **V10** / **V11** when you have spare disks.

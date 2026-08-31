@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# ==================================================================================================
+# ThunderCast host CLI — dispatcher (tcast <command>)
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Date:          Created: 2026-08-31 | Modified: 2026-08-31
+# ==================================================================================================
+set -euo pipefail
+
+_TCAST_BIN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_TCAST_ROOT="$(cd "${_TCAST_BIN}/.." && pwd)"
+if [[ -d "${_TCAST_ROOT}/lib" ]]; then
+    TCAST_LIB="${TCAST_LIB:-${_TCAST_ROOT}/lib}"
+elif [[ -z "${TCAST_LIB:-}" ]]; then
+    printf 'tcast: cannot find lib/ (set TCAST_LIB)\n' >&2
+    exit 1
+fi
+TCAST_CMD="${TCAST_CMD:-${_TCAST_ROOT}/commands}"
+[[ -d "$TCAST_CMD" ]] || {
+    printf 'tcast: cannot find commands/ (set TCAST_CMD)\n' >&2
+    exit 1
+}
+
+# shellcheck disable=SC1091
+source "${TCAST_LIB}/tcast_common.sh"
+# shellcheck disable=SC1091
+source "${TCAST_LIB}/tcast_ui.sh"
+# shellcheck disable=SC1091
+source "${TCAST_LIB}/tcast_conf.sh"
+# shellcheck disable=SC1091
+source "${TCAST_LIB}/tcast_git_ssh.sh"
+# shellcheck disable=SC1091
+source "${TCAST_CMD}/tcast_switch.sh"
+# shellcheck disable=SC1091
+source "${TCAST_CMD}/tcast_clean.sh"
+# shellcheck disable=SC1091
+source "${TCAST_CMD}/tcast_status.sh"
+# shellcheck disable=SC1091
+source "${TCAST_CMD}/tcast_restore.sh"
+# shellcheck disable=SC1091
+source "${TCAST_CMD}/tcast_menu.sh"
+
+_tcast_usage() {
+    cat <<'EOF'
+tcast — ThunderCast host CLI (NDS-free)
+
+Usage:
+  tcast <command> [args]
+
+Commands:
+  switch [--force] [--config]  Pull + nixos-rebuild; --force discards local drift
+  clean  [--config]            GC; --config edits durable defaults
+  restore                      Menu of NixOS generations (swap configs)
+  status                       Host / flake / git-ssh summary
+  git-ssh                      Prefer binary tcast-git-ssh for GIT_SSH_COMMAND
+  menu                         Interactive command menu
+  version                      Print tcast version
+  help                         This help
+
+Host config (shared, survives upgrades): /var/lib/tcast/
+EOF
+}
+
+cmd="${1:-}"
+[[ -n "$cmd" ]] && shift
+
+case "$cmd" in
+    ""|menu) tcast_cmd_menu "$@" ;;
+    switch) tcast_cmd_switch "$@" ;;
+    clean) tcast_cmd_clean "$@" ;;
+    restore) tcast_cmd_restore "$@" ;;
+    status) tcast_env_init; tcast_cmd_status "$@" ;;
+    git-ssh) tcast_git_ssh_exec "$@" ;;
+    version|--version)
+        if [[ -f "${_TCAST_ROOT}/VERSION" ]]; then
+            cat "${_TCAST_ROOT}/VERSION"
+        else
+            echo "unknown"
+        fi
+        ;;
+    -h|--help|help) _tcast_usage ;;
+    config)
+        tcast_die "'tcast config' removed — use: tcast switch --config   (or: tcast restore for generations)"
+        ;;
+    *)
+        tcast_die "unknown command: ${cmd} (try: tcast help)"
+        ;;
+esac
