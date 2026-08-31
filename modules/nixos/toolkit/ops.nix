@@ -1,7 +1,7 @@
 # ==================================================================================================
 # ThunderCast - NixOS installer and operator toolkit by CodeAnthem
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date: Created: 2026-08-19 | Modified: 2026-08-20
+# Date: Created: 2026-08-19 | Modified: 2026-09-01
 # Description: toolkit menu wrapper + VERSION-aware tools updater — opts.nixos.toolkit.ops
 # ==================================================================================================
 
@@ -66,7 +66,7 @@
     elif [[ -x /var/lib/tcast/bin/tcast-git-ssh ]]; then
       export GIT_SSH_COMMAND="/var/lib/tcast/bin/tcast-git-ssh"
     fi
-    export TCAST_GIT_SSH_MAP="${TCAST_GIT_SSH_MAP:-/var/lib/tcast/git.map}"
+    export TCAST_GIT_SSH_MAP="''${TCAST_GIT_SSH_MAP:-/var/lib/tcast/git.map}"
 
     read_ver() {
       local file="$1"
