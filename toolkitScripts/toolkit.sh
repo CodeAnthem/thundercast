@@ -30,7 +30,7 @@ if [[ $# -gt 0 ]]; then
         -h|--help|help)
             echo "toolkit — operator menu (no arguments)"
             echo "toolkit --version — print VERSION"
-            echo "toolkit sops … — same as tc-sops (health, init, put, apply, …)"
+            echo "toolkit sops … — same as tcast-sops (health, init, put, apply, …)"
             echo "toolkit-update — fetch a new tools VERSION"
             exit 0
             ;;

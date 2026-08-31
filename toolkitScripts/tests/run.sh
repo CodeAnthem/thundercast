@@ -166,15 +166,15 @@ else
     fail "toolkit --version"
 fi
 
-if "${ROOT}/toolkit.sh" sops help 2>/dev/null | grep -q 'tc-sops health'; then
+if "${ROOT}/toolkit.sh" sops help 2>/dev/null | grep -q 'tcast-sops health'; then
     ok "toolkit sops help"
 else
     fail "toolkit sops help"
 fi
-if out="$("${ROOT}/tc-sops.sh" health)" && echo "$out" | grep -q 'operator:'; then
-    ok "tc-sops health"
+if out="$("${ROOT}/tcast-sops.sh" health)" && echo "$out" | grep -q 'operator:'; then
+    ok "tcast-sops health"
 else
-    fail "tc-sops health"
+    fail "tcast-sops health"
 fi
 
 SAVE_LEAF="$TCAST_LEAF_DIR"

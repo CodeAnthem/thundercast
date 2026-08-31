@@ -18,7 +18,7 @@ ThunderCore → Thunderstorm (modules) → your private leaf
 ThunderCast  → ISO / NDS actions / toolkit scripts
 ```
 
-Public names after install: **`tc`** (`switch` / `clean` / `status` / `config`), **`tcast-git-ssh`**, **`tc-sops`** (toolkit). Run NDS from the ISO / `bash src/app/main.sh`.
+Public names after install: **`tcast`** (`switch` / `clean` / `status` / `restore`), **`tcast-git-ssh`**, **`tcast-sops`** (toolkit). Run NDS from the ISO / `bash src/app/main.sh`.
 
 ---
 
@@ -179,7 +179,7 @@ Prefer `inputs.thundercast.packages.*.tcast` / `nixosModules.tcast` on the leaf 
 | `tcast clean --config` | Durable GC defaults |
 | `tcast status` | Host / flake / git-ssh summary |
 | `tcast-git-ssh` | `GIT_SSH_COMMAND` + `init owner/repo /abs/key` |
-| `tc-sops` | Toolkit sops ops without the menu (toolkit hosts) |
+| `tcast-sops` | Toolkit sops ops without the menu (toolkit hosts) |
 
 Map: `TCAST_GIT_SSH_MAP` or `/var/lib/tcast/git.map`.
 
@@ -196,7 +196,7 @@ Topic guides live in [`docs/`](docs/) ([configuration](docs/configuration.md), [
 
 ## Toolkit (ops host)
 
-On a dedicated ops machine, NDS action **toolkit** seeds [`toolkitScripts/`](toolkitScripts/). Daily work is the `toolkit` menu (sops, nodes, git) or `tc-sops` for the same sops ops without the menu. `toolkit-update` refreshes those scripts from this repo; it does **not** ride `nixos-rebuild` / comin.
+On a dedicated ops machine, NDS action **toolkit** seeds [`toolkitScripts/`](toolkitScripts/). Daily work is the `toolkit` menu (sops, nodes, git) or `tcast-sops` for the same sops ops without the menu. `toolkit-update` refreshes those scripts from this repo; it does **not** ride `nixos-rebuild` / comin.
 
 NixOS module: `nixosModules.toolkit` (enable from a leaf that already uses ThunderCore `my.lib`).
 
@@ -242,7 +242,7 @@ Link here from your leaf README for live-ISO installs. Copy `exampleRepo/` to a 
 ```bash
 bash dev/shellcheck.sh              # lint (installs ShellCheck to ~/.cache if needed)
 bash dev/selftest.sh                # read-only NDS self-tests (CI gate)
-bash toolkitScripts/tests/run.sh    # toolkit + tc-sops (needs age-keygen + sops)
+bash toolkitScripts/tests/run.sh    # toolkit + tcast-sops (needs age-keygen + sops)
 DEBUG=1 sudo bash src/app/main.sh   # from a checkout
 ```
 

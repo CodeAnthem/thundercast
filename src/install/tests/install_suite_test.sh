@@ -874,8 +874,8 @@ EOF
     seed_mnt=$(mktemp -d)
     mkdir -p "${seed_cast}/toolkitScripts"
     printf '%s\n' '#!/bin/sh' 'echo ok' > "${seed_cast}/toolkitScripts/toolkit.sh"
-    printf '%s\n' '#!/bin/sh' 'echo sops' > "${seed_cast}/toolkitScripts/tc-sops.sh"
-    chmod +x "${seed_cast}/toolkitScripts/toolkit.sh" "${seed_cast}/toolkitScripts/tc-sops.sh"
+    printf '%s\n' '#!/bin/sh' 'echo sops' > "${seed_cast}/toolkitScripts/tcast-sops.sh"
+    chmod +x "${seed_cast}/toolkitScripts/toolkit.sh" "${seed_cast}/toolkitScripts/tcast-sops.sh"
     git -C "$seed_cast" init -q
     git -C "$seed_cast" -c user.email=nds@test -c user.name=nds add toolkitScripts
     git -C "$seed_cast" -c user.email=nds@test -c user.name=nds commit -q -m seed
@@ -884,13 +884,12 @@ EOF
     if nds_toolkit_seed_scripts_to_target "$seed_mnt" \
         && [[ -x "${seed_mnt}/var/lib/nds-toolkit/current/toolkit.sh" ]] \
         && [[ "$(readlink "${seed_mnt}/var/lib/nds-toolkit/current")" == "src/toolkitScripts" ]] \
-        && [[ "$(git -C "${seed_mnt}/var/lib/nds-toolkit/src" remote get-url origin 2>/dev/null)" == "$NDS_CAST_DEFAULT_URL" ]] \
-        && [[ -L "${seed_mnt}/root/.nds/bin/tcast-sops" ]]; then
+        && [[ "$(git -C "${seed_mnt}/var/lib/nds-toolkit/src" remote get-url origin 2>/dev/null)" == "$NDS_CAST_DEFAULT_URL" ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ toolkit seed: relative symlink to toolkitScripts"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ toolkit seed: missing current/toolkit.sh, tc-sops, or stale origin"
+        console "  ✗ toolkit seed: missing current/toolkit.sh or stale origin"
     fi
     unset NDS_CAST_DEFAULT_URL
     unset NDS_CAST_PROBE_DIR

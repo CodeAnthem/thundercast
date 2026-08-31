@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ==================================================================================================
-# Thundercast - tc-sops (non-interactive sops; same as toolkit sops)
+# Thundercast - tcast-sops (non-interactive sops; same as toolkit sops)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-20 | Modified: 2026-08-20
+# Date:          Created: 2026-08-20 | Modified: 2026-09-01
 # ==================================================================================================
 set -euo pipefail
 _here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

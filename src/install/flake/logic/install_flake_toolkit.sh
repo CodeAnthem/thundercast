@@ -206,17 +206,12 @@ nds_toolkit_seed_scripts_to_target() {
     git -C "${dest}/src" remote remove origin >/dev/null 2>&1 || true
     git -C "${dest}/src" remote add origin "$repo" || true
     chmod +x "${dest}/src/toolkitScripts/toolkit.sh" || true
-    if [[ -f "${dest}/src/toolkitScripts/tc-sops.sh" ]]; then
-        chmod +x "${dest}/src/toolkitScripts/tc-sops.sh" || true
+    if [[ -f "${dest}/src/toolkitScripts/tcast-sops.sh" ]]; then
+        chmod +x "${dest}/src/toolkitScripts/tcast-sops.sh" || true
     fi
     ln -sfn src/toolkitScripts "${dest}/current"
-    mkdir -p "${target_root}/root/.nds/bin" "${target_root}/root/bin"
-    if [[ -x "${dest}/src/toolkitScripts/tc-sops.sh" ]]; then
-        ln -sfn /var/lib/nds-toolkit/current/tc-sops.sh \
-            "${target_root}/root/.nds/bin/tcast-sops"
-        ln -sfn /var/lib/nds-toolkit/current/tc-sops.sh \
-            "${target_root}/root/bin/tcast-sops"
-    fi
+    # Host CLI / tcast-sops come from nixosModules.tcast + toolkit (systemPackages).
+    # Do not seed /root/.nds/bin or /root/bin legacy wrappers.
     info "Seeded toolkitScripts at ${dest}/current"
     return 0
 }

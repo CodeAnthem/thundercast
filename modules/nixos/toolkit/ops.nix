@@ -31,7 +31,7 @@
     exec "$current" "$@"
   '';
 
-  tcSops = pkgs.writeShellScriptBin "tc-sops" ''
+  tcastSops = pkgs.writeShellScriptBin "tcast-sops" ''
     set -euo pipefail
     exec ${wrapper}/bin/toolkit sops "$@"
   '';
@@ -189,7 +189,7 @@ in {
 # Config
 # ==================================================================================================
   config = lib.mkIf (cfg.enable or false) {
-    environment.systemPackages = [ wrapper updater tcSops ];
+    environment.systemPackages = [ wrapper updater tcastSops ];
 
     systemd.tmpfiles.rules = [
       "d ${scfg.dest} 0750 root root -"
