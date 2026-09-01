@@ -2,12 +2,13 @@
 # ==================================================================================================
 # ThunderCast host CLI — top-level menu
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-31 | Modified: 2026-08-31
+# Date:          Created: 2026-08-31 | Modified: 2026-09-01
 # ==================================================================================================
 
 tcast_cmd_menu() {
     if ! tcast_ui_menu "tcast — ThunderCast host CLI" \
         "status" \
+        "top" \
         "switch" \
         "switch --config" \
         "switch --force" \
@@ -20,6 +21,7 @@ tcast_cmd_menu() {
     fi
     case "$REPLY" in
         status) tcast_env_init; tcast_cmd_status ;;
+        top) tcast_cmd_top ;;
         switch) tcast_cmd_switch ;;
         "switch --config") tcast_cmd_switch --config ;;
         "switch --force") tcast_cmd_switch --force ;;

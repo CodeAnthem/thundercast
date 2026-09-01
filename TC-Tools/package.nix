@@ -1,8 +1,8 @@
 # ==================================================================================================
 # ThunderCast - tc host CLI package
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date: Created: 2026-08-31 | Modified: 2026-08-31
-# Description: NDS-free host companion (switch / clean / restore / status / git-ssh)
+# Date: Created: 2026-08-31 | Modified: 2026-09-01
+# Description: NDS-free host companion (switch / clean / restore / status / top / git-ssh)
 # ==================================================================================================
 { stdenvNoCC, lib }:
 stdenvNoCC.mkDerivation {
@@ -26,7 +26,7 @@ stdenvNoCC.mkDerivation {
   '';
 
   meta = with lib; {
-    description = "ThunderCast host CLI (tcast switch/clean/restore/status/git-ssh)";
+    description = "ThunderCast host CLI (tcast switch/clean/restore/status/top/git-ssh)";
     license = licenses.mit;
     platforms = platforms.linux;
     mainProgram = "tcast";

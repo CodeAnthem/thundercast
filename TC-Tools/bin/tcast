@@ -2,7 +2,7 @@
 # ==================================================================================================
 # ThunderCast host CLI — dispatcher (tcast <command>)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-31 | Modified: 2026-08-31
+# Date:          Created: 2026-08-31 | Modified: 2026-09-01
 # ==================================================================================================
 set -euo pipefail
 
@@ -37,6 +37,8 @@ source "${TCAST_CMD}/tcast_clean.sh"
 # shellcheck disable=SC1091
 source "${TCAST_CMD}/tcast_status.sh"
 # shellcheck disable=SC1091
+source "${TCAST_CMD}/tcast_top.sh"
+# shellcheck disable=SC1091
 source "${TCAST_CMD}/tcast_restore.sh"
 # shellcheck disable=SC1091
 source "${TCAST_CMD}/tcast_menu.sh"
@@ -53,6 +55,7 @@ Commands:
   clean  [--config]            GC; --config edits durable defaults
   restore                      Menu of NixOS generations (swap configs)
   status                       Host / flake / git-ssh summary
+  top    [--once] [-n SEC]     Live costly processes (Ctrl+C to stop)
   git-ssh                      Prefer binary tcast-git-ssh for GIT_SSH_COMMAND
   menu                         Interactive command menu
   version                      Print tcast version
@@ -71,6 +74,7 @@ case "$cmd" in
     clean) tcast_cmd_clean "$@" ;;
     restore) tcast_cmd_restore "$@" ;;
     status) tcast_env_init; tcast_cmd_status "$@" ;;
+    top) tcast_cmd_top "$@" ;;
     git-ssh) tcast_git_ssh_exec "$@" ;;
     version|--version)
         if [[ -f "${_TCAST_ROOT}/VERSION" ]]; then
