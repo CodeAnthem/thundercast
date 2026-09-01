@@ -4,12 +4,14 @@
 # Date: Created: 2026-08-31 | Modified: 2026-09-01
 # Description: NDS-free host companion (switch / clean / restore / status / top / git-ssh)
 # ==================================================================================================
-{ stdenvNoCC, lib }:
+{ stdenvNoCC, lib, makeWrapper, sysstat, procps }:
 stdenvNoCC.mkDerivation {
   pname = "tcast";
   version = lib.fileContents ./VERSION;
 
   src = ./.;
+
+  nativeBuildInputs = [ makeWrapper ];
 
   dontConfigure = true;
   dontBuild = true;
@@ -22,6 +24,8 @@ stdenvNoCC.mkDerivation {
     cp VERSION $out/
     install -m755 bin/tcast $out/bin/tcast
     install -m755 bin/tcast-git-ssh $out/bin/tcast-git-ssh
+    wrapProgram $out/bin/tcast \
+      --prefix PATH : ${lib.makeBinPath [ sysstat procps ]}
     runHook postInstall
   '';
 

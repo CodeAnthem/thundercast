@@ -1,49 +1,38 @@
 #!/usr/bin/env bash
 # ==================================================================================================
-# ThunderCast host CLI — top (live costly processes)
+# ThunderCast host CLI — top (pidstat CPU watcher)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Date:          Created: 2026-09-01 | Modified: 2026-09-01
 # ==================================================================================================
 
-# Description: Print one sample of load + top processes + key unit CPU.
-_tcast_top_sample() {
-    local n="${1:-15}"
+# Description: Print a one-line loadavg + key unit CPUUsage snapshot (no clear).
+_tcast_top_preamble() {
     local loadavg
     loadavg="$(tr -d '\n' </proc/loadavg 2>/dev/null || true)"
     printf 'loadavg: %s\n' "${loadavg:-?}"
-    printf 'time:    %s\n\n' "$(date '+%H:%M:%S' 2>/dev/null || date)"
-
-    printf '    PID  %%CPU %%MEM    RSS ELAPSED CMD\n'
-    ps -eo pid,pcpu,pmem,rss,etime,cmd --sort=-pcpu 2>/dev/null | head -n "$((n + 1))" | tail -n +2
-
-    printf '\n'
-    printf 'systemd CPUUsage (lifetime nsec → rough):\n'
+    printf 'Banner LOAD%% is loadavg/cores — not process CPU. Short bursts: watch pidstat lines.\n\n'
     local u
     for u in \
         thunderstorm-console-banner-live.service \
-        thunderstorm-console-banner-tick.service \
         thunderstorm-console-dashboard@tty1.service \
         comin.service
     do
         if systemctl cat "$u" >/dev/null 2>&1; then
-            local ns state
-            ns="$(systemctl show -p CPUUsageNSec --value "$u" 2>/dev/null || printf 0)"
-            state="$(systemctl is-active "$u" 2>/dev/null || printf '?')"
-            printf '  %-52s active=%-8s CPUUsageNSec=%s\n' "$u" "$state" "$ns"
+            printf '  %s  active=%s  CPUUsageNSec=%s\n' \
+                "$u" \
+                "$(systemctl is-active "$u" 2>/dev/null || printf '?')" \
+                "$(systemctl show -p CPUUsageNSec --value "$u" 2>/dev/null || printf 0)"
         fi
     done
     printf '\n'
-    printf 'Note: banner LOAD%% is loadavg/cores, not a single process.\n'
-    printf 'Short-lived children (jq/comin status) show in cgtop, often miss ps.\n'
 }
 
-# Description: Watch costly processes (Ctrl+C to stop).
+# Description: Stream process CPU via pidstat (no screen clear / flicker).
 # Arguments:
-# - --once | -1: print one sample and exit
-# - --interval N | -n N: refresh seconds (default 1)
-# - --lines N | -l N: process rows (default 15)
+# - --once | -1: one sample then exit
+# - --interval N | -n N: seconds between samples (default 1)
 tcast_cmd_top() {
-    local once=0 interval=1 lines=15
+    local once=0 interval=1
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --once|-1) once=1; shift ;;
@@ -51,18 +40,14 @@ tcast_cmd_top() {
                 interval="$2"
                 shift 2
                 ;;
-            --lines|-l)
-                lines="$2"
-                shift 2
-                ;;
             -h|--help)
                 cat <<'EOF'
-tcast top — live view of costly processes
+tcast top — stream process CPU with pidstat (no flicker)
 
 Usage:
-  tcast top              Refresh every 1s until Ctrl+C
-  tcast top --once       One sample
-  tcast top -n 2 -l 20   Every 2s, 20 process rows
+  tcast top              pidstat every 1s until Ctrl+C
+  tcast top --once       One pidstat sample
+  tcast top -n 2         Sample every 2s
 EOF
                 return 0
                 ;;
@@ -72,16 +57,18 @@ EOF
         esac
     done
 
+    if ! command -v pidstat >/dev/null 2>&1; then
+        tcast_die "pidstat not found (sysstat). Rebuild with tcast package wrapping sysstat."
+    fi
+
+    _tcast_top_preamble
+
     if [[ "$once" -eq 1 ]]; then
-        _tcast_top_sample "$lines"
+        # One interval then one report.
+        pidstat -u -h "$interval" 1
         return 0
     fi
 
-    trap 'printf "\n"; exit 0' INT
-    while true; do
-        printf '\033c'
-        _tcast_top_sample "$lines"
-        printf 'Refreshing every %ss — Ctrl+C to stop.\n' "$interval"
-        sleep "$interval"
-    done
+    printf 'pidstat -u every %ss — Ctrl+C to stop.\n\n' "$interval"
+    exec pidstat -u -h "$interval"
 }
