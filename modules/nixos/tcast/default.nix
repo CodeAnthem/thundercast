@@ -14,6 +14,7 @@
 let
   cfg = config.programs.tcast;
   tcastPkg = pkgs.callPackage ../../../TC-Tools/package.nix { };
+  rev = config.system.configurationRevision;
 in
 {
   options.programs.tcast = {
@@ -27,6 +28,11 @@ in
 
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [ tcastPkg ];
+    # Running-system flake rev for `tcast status` (set by leaf via system.configurationRevision).
+    # No comin dependency — any deployer that builds the flake can stamp this.
+    environment.etc."tcast/system-revision" = lib.mkIf (rev != null) {
+      text = "${rev}\n";
+    };
     environment.sessionVariables = lib.mkIf cfg.setGitSshCommand {
       GIT_SSH_COMMAND = "${tcastPkg}/bin/tcast-git-ssh";
       TCAST_GIT_SSH_MAP = "/var/lib/tcast/git.map";
