@@ -1,0 +1,17 @@
+---
+description: Maintain per-product .wip/OPEN.md so plans survive chat context
+globs:
+  - "nds/**"
+  - "tcast/**"
+  - "fleet/**"
+alwaysApply: false
+---
+
+# WIP open notes
+
+Each product may have `<product>/.wip/` (gitignored).
+
+- `README.md` — what the folder is for
+- `OPEN.md` — living open work, ops gates, rename candidates, recently done
+
+When finishing a non-trivial task or when the user states a plan that must not be lost: update that product’s `OPEN.md` (check off, add, or move items). Do not treat chat as the only store. Do not put secrets in `.wip/`. Do not delete `OPEN.md` unless the user asks.

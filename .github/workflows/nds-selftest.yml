@@ -1,0 +1,23 @@
+name: NDS selftest
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'nds/**'
+      - 'utilities/bashTestSuite/**'
+      - '.github/workflows/nds-selftest.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'nds/**'
+      - 'utilities/bashTestSuite/**'
+      - '.github/workflows/nds-selftest.yml'
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: NDS selftest
+        run: bash nds/dev/selftest.sh

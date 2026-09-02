@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# ==================================================================================================
+# NDS - Preset injection tests
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Date:          Created: 2026-07-06 | Modified: 2026-08-27
+# ==================================================================================================
+
+suite_presets() {
+    local tmpdir count
+
+    tmpdir=$(mktemp -d)
+    mkdir -p "${tmpdir}/.nds/presets"
+    cp "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/fixtures/nds-remote-preset.sh" "${tmpdir}/.nds/presets/custom.sh"
+
+    nds_preset_inject_from_flake "$tmpdir"
+    count=$NDS_PRESET_INJECT_COUNT
+    if [[ "$count" -eq 1 ]] && [[ "${PRESET_REGISTRY[custom]:-}" == "enabled" ]]; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ inject_from_flake: loads and enables custom preset"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ inject_from_flake: expected 1 preset enabled"
+    fi
+
+    if declare -f custom_defaults &>/dev/null && declare -f custom_configure &>/dev/null \
+        && [[ "${PRESET_HOOKS[custom__validate]:-}" == "custom_validate" ]]; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ inject_from_flake: hooks registered"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ inject_from_flake: missing custom_* hooks / PRESET_HOOKS"
+    fi
+
+    rm -rf "$tmpdir"
+
+    local saved_menu="${PRESET_META[disk__menu]:-}"
+    nds_cfg_preset_set_menu disk false
+    local menu_out enabled_out
+    menu_out="${ nds_cfg_preset_get_all_menu; }"
+    enabled_out="${ nds_cfg_preset_get_all_enabled; }"
+    if [[ "$menu_out" != *disk* ]] && [[ "$enabled_out" == *disk* ]] \
+        && ! nds_cfg_preset_is_menu disk; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ preset menu: hide keeps preset enabled"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ preset menu: hide dropped enable or still listed"
+    fi
+    if [[ -n "$saved_menu" ]]; then
+        nds_cfg_preset_set_menu disk "$saved_menu"
+    else
+        unset "PRESET_META[disk__menu]"
+    fi
+}

@@ -1,0 +1,25 @@
+name: tcast shellcheck
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'tcast/**'
+      - '.github/scripts/**'
+      - '.shellcheckrc'
+      - '.github/workflows/tcast-shellcheck.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'tcast/**'
+      - '.github/scripts/**'
+      - '.shellcheckrc'
+      - '.github/workflows/tcast-shellcheck.yml'
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: tcast shellcheck
+        run: bash tcast/dev/shellcheck.sh

@@ -1,0 +1,25 @@
+name: fleet shellcheck
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'fleet/nds-actions/**'
+      - '.github/scripts/**'
+      - '.shellcheckrc'
+      - '.github/workflows/fleet-shellcheck.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'fleet/nds-actions/**'
+      - '.github/scripts/**'
+      - '.shellcheckrc'
+      - '.github/workflows/fleet-shellcheck.yml'
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: fleet shellcheck
+        run: bash fleet/dev/shellcheck.sh

@@ -1,23 +1,15 @@
 ---
-description: Bump src/app/VERSION on every commit
-alwaysApply: true
+description: Bump the product VERSION file when shipping changes
+globs:
+  - "nds/**"
+  - "tcast/**"
+  - "fleet/**"
+alwaysApply: false
 ---
 
-# Version bump on commit
+# Version bump
 
-Every git commit that changes shipped code **must** bump `src/app/VERSION`.
+When a change ships for a versioned product or script, bump its `VERSION` (path in `.cursor/project.md`) in the same commit.
 
-## Rules
-
-- File: `src/app/VERSION` (single line, semver `MAJOR.MINOR.PATCH`)
-- Include the VERSION change in the same commit as the code change
-- Default increment: **PATCH** (`x.y.Z` → `x.y.Z+1`) for fixes and small changes
-- Use **MINOR** for user-visible features / new actions
-- Use **MAJOR** only for breaking CLI/API changes
-- Do not leave VERSION unchanged across consecutive commits on `main`
-
-## Checklist before `git commit`
-
-1. Read current `src/app/VERSION`
-2. Bump appropriately
-3. Stage `src/app/VERSION` with the other files
+Default PATCH. MINOR for user-visible features. MAJOR for breaking CLI/API.
+Do not invent a version scheme; follow the file already used by that product.

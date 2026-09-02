@@ -1,0 +1,13 @@
+---
+description: Bash 5.3+ capture — only for products that require 5.3
+globs:
+  - "nds/**/*.sh"
+  - "tcast/**/*.sh"
+alwaysApply: false
+---
+
+# Bash 5.3+
+
+Applies only to products listed as Bash 5.3+ in `.cursor/project.md`.
+
+Do not capture our functions with `$(fn)`. Use `${ command; }` so work stays in the current shell.

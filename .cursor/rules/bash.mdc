@@ -1,0 +1,13 @@
+---
+description: Portable Bash conventions (any supported Bash version)
+globs:
+  - "**/*.sh"
+alwaysApply: false
+---
+
+# Bash
+
+- Public names: verb first (`get` / `set` / `has` / `is`).
+- `local -n` only for arrays; pass the original array name into callees.
+- No one-line shortcut wrappers around existing functions.
+- Prefer clarity over cleverness; match the surrounding script’s Bash baseline.

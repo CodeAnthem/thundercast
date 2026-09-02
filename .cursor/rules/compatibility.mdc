@@ -1,0 +1,19 @@
+---
+description: Compatibility — replace vs keep; ask when maturity is unclear
+globs:
+  - "nds/**"
+  - "tcast/**"
+  - "fleet/**"
+alwaysApply: false
+---
+
+# Compatibility
+
+Read product maturity from `.cursor/project.md`.
+
+| Maturity | Default |
+|----------|---------|
+| `wip` | Replace in place. No dual-path, migrators, or forever aliases unless the user asks. |
+| `stable` / `public` | Prefer a clean break, but ask before dropping callers or shipped interfaces. |
+
+If maturity is missing or the change might break existing users, ask: clean cut, temporary workaround, or keep backwards compatibility.

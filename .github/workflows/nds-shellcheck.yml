@@ -1,0 +1,27 @@
+name: NDS shellcheck
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'nds/**'
+      - 'utilities/bashTestSuite/**'
+      - '.github/scripts/**'
+      - '.shellcheckrc'
+      - '.github/workflows/nds-shellcheck.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'nds/**'
+      - 'utilities/bashTestSuite/**'
+      - '.github/scripts/**'
+      - '.shellcheckrc'
+      - '.github/workflows/nds-shellcheck.yml'
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: NDS shellcheck
+        run: bash nds/dev/shellcheck.sh

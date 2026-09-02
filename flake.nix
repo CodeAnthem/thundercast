@@ -1,5 +1,5 @@
 {
-  description = "ThunderCast — NixOS installer (NDS), host CLI (tcast), and operator toolkit";
+  description = "ThunderCast — NDS installer, tcast host CLI, and fleet (toolkit + leaf)";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -12,7 +12,7 @@
     packages = forAllSystems (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        tcast = pkgs.callPackage ./TC-Tools/package.nix { };
+        tcast = pkgs.callPackage ./tcast/package.nix { };
       in
       {
         inherit tcast;
@@ -20,13 +20,13 @@
       }
     );
 
-    nixosModules.host = import ./modules/nixos/host;
-    nixosModules.tcast = import ./modules/nixos/tcast;
+    nixosModules.host = import ./fleet/modules/nixos/host;
+    nixosModules.tcast = import ./tcast/modules/tcast;
     nixosModules.toolkit = {
       imports = [
-        ./modules/nixos/toolkit/ops.nix
-        ./modules/nixos/toolkit/scripts.nix
-        ./modules/nixos/toolkit/tools.nix
+        ./fleet/modules/nixos/toolkit/ops.nix
+        ./fleet/modules/nixos/toolkit/scripts.nix
+        ./fleet/modules/nixos/toolkit/tools.nix
       ];
     };
 
