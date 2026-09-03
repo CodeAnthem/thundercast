@@ -34,7 +34,7 @@ Public names after install: **`tcast`**, **`tcast-git-ssh`**, **`toolkit`** / **
 
 **NDS is the guided NixOS installer for the live ISO** — pick a path, answer the menu, and it handles disk prep, hardware facts, staging, and `nixos-install` in order.
 
-Wizards (**Part B**) fill a settings session with the same validators as **apply**. Composers that git-push also write a portable **recipe**, then **Part A** (`nds_install_apply`) partitions and installs. Secret **values** never go in git or printed recipes — only `*_FILE` paths.
+Wizards (**Part B**) fill a settings session with the same validators as **apply**. Composers that git-push also write a portable **recipe**, then **Part A** (`nds/src/realize/`, `nds_realize_run`) partitions and installs. Secret **values** never go in git or printed recipes — only `*_FILE` paths.
 
 **NDS can:**
 

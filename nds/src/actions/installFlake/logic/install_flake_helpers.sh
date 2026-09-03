@@ -2,14 +2,13 @@
 # ==================================================================================================
 # NDS - Flake tools — prepare, scaffold, detect disko
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-01 | Modified: 2026-08-28
+# Date:          Created: 2026-07-01 | Modified: 2026-09-03
 # Description:   Flake prepare, disko detect, host-folder scaffold (no interactive picker)
 # ==================================================================================================
 
-# Description: Export NDS_FLAKE_* env vars from settings answers so the
-# install pipeline (nds_nixos_install_flake) can read them. Also mirrors the
-# chosen host into NETWORK_HOSTNAME. Pass a source ("remote"|"local") to override
-# FLAKE_SOURCE — remoteAction always uses "remote".
+# Description: Export NDS_FLAKE_* env vars for compose-side UI (confirm screens, scaffold)
+# and mirror FLAKE_HOST ↔ NETWORK_HOSTNAME. Realize reads settings directly, never these
+# env vars. Pass a source ("remote"|"local") to override FLAKE_SOURCE.
 # Arguments:
 # - source: <String|optional> "remote" | "local" (default: read FLAKE_SOURCE)
 nds_flake_prepare() {
@@ -55,25 +54,6 @@ nds_flake_prepare() {
 
     # Console copy lives on the Ready-to-install screen; keep a stamp in the log only.
     nds_install_log "Flake target: ${install_path}#${host} (source: ${source}, mode: ${NDS_INSTALL_MODE})"
-}
-
-# Description: Inspect the flake (local path or remote clone) and apply a disko
-# disk strategy if the flake declares one. Best-effort — silently skips when no
-# disko config is found or the source is unavailable.
-nds_flake_detect_disko() {
-    local host host_dir local_path repo_url probe_root
-    host=$(nds_cfg_get "FLAKE_HOST")
-    host_dir=$(nds_cfg_get "FLAKE_HOST_DIR")
-    host_dir="${host_dir:-hosts/x86_64-linux}"
-    local_path=$(nds_cfg_get "FLAKE_LOCAL_PATH")
-    repo_url=$(nds_cfg_get "FLAKE_REPO_URL")
-
-    if [[ -n "$local_path" ]]; then
-        [[ -d "$local_path" ]] && nds_preflight_apply_disko_strategy "$local_path" "$host" "$host_dir"
-    elif [[ -n "$repo_url" ]]; then
-        probe_root=$(nds_preflight_probe_flake "$repo_url") || return 0
-        nds_preflight_apply_disko_strategy "$probe_root" "$host" "$host_dir"
-    fi
 }
 
 # Description: Absolute path to the NDS install templates directory.

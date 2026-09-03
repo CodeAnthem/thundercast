@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Bundle contribution registry (hooks)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-05 | Modified: 2026-08-15
+# Date:          Created: 2026-08-05 | Modified: 2026-09-03
 # Description:   Features register files/dirs/text/hooks; create assembles from the registry
 # ==================================================================================================
 
@@ -85,7 +85,7 @@ nds_bundle_run_hooks() {
 # Registered as the default hook; features add more via nds_bundle_register_hook.
 nds_bundle_contrib_core() {
     local nds_log nixos_log
-    local item secret_files=()
+    local item
 
     if declare -f nds_sm_export &>/dev/null; then
         nds_bundle_register_text "nds-restore.recipe" "${ nds_sm_export; }"
@@ -114,9 +114,8 @@ nds_bundle_contrib_core() {
         nds_bundle_register_file "logs/nixosInstallation.log" "$nixos_log"
     fi
 
-    if declare -f nds_secrets_list_runtime &>/dev/null; then
-        mapfile -t secret_files < <(nds_secrets_list_runtime)
-        for item in "${secret_files[@]}"; do
+    if [[ -d "${NDS_RUNTIME_DIR:-}/secrets" ]]; then
+        for item in "${NDS_RUNTIME_DIR}/secrets"/*; do
             [[ -f "$item" ]] || continue
             nds_bundle_register_file "secrets/$(basename "$item")" "$item"
         done

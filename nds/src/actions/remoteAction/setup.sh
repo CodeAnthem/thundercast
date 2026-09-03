@@ -78,10 +78,10 @@ action_setup() {
     if declare -f remote_action_config &>/dev/null; then
         remote_action_config || exit 14
         nds_flake_prepare remote
-        nds_preflight_apply_disko_strategy "$NDS_FLAKE_PROBE_DIR" "${ nds_cfg_get FLAKE_HOST; }" "$host_dir"
+        nds_flake_apply_disko_strategy "$NDS_FLAKE_PROBE_DIR" "${ nds_cfg_get FLAKE_HOST; }" "$host_dir"
     fi
     nds_cfg_menu_or_skip || exit 12
-    nds_install_confirm || exit 13
+    nds_realize_confirm || exit 13
 
     NDS_REMOTE_ACTION_DID_INSTALL=0
     export NDS_REMOTE_ACTION_DID_INSTALL
@@ -95,7 +95,7 @@ action_setup() {
 
     if [[ "${NDS_REMOTE_ACTION_DID_INSTALL}" != "1" ]]; then
         nds_cfg_set INSTALL_KIND "flake"
-        nds_install_apply || exit $?
+        nds_realize_run || exit $?
     else
         export NDS_GIT_INSTALL_SUCCEEDED=true
         nds_git_access_cleanup_success

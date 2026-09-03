@@ -86,7 +86,7 @@ nds_flake_gate_logic_ensure_access() {
         if [[ -n "$probe" && -d "$probe" ]]; then
             _root_out="$probe"
         else
-            probe=${ nds_preflight_probe_flake "$repo_url"; } || return 1
+            probe=${ nds_flake_probe_clone "$repo_url"; } || return 1
             _root_out="$probe"
         fi
         return 0

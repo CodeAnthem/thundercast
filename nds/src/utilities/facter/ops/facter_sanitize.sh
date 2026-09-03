@@ -33,11 +33,3 @@ in scrub report
     mv -f "$tmp" "$dest"
     return 0
 }
-
-# Compatibility wrappers for shot callers still using install names.
-_nds_install_sanitize_facter_report() {
-    facter_sanitize "$1" || {
-        error "Failed to sanitize facter.json (null scrub) — see install log"
-        return 1
-    }
-}

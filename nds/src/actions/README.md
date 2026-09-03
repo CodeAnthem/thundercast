@@ -45,20 +45,21 @@ The file header must include `# Description:` (discovery reads the first 20 line
 5. Enable action preset bundle → seed defaults
 6. Configure → preview → confirm → `action_setup`
 
-## Where things live (post install drain)
+## Where things live (compose vs realize)
 
 | Concern | Location |
 |---------|----------|
 | Disk / LUKS / Disko (dumb API) | `utilities/disk/` |
 | nixos-install / store | `utilities/nixos/` |
 | classic `configuration.nix` builder | `utilities/nixcfg/` |
-| hardware-configuration.nix | `utilities/hwconfig/` |
+| hardware-configuration.nix / artifact name | `utilities/hwconfig/` |
 | facter write + sanitize | `utilities/facter/` |
 | sops age enroll | `utilities/sops/` |
 | deploy keys on target | `utilities/targetSeed/` |
-| Part A apply / confirm / verify | `actions/apply/logic/` |
-| Classic pipeline | `actions/classicInstall/logic/` |
-| Flake gate / pipeline / leaf | `actions/installFlake/logic/` |
+| **Part A realize engine** (plans, steps, preflight, verify, diag) | `realize/` (`nds_realize_run`) |
+| classicInstall / installFlake / apply **setup** | `actions/*/setup.sh` (thin composers → `nds_realize_run`) |
+| Flake gate / hosts / leaf / probe / scaffold helpers | `actions/installFlake/logic/` |
+| Open leaf with write access (shared by remoteAction, addFleetHost, toolkit) | `wizard/install/logic/install_leaf_open.sh` |
 | Remote catalog cast | `actions/remoteAction/logic/` |
 | Toolkit keys/seed | `fleet/nds-actions/toolkit/logic/` |
 | Prompts / confirms | `wizard/install/ui/` |
@@ -66,6 +67,14 @@ The file header must include `# Description:` (discovery reads the first 20 line
 
 ## Flake naming
 
-- `nds_flake_prepare`, `nds_flake_detect_disko`, … — `actions/installFlake/logic/install_flake_helpers.sh`
-- `nds_flake_install_prepare_and_verify`, `nds_flake_install_confirm` — `actions/installFlake/logic/install_flake_pipeline.sh`
-- `nds_install_confirm`, `nds_install_apply` — `actions/apply/logic/install_apply.sh` (confirm before compose when the composer git-pushes)
+- `nds_flake_prepare`, … — `actions/installFlake/logic/install_flake_helpers.sh`
+- `nds_flake_probe_clone`, `nds_flake_apply_disko_strategy`, `nds_flake_install_prepare_and_verify` — `actions/installFlake/logic/install_flake_probe.sh`
+- `nds_realize_confirm`, `nds_realize_run` — `realize/main.sh` (confirm before compose when the composer git-pushes)
+- `_nds_realize_plan_*` / `nixos_*` / `disk_*` — realize + utilities only; composers never call these
+
+## Layering rules (enforced by `app/tests/structure_TEST.sh`)
+
+- No `NDS_CTX_*` snapshot anywhere. Realize reads settings via `nds_cfg_get` once per step and
+  hands plain arguments to utilities.
+- Utilities (`utilities/*`) never call `nds_realize_*` or install prompts; they are dumb ops.
+- Composers (`actions/*/setup.sh`) validate + confirm, then call `nds_realize_run`. Nothing else installs.

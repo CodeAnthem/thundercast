@@ -134,11 +134,11 @@ action_setup() {
     fi
     nds_sm_menu || exit 12
     _nds_toolkit_refuse_remote || exit 11
-    nds_install_confirm || exit 13
+    nds_realize_confirm || exit 13
 
     nds_toolkit_compose || exit 15
     nds_cfg_set INSTALL_KIND "flake"
-    nds_install_apply || exit $?
+    nds_realize_run || exit $?
 
     nds_toolkit_install_keys_to_target /mnt || true
     nds_toolkit_ensure_cast_fetch_key /mnt || true

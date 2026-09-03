@@ -95,7 +95,7 @@ nds_flake_resolve_thundercast_src() {
 
     rm -rf "$dest"
     mkdir -p "$(dirname "$dest")"
-    if ! nds_git_clone "$url" "$dest" 1; then
+    if ! nds_git_env_pullTo "$url" "$dest" 1; then
         error "Cannot clone thundercast input (${url})"
         return 1
     fi

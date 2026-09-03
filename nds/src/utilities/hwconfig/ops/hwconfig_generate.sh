@@ -2,7 +2,7 @@
 # ==================================================================================================
 # hwconfig - generate hardware-configuration.nix (no prompts)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-02 | Modified: 2026-09-02
+# Date:          Created: 2026-09-02 | Modified: 2026-09-03
 # ==================================================================================================
 
 if ! declare -F error >/dev/null 2>&1; then
@@ -14,6 +14,28 @@ fi
 if ! declare -F log >/dev/null 2>&1; then
     log() { printf 'HWCONFIG: %s\n' "$1" >&2; }
 fi
+
+# Description: Hardware artifact basename for an install kind.
+# Arguments:
+# - kind: <String> classic | flake | other (classic → hardware-configuration.nix)
+# - gen:  <String|optional> facter | legacy (flake default facter)
+# Returns:
+# - <String> facter.json or hardware-configuration.nix (stdout)
+hwconfig_artifactName() {
+    local kind="${1:-}"
+    local gen="${2:-}"
+
+    if [[ "$kind" == "classic" ]]; then
+        printf '%s\n' "hardware-configuration.nix"
+        return 0
+    fi
+    gen="${gen:-facter}"
+    if [[ "$gen" == "facter" ]]; then
+        printf '%s\n' "facter.json"
+    else
+        printf '%s\n' "hardware-configuration.nix"
+    fi
+}
 
 # Description: Run nixos-generate-config --show-hardware-config into dest.
 # Arguments:
@@ -31,14 +53,5 @@ hwconfig_generate() {
         return 1
     fi
     [[ -s "$dest" ]] || { err "hardware-configuration.nix was not written to ${dest}"; return 1; }
-    return 0
-}
-
-# Compatibility name used by classic/flake shot callers.
-_nds_install_generate_legacy_hardware() {
-    local dest="$1"
-    log "Generating hardware configuration (legacy) -> ${dest}"
-    hwconfig_generate "$dest" /mnt || return 1
-    log "Generated hardware-configuration.nix at ${dest}"
     return 0
 }

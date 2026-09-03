@@ -53,8 +53,6 @@ nds_bundle_create() {
         return 0
     fi
 
-    declare -f _nds_install_gather_context &>/dev/null && _nds_install_gather_context
-
     user=${ nds_lib_getSshUser; }
     bundle_path=${ nds_bundle_path; }
     staging=$(mktemp -d "${TMPDIR:-/tmp}/nds-bundle-staging.XXXXXX") || return 1

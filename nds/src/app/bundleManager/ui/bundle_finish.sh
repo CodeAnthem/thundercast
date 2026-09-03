@@ -41,29 +41,31 @@ _nds_bundle_remote_copy_hint() {
 }
 
 _nds_bundle_usbkey_instructions() {
-    _nds_install_gather_context
-    [[ "$NDS_CTX_ENCRYPTION" == "true" ]] || return 0
-    [[ "$NDS_CTX_ENCRYPTION_KEY" == "true" ]] || return 0
+    local key_device key_file
+    [[ "$(nds_cfg_get ENCRYPTION)" == "true" ]] || return 0
+    [[ "$(nds_cfg_get ENCRYPTION_KEY)" == "true" ]] || return 0
+    key_device="$(nds_cfg_get ENCRYPTION_KEY_BOOT_DEVICE)"
+    key_file="$(nds_cfg_get ENCRYPTION_KEY_BOOT_FILE)"
 
     nds_ui_b ""
     nds_ui_h "Prepare your USB key (required to boot)"
     nds_ui_i "The LUKS key is in this zip at secrets/luks_key.bin."
 
-    if [[ -z "$NDS_CTX_KEY_BOOT_FILE" ]]; then
+    if [[ -z "$key_file" ]]; then
         nds_ui_i "Copy it to a USB stick as RAW bytes BEFORE rebooting:"
         nds_ui_i "  dd if=luks_key.bin of=<usb-device> bs=4096 count=1"
         nds_ui_i "Plug that USB in at every boot. Its device path must match:"
-        nds_ui_i "  ENCRYPTION_KEY_BOOT_DEVICE = ${NDS_CTX_KEY_BOOT_DEVICE}"
+        nds_ui_i "  ENCRYPTION_KEY_BOOT_DEVICE = ${key_device}"
     else
         nds_ui_i "Copy it to a file on a USB stick BEFORE rebooting:"
         nds_ui_i "  mount <usb-device> /mnt/usb"
-        nds_ui_i "  cp luks_key.bin /mnt/usb/${NDS_CTX_KEY_BOOT_FILE}"
+        nds_ui_i "  cp luks_key.bin /mnt/usb/${key_file}"
         nds_ui_i "  umount /mnt/usb"
         nds_ui_i "Plug that USB in at every boot. Its device path must match:"
-        nds_ui_i "  ENCRYPTION_KEY_BOOT_DEVICE = ${NDS_CTX_KEY_BOOT_DEVICE}"
+        nds_ui_i "  ENCRYPTION_KEY_BOOT_DEVICE = ${key_device}"
     fi
 
-    if [[ "$NDS_CTX_ENCRYPTION_PASSWORD" != "true" ]]; then
+    if [[ "$(nds_cfg_get ENCRYPTION_PASSWORD)" != "true" ]]; then
         nds_ui_b ""
         _nds_bundle_ui_colored 31 "WARNING: key-only mode (no password)."
         _nds_bundle_ui_colored 31 "If this USB is lost, stolen, or corrupted, the system CANNOT boot."
@@ -79,7 +81,6 @@ nds_bundle_finish() {
     nds_bundle_create || bundle_ok=0
 
     if [[ "$bundle_ok" -ne 0 && -n "${NDS_INSTALL_BUNDLE:-}" && -f "$NDS_INSTALL_BUNDLE" ]]; then
-        _nds_install_gather_context
         nds_ui_section_header "Backup bundle"
         nds_ui_indent_push
         nds_ui_h "Save the restore package for future use"
@@ -87,7 +88,7 @@ nds_bundle_finish() {
         nds_ui_b "It includes your NDS configuration, install logs, and unlock material (if encrypted)."
         nds_ui_b ""
 
-        if [[ "$NDS_CTX_ENCRYPTION" == "true" ]]; then
+        if [[ "$(nds_cfg_get ENCRYPTION)" == "true" ]]; then
             _nds_bundle_ui_colored 35 "Encryption was enabled — saving this zip is important."
             _nds_bundle_ui_colored 35 "Keep it somewhere safe and offline; it contains your unlock secrets."
             nds_ui_b ""

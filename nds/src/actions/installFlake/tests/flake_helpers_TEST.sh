@@ -39,8 +39,8 @@ suite_flake_helpers() {
         _fh_fail "normalize_eval_hosts missing"
     fi
 
-    if declare -f _nds_install_nix_flake_system_ref &>/dev/null; then
-        out=${ _nds_install_nix_flake_system_ref "control-01"; }
+    if declare -f nixos_flakeSystemRef &>/dev/null; then
+        out=${ nixos_flakeSystemRef "control-01"; }
         _fh_eq "system ref host attr" "$out" \
             'nixosConfigurations."control-01".config.system.build.toplevel'
     else

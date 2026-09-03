@@ -18,18 +18,18 @@ suite_nixos_store() {
         console "  ✗ nixos_store: $1"
     }
 
-    if ! declare -f _nds_install_nix_combined_nix_config &>/dev/null; then
+    if ! declare -f nixos_combinedNixConfig &>/dev/null; then
         _ns_fail "combined_nix_config missing"
         return 0
     fi
 
     local _restore_free _restore_ready
-    _restore_free=$(declare -f _nds_install_nix_store_free_mb)
-    _restore_ready=$(declare -f _nds_install_nix_ensure_store_ready)
+    _restore_free=$(declare -f nixos_storeFreeMb)
+    _restore_ready=$(declare -f nixos_ensureStoreReady)
 
     # Large live store → no chroot override (ISO store stays default).
-    _nds_install_nix_store_free_mb() { echo 8192; }
-    out=${ _nds_install_nix_combined_nix_config "$base"; }
+    nixos_storeFreeMb() { echo 8192; }
+    out=${ nixos_combinedNixConfig "$base"; }
     if [[ "$out" == "$base" ]]; then
         _ns_ok "no store line when live store is large"
     else
@@ -40,9 +40,9 @@ suite_nixos_store() {
     root=$(mktemp -d "${TMPDIR:-/tmp}/nds_nix_root.XXXXXX")
     NDS_NIX_TARGET_ROOT="$root"
     NDS_NIX_INSTALL_STORE_FORCE=1
-    _nds_install_nix_store_free_mb() { echo 100; }
-    _nds_install_nix_ensure_store_ready() { return 0; }
-    out=${ _nds_install_nix_combined_nix_config "$base"; }
+    nixos_storeFreeMb() { echo 100; }
+    nixos_ensureStoreReady() { return 0; }
+    out=${ nixos_combinedNixConfig "$base"; }
     if [[ "$out" == *$'\n'"store = ${root}"* ]] || [[ "$out" == *"store = ${root}"* ]]; then
         _ns_ok "chroot store line when target forced + low free"
     else

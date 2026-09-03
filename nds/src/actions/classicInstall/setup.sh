@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Classic install action
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-06-29 | Modified: 2026-08-20
+# Date:          Created: 2026-06-29 | Modified: 2026-09-03
 # Description:   Install NixOS with a generated /etc/nixos configuration (no flake needed)
 # ==================================================================================================
 
@@ -57,5 +57,5 @@ action_setup() {
     nds_sm_menu || exit 12
 
     nds_cfg_set INSTALL_KIND "classic"
-    nds_install_apply || exit $?
+    nds_realize_run || exit $?
 }

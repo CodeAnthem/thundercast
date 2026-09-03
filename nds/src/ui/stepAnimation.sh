@@ -196,8 +196,8 @@ nds_step_exec_to() {
         return 0
     fi
     nds_step_fail "$label"
-    if declare -f nds_install_diag_step_failure &>/dev/null; then
-        nds_install_diag_step_failure "$label"
+    if declare -f nds_realize_diag_step_failure &>/dev/null; then
+        nds_realize_diag_step_failure "$label"
     fi
     if declare -f nds_install_logs_fetch_hints &>/dev/null; then
         nds_install_logs_fetch_hints

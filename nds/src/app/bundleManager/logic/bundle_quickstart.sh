@@ -75,7 +75,7 @@ _nds_bundle_action_readme_url() {
     printf 'https://github.com/CodeAnthem/thundercast/blob/main/%s\n' "$path"
 }
 
-# Description: Write personalized quick-start markdown from NDS_CTX_* snapshot.
+# Description: Write personalized quick-start markdown from the settings session.
 # Mentions secrets/admin_password.txt only when NDS actually wrote that file.
 _nds_bundle_quickstart() {
     local dest="$1"
@@ -85,20 +85,20 @@ _nds_bundle_quickstart() {
     local staging_dir has_admin_pw=false has_git_keys=false has_toolkit_keys=false
     local nds_ver nixos_ver git_key
 
-    hostname="${NDS_CTX_HOSTNAME:-unknown}"
-    admin_user="${NDS_CTX_ADMIN_USER:-admin}"
-    ssh_port="${NDS_CTX_SSH_PORT:-22}"
-    ssh_pw_auth="${NDS_CTX_SSH_PW_AUTH:-true}"
-    admin_ssh_key="${NDS_CTX_ADMIN_SSH_KEY:-}"
-    encryption="${NDS_CTX_ENCRYPTION:-}"
-    use_password="${NDS_CTX_ENCRYPTION_PASSWORD:-}"
-    use_key="${NDS_CTX_ENCRYPTION_KEY:-}"
-    key_device="${NDS_CTX_KEY_BOOT_DEVICE:-}"
-    key_file="${NDS_CTX_KEY_BOOT_FILE:-}"
-    remote_unlock="${NDS_CTX_REMOTE_UNLOCK:-}"
-    remote_net="${NDS_CTX_REMOTE_NETWORK:-}"
-    remote_ip="${NDS_CTX_NETWORK_IP:-}"
-    remote_port="${NDS_CTX_REMOTE_PORT:-2222}"
+    hostname="$(nds_cfg_get NETWORK_HOSTNAME)";           hostname="${hostname:-unknown}"
+    admin_user="$(nds_cfg_get ACCESS_ADMIN_USER)";        admin_user="${admin_user:-admin}"
+    ssh_port="$(nds_cfg_get ACCESS_SSH_PORT)";            ssh_port="${ssh_port:-22}"
+    ssh_pw_auth="$(nds_cfg_get ACCESS_SSH_PASSWORD_AUTH)"; ssh_pw_auth="${ssh_pw_auth:-true}"
+    admin_ssh_key="$(nds_cfg_get ACCESS_ADMIN_SSH_KEY)"
+    encryption="$(nds_cfg_get ENCRYPTION)"
+    use_password="$(nds_cfg_get ENCRYPTION_PASSWORD)"
+    use_key="$(nds_cfg_get ENCRYPTION_KEY)"
+    key_device="$(nds_cfg_get ENCRYPTION_KEY_BOOT_DEVICE)"
+    key_file="$(nds_cfg_get ENCRYPTION_KEY_BOOT_FILE)"
+    remote_unlock="$(nds_cfg_get ENCRYPTION_REMOTE_UNLOCK)"
+    remote_net="$(nds_cfg_get ENCRYPTION_REMOTE_NETWORK)"
+    remote_ip="$(nds_cfg_get NETWORK_IP)"
+    remote_port="$(nds_cfg_get ENCRYPTION_REMOTE_PORT)";  remote_port="${remote_port:-2222}"
 
     staging_dir="$(dirname "$dest")"
     if [[ -f "${staging_dir}/secrets/admin_password.txt" ]] \

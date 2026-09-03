@@ -93,10 +93,10 @@ action_setup() {
         nds_sm_validate || exit 11
     fi
     nds_sm_menu || exit 12
-    nds_install_confirm || exit 13
+    nds_realize_confirm || exit 13
 
     nds_addFleetHost_compose || exit 15
     nds_cfg_set INSTALL_KIND "flake"
-    nds_install_apply || exit $?
+    nds_realize_run || exit $?
     nds_install_flake_run_hooks "${NDS_FLAKE_PROBE_DIR:-.}" post_install || exit 15
 }

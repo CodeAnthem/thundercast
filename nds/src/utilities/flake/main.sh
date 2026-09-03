@@ -23,6 +23,10 @@ if ! declare -F err >/dev/null 2>&1; then
     }
 fi
 
+if ! declare -F nds_install_log >/dev/null 2>&1; then
+    nds_install_log() { printf 'FLAKE: %s\n' "$1" >&2; }
+fi
+
 _FLAKE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Description: Source every *.sh in a directory.
@@ -41,6 +45,8 @@ _flake_source_dir() {
 _flake_source_dir "${_FLAKE_DIR}/helpers"
 # shellcheck disable=SC1091
 source "${_FLAKE_DIR}/flake_list.sh"
+# shellcheck disable=SC1091
+source "${_FLAKE_DIR}/flake_host.sh"
 
 # Description: No-op load (discovery is pure).
 # Returns:

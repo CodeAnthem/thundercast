@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Structure / layout selfchecks (high-signal only)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-07 | Modified: 2026-09-02
+# Date:          Created: 2026-08-07 | Modified: 2026-09-03
 # Description:   Post-drain layout + public API contracts — no migration archaeology
 # ==================================================================================================
 
@@ -24,8 +24,11 @@ suite_structure() {
         "${SCRIPT_DIR}/wizard/git/lib/git_warm.sh" \
         "${SCRIPT_DIR}/wizard/git/access/logic" \
         "${SCRIPT_DIR}/wizard/install/ui" \
-        "${SCRIPT_DIR}/actions/apply/logic" \
-        "${SCRIPT_DIR}/actions/classicInstall/logic" \
+        "${SCRIPT_DIR}/realize/main.sh" \
+        "${SCRIPT_DIR}/realize/plan_classic.sh" \
+        "${SCRIPT_DIR}/realize/plan_flake.sh" \
+        "${SCRIPT_DIR}/wizard/install/logic/install_leaf_open.sh" \
+        "${SCRIPT_DIR}/actions/classicInstall/setup.sh" \
         "${SCRIPT_DIR}/actions/installFlake/logic" \
         "${SCRIPT_DIR}/actions/remoteAction/logic" \
         "${SCRIPT_DIR}/app/bundleManager/logic" \
@@ -39,9 +42,10 @@ suite_structure() {
             console "  ✗ missing: ${f#"$SCRIPT_DIR"/}"
         fi
     done
-    if [[ -d "${SCRIPT_DIR}/install" || -d "${SCRIPT_DIR}/tools" || -d "${SCRIPT_DIR}/app/ensure" ]]; then
+    if [[ -d "${SCRIPT_DIR}/install" || -d "${SCRIPT_DIR}/tools" || -d "${SCRIPT_DIR}/app/ensure" \
+        || -d "${SCRIPT_DIR}/actions/apply/logic" || -d "${SCRIPT_DIR}/actions/classicInstall/logic" ]]; then
         missing=1
-        console "  ✗ leftover install/, tools/, or app/ensure/"
+        console "  ✗ leftover install/, tools/, app/ensure/, or action-local realize logic"
     fi
     if [[ "$missing" -eq 0 ]]; then
         TEST_PASSED=$((TEST_PASSED + 1))
@@ -80,7 +84,7 @@ suite_structure() {
     if declare -f git_gh_ensure &>/dev/null \
         && declare -f nds_bundle_create &>/dev/null \
         && declare -f nds_import_tree &>/dev/null \
-        && declare -f nds_install_apply &>/dev/null \
+        && declare -f nds_realize_run &>/dev/null \
         && declare -f disk_prepare &>/dev/null \
         && declare -f nds_lib_getHostIP &>/dev/null; then
         TEST_PASSED=$((TEST_PASSED + 1))
@@ -114,5 +118,25 @@ suite_structure() {
     else
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ (skip UI-in-logic grep — rg not installed)"
+    fi
+
+    # Layering: nobody reads a NDS_CTX_* snapshot anymore; utilities never call realize or
+    # install prompts — they receive arguments.
+    if command -v rg &>/dev/null; then
+        local ctx_hits util_hits
+        ctx_hits=$(rg -n 'NDS_CTX_|nds_install_ctx_' "${SCRIPT_DIR}" "${fleet_actions}" \
+            --glob '*.sh' --glob '!**/tests/**' 2>/dev/null || true)
+        util_hits=$(rg -n 'nds_realize_|_nds_realize_|nds_install_ui_' "${SCRIPT_DIR}/utilities" \
+            --glob '*.sh' --glob '!**/tests/**' 2>/dev/null || true)
+        if [[ -z "$ctx_hits" && -z "$util_hits" ]]; then
+            TEST_PASSED=$((TEST_PASSED + 1))
+            console "  ✓ no NDS_CTX_* snapshot; no utility → realize/prompt callbacks"
+        else
+            TEST_FAILED=$((TEST_FAILED + 1))
+            console "  ✗ layering violations:"
+            while IFS= read -r line; do
+                [[ -n "$line" ]] && console "      $line"
+            done <<< "${ctx_hits}"$'\n'"${util_hits}"
+        fi
     fi
 }

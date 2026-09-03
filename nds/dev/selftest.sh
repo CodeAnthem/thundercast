@@ -65,7 +65,8 @@ run_named_suite "mode" suite_mode
 run_named_suite "bundle" suite_bundle
 run_named_suite "inputs" suite_inputs
 run_named_suite "classicConfig" suite_classic_config
-run_named_suite "classic_hardware" suite_classic_hardware
+run_named_suite "realize" suite_realize
+run_named_suite "hwconfig" suite_hwconfig
 run_named_suite "nixos_store" suite_nixos_store
 run_named_suite "flake_helpers" suite_flake_helpers
 run_named_suite "cast_catalog" suite_cast_catalog

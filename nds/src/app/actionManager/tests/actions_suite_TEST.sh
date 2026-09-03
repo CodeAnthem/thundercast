@@ -168,7 +168,7 @@ suite_actions() {
         && grep -q 'nds_install_open_leaf' \
             "${SCRIPT_DIR}/actions/remoteAction/setup.sh" \
         && grep -q 'nds_install_flake_probe_leaf_write' \
-            "${SCRIPT_DIR}/actions/apply/logic/install_apply.sh" \
+            "${SCRIPT_DIR}/wizard/install/logic/install_leaf_open.sh" \
         && ! grep -q 'nds_cfg_prompt_errors' \
             "${SCRIPT_DIR}/actions/remoteAction/setup.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
@@ -180,23 +180,23 @@ suite_actions() {
 
     if awk '
             /^action_setup\(\)/ { s=1 }
-            s && /nds_install_confirm/ { conf=1 }
+            s && /nds_realize_confirm/ { conf=1 }
             s && /nds_addFleetHost_compose \|\|/ { if (!conf) exit 1 }
             END { exit (s && conf) ? 0 : 1 }
         ' "${SCRIPT_DIR}/../../fleet/nds-actions/addFleetHost/setup.sh" \
         && awk '
             /^action_setup\(\)/ { s=1 }
-            s && /nds_install_confirm/ { conf=1 }
+            s && /nds_realize_confirm/ { conf=1 }
             s && /nds_toolkit_compose \|\|/ { if (!conf) exit 1 }
             END { exit (s && conf) ? 0 : 1 }
         ' "${SCRIPT_DIR}/../../fleet/nds-actions/toolkit/setup.sh" \
         && awk '
-            /nds_install_confirm/ { conf=1 }
+            /nds_realize_confirm/ { conf=1 }
             /remote_action_run \|\|/ { if (!conf) exit 1 }
             END { exit conf ? 0 : 1 }
         ' "${SCRIPT_DIR}/actions/remoteAction/setup.sh" \
         && grep -q 'NDS_INSTALL_CONFIRMED' \
-            "${SCRIPT_DIR}/actions/apply/logic/install_apply.sh"; then
+            "${SCRIPT_DIR}/realize/main.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ composers confirm disk wipe before git-push compose"
     else

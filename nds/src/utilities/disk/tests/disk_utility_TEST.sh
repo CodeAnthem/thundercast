@@ -127,5 +127,12 @@ suite_disk_utility() {
         rm -rf "$disko_work"
     fi
 
+    out=${ disk_efiLoaderPath grub; }
+    _disk_util_assert_eq "efi path grub" "$out" '\\EFI\\nixos\\grubx64.efi'
+    out=${ disk_efiLoaderPath systemd-boot; }
+    _disk_util_assert_eq "efi path systemd-boot" "$out" '\\EFI\\systemd\\systemd-bootx64.efi'
+    _disk_util_assert_false "bios_grub empty" disk_hasBiosGrub ""
+    _disk_util_assert_false "bios_grub missing" disk_hasBiosGrub "/dev/nds_disk_util_missing_$$"
+
     return 0
 }

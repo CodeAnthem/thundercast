@@ -32,7 +32,8 @@ suite_bundle() {
         dest=$(mktemp)
         ver="${SCRIPT_VERSION:-}"
         [[ -n "$ver" ]] || ver=$(<"${SCRIPT_DIR}/app/VERSION")
-        NDS_CTX_HOSTNAME=testhost _nds_bundle_quickstart "$dest"
+        nds_cfg_set NETWORK_HOSTNAME testhost
+        _nds_bundle_quickstart "$dest"
         if grep -q "\*\*NDS version:\*\* ${ver}" "$dest" \
             && grep -q '\*\*NixOS version:\*\* ' "$dest" \
             && grep -q 'nds-restore.recipe' "$dest" \
@@ -50,7 +51,7 @@ suite_bundle() {
         qs_stage=$(mktemp -d)
         mkdir -p "${qs_stage}/secrets/git"
         printf 'dummy-key\n' >"${qs_stage}/secrets/git/nds_deploy_test_repo"
-        NDS_CTX_HOSTNAME=testhost _nds_bundle_quickstart "${qs_stage}/QUICK_START.md"
+        _nds_bundle_quickstart "${qs_stage}/QUICK_START.md"
         if grep -q 'secrets/git' "${qs_stage}/QUICK_START.md" \
             && grep -q 'Recreate this install' "${qs_stage}/QUICK_START.md"; then
             TEST_PASSED=$((TEST_PASSED + 1))
@@ -66,7 +67,7 @@ suite_bundle() {
         qs_stage=$(mktemp -d)
         mkdir -p "${qs_stage}/secrets/toolkit"
         printf 'dummy-age\n' >"${qs_stage}/secrets/toolkit/operator_age.txt"
-        NDS_CTX_HOSTNAME=testhost _nds_bundle_quickstart "${qs_stage}/QUICK_START.md"
+        _nds_bundle_quickstart "${qs_stage}/QUICK_START.md"
         if grep -q 'secrets/toolkit' "${qs_stage}/QUICK_START.md" \
             && grep -q 'Operator keys (keep this zip)' "${qs_stage}/QUICK_START.md" \
             && grep -q 'CAST_TOOLKIT_BUNDLE' "${qs_stage}/QUICK_START.md" \
@@ -81,13 +82,15 @@ suite_bundle() {
         rm -f "$dest"
 
         dest=$(mktemp)
-        NDS_CTX_HOSTNAME=testhost \
-            NDS_CTX_ENCRYPTION=true \
-            NDS_CTX_ENCRYPTION_PASSWORD=true \
-            NDS_CTX_REMOTE_UNLOCK=true \
-            NDS_CTX_REMOTE_PORT=2222 \
-            NDS_CTX_REMOTE_NETWORK=dhcp \
-            _nds_bundle_quickstart "$dest"
+        nds_cfg_set ENCRYPTION true
+        nds_cfg_set ENCRYPTION_PASSWORD true
+        nds_cfg_set ENCRYPTION_REMOTE_UNLOCK true
+        nds_cfg_set ENCRYPTION_REMOTE_PORT 2222
+        nds_cfg_set ENCRYPTION_REMOTE_NETWORK dhcp
+        _nds_bundle_quickstart "$dest"
+        nds_cfg_set ENCRYPTION ""
+        nds_cfg_set ENCRYPTION_PASSWORD ""
+        nds_cfg_set ENCRYPTION_REMOTE_UNLOCK ""
         local ru_line fl_line
         ru_line=$(grep -n '^## Remote unlock' "$dest" | head -n1 | cut -d: -f1)
         fl_line=$(grep -n '^## First login' "$dest" | head -n1 | cut -d: -f1)

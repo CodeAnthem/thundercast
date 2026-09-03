@@ -4,6 +4,11 @@ First NixOS install without a flake. NDS generates `/etc/nixos/configuration.nix
 `hardware-configuration.nix` and runs `nixos-install`. You own nothing beforehand —
 NDS asks the menu and builds a complete, bootable system.
 
+**Architecture:** this action is compose-only (`setup.sh` → settings menu →
+`nds_realize_confirm` → `nds_realize_run`). Realize (partition, nixcfg, nixos-install,
+verify) is the engine under `nds/src/realize/` (`plan_classic.sh`); the actual work is done
+by `utilities/{disk,nixcfg,hwconfig,nixos}`.
+
 ## What you configure
 
 Timezone, locales, keyboard, **network**, **admin user**, bootloader, **disk**, and

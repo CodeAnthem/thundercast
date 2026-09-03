@@ -519,13 +519,13 @@ LOCK
         console "  ✗ wizard: write-access still keyed on env, remoteAction, or missing read_only"
     fi
     if grep -q 'nds_app_actionManager_logic_callFeature nds_git_access_run' \
-        "${SCRIPT_DIR}/actions/apply/logic/install_apply.sh" \
+        "${SCRIPT_DIR}/wizard/install/logic/install_leaf_open.sh" \
         && grep -q 'write \\' \
-        "${SCRIPT_DIR}/actions/apply/logic/install_apply.sh" \
+        "${SCRIPT_DIR}/wizard/install/logic/install_leaf_open.sh" \
         && grep -q 'This action git-pushes host files to the install flake.' \
-        "${SCRIPT_DIR}/actions/apply/logic/install_apply.sh" \
+        "${SCRIPT_DIR}/wizard/install/logic/install_leaf_open.sh" \
         && ! grep -q 'GIT_ACCESS_NEED' \
-        "${SCRIPT_DIR}/actions/apply/logic/install_apply.sh"; then
+        "${SCRIPT_DIR}/wizard/install/logic/install_leaf_open.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ install: open_leaf passes write + reason as git access args"
     else
@@ -536,9 +536,9 @@ LOCK
         /nds_install_flake_probe_leaf_write/ { if (!w) w=NR }
         /nds_git_ensure_flake_closure_access/ { c=NR }
         END { exit !(w && c && w < c) }
-    ' "${SCRIPT_DIR}/actions/apply/logic/install_apply.sh" \
+    ' "${SCRIPT_DIR}/wizard/install/logic/install_leaf_open.sh" \
         && grep -q 'nds_git_auth_wizard_step_repo' \
-            "${SCRIPT_DIR}/actions/apply/logic/install_apply.sh"; then
+            "${SCRIPT_DIR}/wizard/install/logic/install_leaf_open.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
         console "  ✓ install: leaf write is checked before related-repo wizard"
     else
@@ -865,7 +865,7 @@ LOCK
     mkdir -p "${tmpdir}/mnt"
     nds_git_keys_register "$NDS_GIT_SESSION_KEY_PATH" || true
     # Unit test: install keys without network RO probe (no flake checkout)
-    unset NDS_CTX_FLAKE_INSTALL_PATH NDS_FLAKE_INSTALL_PATH NDS_FLAKE_REPO_URL NDS_CTX_FLAKE_REPO_URL
+    unset NDS_FLAKE_INSTALL_PATH NDS_FLAKE_REPO_URL
     if nds_install_git_keys_to_target "${tmpdir}/mnt" "" \
         && [[ -f "${tmpdir}/mnt/root/.ssh/nds_deploy_org_repo" ]] \
         && [[ -x "${tmpdir}/mnt/var/lib/tcast/bin/tcast-git-ssh" ]] \

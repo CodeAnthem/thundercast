@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Install from flake action
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-06-28 | Modified: 2026-08-20
+# Date:          Created: 2026-06-28 | Modified: 2026-09-03
 # Description:   Install a NixOS host from an existing flake via nixos-install --flake
 # ==================================================================================================
 
@@ -60,6 +60,8 @@ action_setup() {
 
     nds_sm_menu || exit 12
 
+    # Compose: settings → env mirror, closure access, disko detection. Then hand over.
+    nds_flake_install_prepare_and_verify || exit 11
     nds_cfg_set INSTALL_KIND "flake"
-    nds_install_apply || exit $?
+    nds_realize_run || exit $?
 }

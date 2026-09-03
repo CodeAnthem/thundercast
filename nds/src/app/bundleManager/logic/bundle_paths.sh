@@ -18,8 +18,8 @@ nds_bundle_path() {
 # - <String> nds_install_backup_<stamp>_<hostname>.zip
 nds_bundle_local_name() {
     local hostname stamp
-    declare -f _nds_install_gather_context &>/dev/null && _nds_install_gather_context
-    hostname="${NDS_CTX_HOSTNAME:-nixos}"
+    hostname="$(nds_cfg_get NETWORK_HOSTNAME)"
+    hostname="${hostname:-nixos}"
     printf -v stamp '%(%Y%m%d_%H%M%S)T' -1
     printf 'nds_install_backup_%s_%s.zip' "$stamp" "$hostname"
 }

@@ -79,9 +79,9 @@ _nds_git_write_deploy_map_lines() {
         printf '%s\t/root/.ssh/%s\n' "$want" "$base"
     done < <(
         if [[ -n "$flake_root" && -d "$flake_root" ]]; then
-            _nds_git_flake_collect_git_remote_urls "$flake_root" "${NDS_CTX_FLAKE_REPO_URL:-${NDS_FLAKE_REPO_URL:-}}"
-        elif [[ -n "${NDS_CTX_FLAKE_REPO_URL:-${NDS_FLAKE_REPO_URL:-}}" ]]; then
-            _nds_git_url_toSsh "${NDS_CTX_FLAKE_REPO_URL:-$NDS_FLAKE_REPO_URL}"
+            _nds_git_flake_collect_git_remote_urls "$flake_root" "${NDS_FLAKE_REPO_URL:-}"
+        elif [[ -n "${NDS_FLAKE_REPO_URL:-}" ]]; then
+            _nds_git_url_toSsh "${NDS_FLAKE_REPO_URL:-}"
         fi
     )
 
@@ -218,7 +218,7 @@ nds_git_verify_target_ro_access() {
             nds_install_log "git: target probe OK ${ssh_url}"
         fi
         rc=0
-    done < <(_nds_git_flake_collect_git_remote_urls "$flake_root" "${NDS_CTX_FLAKE_REPO_URL:-${NDS_FLAKE_REPO_URL:-}}")
+    done < <(_nds_git_flake_collect_git_remote_urls "$flake_root" "${NDS_FLAKE_REPO_URL:-}")
 
     [[ "$fail" -eq 0 ]] || return 1
     [[ "$probed" -gt 0 ]] && nds_install_log "git: target RO probes OK (${probed} private)"
@@ -233,7 +233,7 @@ nds_git_verify_target_ro_access() {
 # - <Bool> 0 on success; 1 when private inputs need keys but none installed
 nds_install_git_keys_to_target() {
     local mount_root="${1:-/mnt}"
-    local flake_root="${2:-${NDS_CTX_FLAKE_INSTALL_PATH:-${NDS_FLAKE_INSTALL_PATH:-}}}"
+    local flake_root="${2:-${NDS_FLAKE_INSTALL_PATH:-}}"
     local -a keys=()
     local key_path base dest_rel dest installed=0
     local need_private=false url
@@ -256,7 +256,7 @@ nds_install_git_keys_to_target() {
                 need_private=true
                 break
             fi
-        done < <(_nds_git_flake_collect_git_remote_urls "$flake_root" "${NDS_CTX_FLAKE_REPO_URL:-${NDS_FLAKE_REPO_URL:-}}")
+        done < <(_nds_git_flake_collect_git_remote_urls "$flake_root" "${NDS_FLAKE_REPO_URL:-}")
     else
         # No flake root yet — if deploy keys exist in session, still install them.
         need_private=true

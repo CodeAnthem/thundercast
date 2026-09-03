@@ -30,7 +30,7 @@ nds_git_nix_prefetch_git_input() {
     probe_url="${ _nds_git_url_toSsh "$url"; }"
     nds_git_env_syncKeyFromNds "$probe_url" 2>/dev/null || true
     while IFS= read -r line; do envv+=("$line"); done < <(_nds_git_ssh_env_for_url "$probe_url")
-    mapfile -t store_args < <(_nds_install_nix_install_store_args 2>/dev/null || true)
+    mapfile -t store_args < <(nixos_installStoreArgs 2>/dev/null || true)
 
     expr="builtins.fetchTree { type = \"git\"; url = \"${fetch_url}\"; rev = \"${rev}\"; narHash = \"${narHash}\"; }"
 

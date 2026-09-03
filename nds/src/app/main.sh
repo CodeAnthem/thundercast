@@ -2,7 +2,7 @@
 # ==================================================================================================
 # DPS Project - Bootstrap NixOS - App entry point
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-12 | Modified: 2026-09-02
+# Date:          Created: 2025-10-12 | Modified: 2026-09-03
 # ==================================================================================================
 # shellcheck disable=SC2162
 set -euo pipefail
@@ -104,11 +104,14 @@ nds_app_loadFeatures() {
     nds_import_tree "${SCRIPT_DIR}/wizard/git" || return 1
     nds_import_tree "${SCRIPT_DIR}/wizard/install" || return 1
     nds_import_tree "${SCRIPT_DIR}/app/bundleManager" || return 1
-    # Action-local shot callers / pipelines (logic only — never action setup.sh).
-    nds_import_tree "${SCRIPT_DIR}/actions/apply/logic" || return 1
-    nds_import_tree "${SCRIPT_DIR}/actions/classicInstall/logic" || return 1
-    nds_import_tree "${SCRIPT_DIR}/actions/installFlake/logic" || return 1
-    nds_import_tree "${SCRIPT_DIR}/actions/remoteAction/logic" || return 1
+    # Realize engine (Part A): the only code that partitions / installs. Actions compose, then call it.
+    nds_import_tree "${SCRIPT_DIR}/realize" || return 1
+    if [[ -d "${SCRIPT_DIR}/actions/installFlake/logic" ]]; then
+        nds_import_tree "${SCRIPT_DIR}/actions/installFlake/logic" || return 1
+    fi
+    if [[ -d "${SCRIPT_DIR}/actions/remoteAction/logic" ]]; then
+        nds_import_tree "${SCRIPT_DIR}/actions/remoteAction/logic" || return 1
+    fi
     fleet_actions="$(cd "${SCRIPT_DIR}/../.." && pwd)/fleet/nds-actions"
     if [[ -d "${fleet_actions}/toolkit/logic" ]]; then
         nds_import_tree "${fleet_actions}/toolkit/logic" || return 1

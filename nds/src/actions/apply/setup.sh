@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ==================================================================================================
-# NDS - Apply recipe action (Part A only)
+# NDS - Apply recipe action (no wizard: recipe → realize)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-20 | Modified: 2026-08-28
+# Date:          Created: 2026-08-20 | Modified: 2026-09-03
 # Description:   Install NixOS from a complete recipe file (no composer wizard)
 # ==================================================================================================
 
@@ -25,27 +25,30 @@ action_preview() {
 }
 
 action_setup() {
+    local kind
     nds_mode_resolve || true
 
     if [[ -n "${NDS_RECIPE_FILE:-}" ]]; then
         nds_sm_load_with_env "$NDS_RECIPE_FILE" || exit 11
     fi
 
-    if [[ "${ _nds_install_apply_kind; }" == "flake" ]]; then
+    kind="${ nds_realize_kind; }"
+    if [[ "$kind" == "flake" ]]; then
         if [[ "${PRESET_LOADED[installFlake]:-}" != "1" ]]; then
             nds_preset_load_file "${SCRIPT_DIR}/app/settingsManager/data/builtin/installFlake.sh" || exit 11
         fi
         nds_cfg_preset_enable installFlake
         nds_cfg_seed_new_presets
-        nds_cfg_set INSTALL_KIND "flake"
-    else
-        nds_cfg_set INSTALL_KIND "classic"
     fi
+    nds_cfg_set INSTALL_KIND "$kind"
 
     if ! nds_sm_validate; then
         error "Recipe is incomplete or invalid — fix it or run a composer (classicInstall / installFlake / addFleetHost / toolkit)"
         exit 11
     fi
 
-    nds_install_apply || exit $?
+    # Compose-side: flake git access must be proven before realize clones onto the target.
+    [[ "$kind" == "flake" ]] && { nds_flake_install_prepare_and_verify || exit 11; }
+
+    nds_realize_run || exit $?
 }

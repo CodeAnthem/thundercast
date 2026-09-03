@@ -44,7 +44,7 @@ nds_git_clone_flake_probe() {
     mkdir -p "$(dirname "$clone_dir")"
     rm -rf "$clone_dir"
 
-    err=$(nds_git_clone "$root_url" "$clone_dir" 1 2>&1) || rc=$?
+    err=$(nds_git_env_pullTo "$root_url" "$clone_dir" 1 2>&1) || rc=$?
     if [[ "$rc" -ne 0 ]]; then
         debug "flake probe clone failed: ${err}"
         rm -rf "$clone_dir"

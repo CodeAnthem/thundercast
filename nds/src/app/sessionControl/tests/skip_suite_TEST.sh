@@ -107,7 +107,7 @@ suite_skip() {
             nds_app_prepareAction || exit 1
             declare -f nds_git_owner_slug >/dev/null
             declare -f disk_part >/dev/null
-            declare -f nds_nixos_install >/dev/null
+            declare -f nds_realize_run >/dev/null
         ' 2>&1
     ); then
         TEST_PASSED=$((TEST_PASSED + 1))
