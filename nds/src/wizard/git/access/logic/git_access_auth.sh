@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Git SSH auth gate + exit cleanup
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-05 | Modified: 2026-08-31
+# Date:          Created: 2026-07-05 | Modified: 2026-09-04
 # Description:   Exit cleanup + flake-input closure access gate
 # ==================================================================================================
 
@@ -255,6 +255,11 @@ nds_git_ensure_flake_closure_access() {
 
             if _nds_git_env_verifyQuiet "$url" \
                 || _nds_git_closure_probe_one "$url" &>/dev/null; then
+                if declare -f nds_git_ssh_probe_url &>/dev/null \
+                    && ! nds_git_ssh_probe_url "$url"; then
+                    failed+=("$url")
+                    continue
+                fi
                 debug "Git access OK: $url"
                 _nds_git_record_url_access "$url"
                 nds_git_env_syncKeyFromNds "$url" 2>/dev/null || true

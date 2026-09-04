@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Prefetch flake git lock inputs into the Nix store
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-31
+# Date:          Created: 2026-07-07 | Modified: 2026-09-04
 # Description:   Fetch private git flake inputs with per-repo deploy keys (live ISO, no daemon SSH)
 # ==================================================================================================
 
@@ -15,10 +15,9 @@
 # - <Bool> 0 on success
 nds_git_nix_prefetch_git_input() {
     local url="$1" rev="$2" narHash="${3:-}"
-    local fetch_url probe_url expr
+    local fetch_url probe_url expr nix_config
     local -a envv=() store_args=()
-    local rc=0 log="${NDS_INSTALL_DETAIL_LOG:-/tmp/nds_install.log}"
-    local nix_config="experimental-features = nix-command flakes"
+    local log="${NDS_INSTALL_DETAIL_LOG:-/tmp/nds_install.log}"
 
     [[ -n "$url" && -n "$rev" ]] || return 1
     [[ -n "$narHash" ]] || {
@@ -31,6 +30,7 @@ nds_git_nix_prefetch_git_input() {
     nds_git_env_syncKeyFromNds "$probe_url" 2>/dev/null || true
     while IFS= read -r line; do envv+=("$line"); done < <(_nds_git_ssh_env_for_url "$probe_url")
     mapfile -t store_args < <(nixos_installStoreArgs 2>/dev/null || true)
+    nix_config="${ nixos_installNixConfig; }"
 
     expr="builtins.fetchTree { type = \"git\"; url = \"${fetch_url}\"; rev = \"${rev}\"; narHash = \"${narHash}\"; }"
 
@@ -39,11 +39,17 @@ nds_git_nix_prefetch_git_input() {
         printf 'url=%s rev=%s\n' "$fetch_url" "$rev"
     } >>"$log"
 
+    if ! nds_git_ssh_probe_url "$probe_url"; then
+        nds_install_log "git: prefetch blocked — SSH probe failed for ${probe_url}"
+        error "Cannot access ${probe_url} — configure a deploy key for this repository"
+        return 1
+    fi
+
     if ! env NIX_CONFIG="$nix_config" "${envv[@]}" \
         nix build "${store_args[@]}" --no-link --print-out-paths --impure --expr "$expr" >>"$log" 2>&1; then
-        rc=$?
         debug "nix prefetch failed for ${probe_url} (${rev})"
-        return "$rc"
+        error "Nix could not prefetch ${probe_url} (${rev:0:12})"
+        return 1
     fi
     nds_install_log "git: prefetched ${probe_url} (${rev:0:12})"
     return 0

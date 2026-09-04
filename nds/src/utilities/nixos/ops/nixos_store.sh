@@ -2,7 +2,7 @@
 # ==================================================================================================
 # nixos - Nix store helpers (live ISO vs install disk)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-09-03
+# Date:          Created: 2026-07-07 | Modified: 2026-09-04
 # Description:   Chroot store on mounted /mnt during install; activate profile and bootloader
 # ==================================================================================================
 
@@ -127,10 +127,13 @@ nixos_combinedNixConfig() {
 }
 
 # Description: NIX_CONFIG for nixos-install (never override its --store /mnt).
+# impure-envs: nix flake git fetches must see GIT_SSH_COMMAND from the installer env.
 # Returns:
 # - <String> NIX_CONFIG value (stdout)
 nixos_installNixConfig() {
-    printf '%s' "experimental-features = nix-command flakes"
+    printf '%s\n' \
+        "experimental-features = nix-command flakes" \
+        "impure-envs = GIT_SSH GIT_SSH_COMMAND GIT_TERMINAL_PROMPT"
 }
 
 # Description: Canonical /nix/store/… path for a store URI (nixos-anywhere style).
