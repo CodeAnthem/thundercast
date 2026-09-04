@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Git utility - generic provider access (dispatch: isPrivate, probe, deploy keys)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-29 | Modified: 2026-09-02
+# Date:          Created: 2026-08-29 | Modified: 2026-09-04
 # ==================================================================================================
 
 # Description: Anonymous ls-remote: success → public; failure → private (needs auth).
@@ -42,7 +42,11 @@ git_generic_probeWithKey() {
             fi
         fi
     else
-        err "ls-remote failed"
+        if declare -f nds_install_log &>/dev/null; then
+            nds_install_log "git: ls-remote failed ${safeUrl}"
+        elif declare -F debug &>/dev/null; then
+            debug "ls-remote failed ${safeUrl}"
+        fi
         return 1
     fi
     needWrite=${ git_store_get "$safeUrl" needWrite; }
@@ -58,7 +62,11 @@ git_generic_probeWithKey() {
         git_store_set "$safeUrl" accessVerified "true"
         return 0
     fi
-    err "write probe failed"
+    if declare -f nds_install_log &>/dev/null; then
+        nds_install_log "git: write probe failed ${safeUrl}"
+    elif declare -F debug &>/dev/null; then
+        debug "write probe failed ${safeUrl}"
+    fi
     return 1
 }
 

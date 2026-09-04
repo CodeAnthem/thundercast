@@ -466,17 +466,19 @@ LOCK
     fi
     if grep -q 'GIT_ACCESS_STRATEGY "deploy-this"' \
         "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_flow.sh" \
-        && grep -q 'nds_git_wizard_ask_closure_coverage' \
+        && ! grep -q 'nds_git_wizard_ask_closure_coverage' \
+            "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_flow.sh" \
+        && grep -q 'nds_git_wizard_import_each_url "${failed' \
             "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_flow.sh" \
         && ! grep -q 'nds_git_wizard_ask_access_strategy' \
             "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_flow.sh" \
         && ! grep -q 'Deploy key: read-only' \
             "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_flow.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ wizard: first repo is this-repo only; related coverage asked at closure"
+        console "  ✓ wizard: first repo is this-repo only; related repos use per-repo import"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ wizard: early SSH key strategy menu still present"
+        console "  ✗ wizard: early SSH key strategy menu or batch closure coverage still present"
     fi
     if grep -q 'nds_ui_section_header "Git access"' \
         "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_screens.sh" \
@@ -486,17 +488,17 @@ LOCK
         "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_screens.sh" \
         && grep -q 'nds_git_access_normalize_need' \
         "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_screens.sh" \
-        && grep -q 'Related private repositories still need SSH access' \
-        "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_screens.sh" \
+        && ! grep -q 'Related private repositories still need SSH access' \
+            "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_screens.sh" \
         && ! grep -q 'nds_ui_kv_row "Repository"' \
             "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_screens.sh" \
         && ! grep -q 'NDS already probes keys' \
             "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_screens.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ wizard: Git access intro names the repo once"
+        console "  ✓ wizard: Git access intro names the repo once (no batch closure screen)"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ wizard: missing Git access header or repo named twice"
+        console "  ✗ wizard: missing Git access header or batch closure screen still present"
     fi
     if grep -q 'nds_git_access_deploy_read_only' \
         "${SCRIPT_DIR}/wizard/git/keys/ui/git_keys_new.sh" \
@@ -619,6 +621,20 @@ LOCK
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ git import: probe fail still continues as success"
     fi
+    if grep -q 'nds_install_log "git: access not satisfied' \
+            "${SCRIPT_DIR}/utilities/git/store/git_store_error.sh" \
+        && ! grep -q 'err "access not satisfied' \
+            "${SCRIPT_DIR}/utilities/git/store/git_store_error.sh" \
+        && grep -q 'nds_install_log "git: ls-remote failed' \
+            "${SCRIPT_DIR}/utilities/git/providers/git_generic_access.sh" \
+        && ! grep -q 'err "ls-remote failed"' \
+            "${SCRIPT_DIR}/utilities/git/providers/git_generic_access.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ git probe: auth/ls-remote failures log only (no console FAIL)"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ git probe: failAccess or ls-remote still prints console FAIL"
+    fi
     if grep -q 'Try another key' \
         "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_flow.sh" \
         && grep -q 'nds_git_probe_access_with_key' \
@@ -664,8 +680,10 @@ LOCK
             "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_flow.sh" \
         && grep -q 'nds_ui_read_menu_digit digit' \
             "${SCRIPT_DIR}/app/settingsManager/ui/settings_ask.sh" \
-        && grep -A30 '^nds_ui_read_menu_digit()' \
-            "${SCRIPT_DIR}/ui/prompts.sh" | grep -q 'nds_ui_tty_read -rsn1' \
+        && grep -A35 '^nds_ui_read_menu_digit()' \
+            "${SCRIPT_DIR}/ui/prompts.sh" | grep -q 'nds_ui_tty_read -rsn1 -s' \
+        && grep -A35 '^nds_ui_read_menu_digit()' \
+            "${SCRIPT_DIR}/ui/prompts.sh" | grep -q 'Paste is not supported' \
         && ! grep -q 'digit=$(nds_ui_read_menu_digit' \
             "${SCRIPT_DIR}/app/settingsManager/ui/settings_ask.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))

@@ -2,9 +2,9 @@
 # ==================================================================================================
 # NDS - Git auth wizard flow (menu state machine)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-07 | Modified: 2026-08-28
+# Date:          Created: 2026-07-07 | Modified: 2026-09-04
 # Description:   Per-repo conversation: existing-key y/n, then paste/path or gh/generate.
-#                Related-repo coverage is asked only after flake inputs are known.
+#                Related flake inputs use the same per-repo flow (no batch coverage menu).
 # ==================================================================================================
 
 # Description: Ask whether the installed machine should keep private-git SSH access.
@@ -102,59 +102,6 @@ nds_git_wizard_ask_auth_method() {
         nds_feat_cfg_set GIT_AUTH_ROUTE generate
         nds_ui_b "Non-GitHub host — generate a key and register it on the forge."
         return 0
-    fi
-    rc=$?
-    [[ "$rc" -eq "${NDS_ACTION_BACK:-10}" ]] && return "$rc"
-    return 0
-}
-
-# Description: True when this session already used gh or a gh login is active.
-_nds_git_wizard_used_gh() {
-    local method route
-    method="${ nds_feat_cfg_get GIT_SSH_KEY_REGISTER_METHOD 2>/dev/null || true; }"
-    route="${ nds_feat_cfg_get GIT_AUTH_ROUTE 2>/dev/null || true; }"
-    [[ "$method" == "gh" || "$route" == "gh" ]] && return 0
-    declare -f git_gh_session_ready &>/dev/null && git_gh_session_ready 2>/dev/null && return 0
-    return 1
-}
-
-# Description: Ask how to cover related private repos once flake inputs are known.
-# Arguments:
-# - n: <Int> Number of same-owner repositories still missing access
-# Returns:
-# - Sets GIT_CLOSURE_COVERAGE; NDS_ACTION_BACK on back
-nds_git_wizard_ask_closure_coverage() {
-    local n="${1:-0}"
-    local rc default
-
-    if [[ "$n" -gt 1 ]]; then
-        nds_ui_b "How should NDS get access to these ${n} repositories?"
-    else
-        nds_ui_b "How should NDS get access?"
-    fi
-    nds_ui_b ""
-
-    if _nds_git_wizard_used_gh; then
-        default="gh"
-    else
-        default="generate"
-    fi
-    if [[ "${ nds_feat_cfg_get GIT_EXISTING_KEY 2>/dev/null || true; }" == "true" ]]; then
-        default="existing"
-    fi
-
-    if _nds_git_wizard_used_gh; then
-        nds_aa_ask_numbered_choice GIT_CLOSURE_COVERAGE \
-            "gh|generate|existing" \
-            "gh=Register deploy keys via gh|generate=Create a key per repo and add it yourself|existing=Path/folder of keys, or paste (one file per remaining repo)" \
-            "$default" \
-            true
-    else
-        nds_aa_ask_numbered_choice GIT_CLOSURE_COVERAGE \
-            "generate|existing" \
-            "generate=Create a key per repo and add it yourself|existing=Path/folder of keys, or paste (one file per remaining repo)" \
-            "$default" \
-            true
     fi
     rc=$?
     [[ "$rc" -eq "${NDS_ACTION_BACK:-10}" ]] && return "$rc"
@@ -292,13 +239,6 @@ nds_git_wizard_route_menu() {
     fi
 }
 
-# Description: Owner from a git URL (stdout).
-_nds_git_wizard_url_owner() {
-    local url="$1" parsed
-    parsed=${ _nds_git_url_parse "${ _nds_git_url_toSsh "$url"; }"; } || return 1
-    printf '%s\n' "$(cut -f2 <<<"$parsed")"
-}
-
 # Description: Store per-URL existing_key + key_mode after a successful auth choice.
 _nds_git_wizard_record_url_choice() {
     local url="$1" mode existing
@@ -351,15 +291,9 @@ nds_git_wizard_converse_url() {
     fi
 
     nds_feat_cfg_set GIT_IMPORT_KEY_PATH ""
-    if [[ "${_NDS_GIT_RELATED_IMPORT:-}" == "1" \
-        && "${ nds_feat_cfg_get GIT_CLOSURE_COVERAGE 2>/dev/null || true; }" == "existing" ]]; then
-        nds_feat_cfg_set GIT_EXISTING_KEY true
-        nds_feat_cfg_set GIT_KEY_SOURCE have
-    else
-        nds_git_wizard_ask_key_source
-        rc=$?
-        [[ "$rc" -eq "${NDS_ACTION_BACK:-10}" ]] && return "$rc"
-    fi
+    nds_git_wizard_ask_key_source
+    rc=$?
+    [[ "$rc" -eq "${NDS_ACTION_BACK:-10}" ]] && return "$rc"
 
     while true; do
         nds_git_wizard_ask_auth_method "$is_gh"
@@ -440,63 +374,13 @@ nds_git_wizard_route_menu_closure_account() {
     nds_git_wizard_import_each_url "$@"
 }
 
-# Description: Closure route — ask coverage now that related private repos are known.
+# Description: Closure route — one conversation per related private repo.
 nds_git_wizard_route_menu_closure() {
-    local -a failed=("$@") same_owner=() other=()
-    local owner root_owner url coverage rc
+    local -a failed=("$@")
 
     [[ ${#failed[@]} -gt 0 ]] || return 0
-
-    root_owner="${ _nds_git_wizard_url_owner "${failed[0]}"; }" || root_owner=""
-    for url in "${failed[@]}"; do
-        owner="${ _nds_git_wizard_url_owner "$url"; }" || owner=""
-        if [[ -n "$root_owner" && "$owner" == "$root_owner" ]]; then
-            same_owner+=("$url")
-        else
-            other+=("$url")
-        fi
-    done
-
-    if [[ ${#same_owner[@]} -gt 0 ]]; then
-        nds_git_wizard_ask_closure_coverage "${#same_owner[@]}"
-        rc=$?
-        [[ "$rc" -eq "${NDS_ACTION_BACK:-10}" ]] && return "$rc"
-        coverage="${ nds_feat_cfg_get GIT_CLOSURE_COVERAGE 2>/dev/null || true; }"
-        case "$coverage" in
-            gh)
-                nds_feat_cfg_set GIT_ACCESS_STRATEGY "deploy-all"
-                nds_feat_cfg_set GIT_SSH_KEY_REGISTER_METHOD gh
-                nds_feat_cfg_set GIT_SSH_KEY_TYPE deploy
-                nds_feat_cfg_set GIT_EXISTING_KEY false
-                nds_feat_cfg_set GIT_KEY_SOURCE new
-                nds_feat_cfg_set GIT_AUTH_ROUTE gh
-                nds_git_warm_gh || true
-                nds_git_wizard_register_deploy_for_urls "read" "${same_owner[@]}" || return 1
-                ;;
-            generate)
-                nds_feat_cfg_set GIT_ACCESS_STRATEGY "deploy-all"
-                nds_feat_cfg_set GIT_SSH_KEY_REGISTER_METHOD manual
-                nds_feat_cfg_set GIT_SSH_KEY_TYPE deploy
-                nds_feat_cfg_set GIT_EXISTING_KEY false
-                nds_feat_cfg_set GIT_KEY_SOURCE new
-                nds_feat_cfg_set GIT_AUTH_ROUTE generate
-                nds_git_wizard_register_deploy_for_urls "read" "${same_owner[@]}" || return 1
-                ;;
-            existing)
-                nds_feat_cfg_set GIT_ACCESS_STRATEGY "account-all"
-                nds_git_wizard_import_each_url "${same_owner[@]}" || return $?
-                ;;
-            *)
-                nds_git_wizard_import_each_url "${same_owner[@]}" || return $?
-                ;;
-        esac
-    fi
-
-    if [[ ${#other[@]} -gt 0 ]]; then
-        nds_feat_cfg_set GIT_CLOSURE_COVERAGE ""
-        nds_git_wizard_import_each_url "${other[@]}" || return $?
-    fi
-    return 0
+    nds_feat_cfg_set GIT_ACCESS_STRATEGY "deploy-this"
+    nds_git_wizard_import_each_url "${failed[@]}"
 }
 
 # Description: Bind a temporary AA from store when wizard runs outside a feature entry.
@@ -547,7 +431,6 @@ nds_git_auth_wizard_step_closure() {
     local strategy type rc=0
 
     _nds_git_wizard_ensure_aa
-    nds_git_wizard_screen_closure "${failed[@]}"
 
     strategy="${ nds_feat_cfg_get GIT_ACCESS_STRATEGY 2>/dev/null || true; }"
     type="${ nds_feat_cfg_get GIT_SSH_KEY_TYPE 2>/dev/null || true; }"

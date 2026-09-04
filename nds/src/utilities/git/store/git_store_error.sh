@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Git utility - store last-error + host reachability (internal)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-02 | Modified: 2026-09-02
+# Date:          Created: 2026-09-02 | Modified: 2026-09-04
 # ==================================================================================================
 
 declare -g GIT_STORE_LAST_ERROR=""
@@ -33,20 +33,25 @@ _git_host_isReachable() {
     return 1
 }
 
-# Description: Set GIT_STORE_LAST_ERROR from reachability and print err.
+# Description: Set GIT_STORE_LAST_ERROR from reachability; log only (probe noise).
 # Arguments:
 # - url: <String> Raw URL or safeUrl
 # Returns:
 # - <Bool> always 1
 _git_store_failAccess() {
-    local url="${1:-}" host=""
+    local url="${1:-}" host="" kind="auth"
     host=${ git_store_get "$url" host 2>/dev/null; } || host=""
     if [[ -n "$host" ]] && _git_host_isReachable "$host"; then
         _git_store_setLastError "auth"
-        err "access not satisfied (auth)"
+        kind="auth"
     else
         _git_store_setLastError "unreachable"
-        err "access not satisfied (unreachable)"
+        kind="unreachable"
+    fi
+    if declare -f nds_install_log &>/dev/null; then
+        nds_install_log "git: access not satisfied (${kind}) ${url}"
+    elif declare -F debug &>/dev/null; then
+        debug "access not satisfied (${kind}) ${url}"
     fi
     return 1
 }

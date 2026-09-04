@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - UI - User prompts and menu input
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-21 | Modified: 2026-08-28
+# Date:          Created: 2025-10-21 | Modified: 2026-09-04
 # Description:   Interactive yes/no/back and numbered-menu prompts
 # ==================================================================================================
 
@@ -124,7 +124,7 @@ nds_ui_numbered_prompt() {
     fi
 }
 
-# Description: Read one menu key (no Enter) and echo it, same as y/n Yes/No.
+# Description: Read one menu key (no Enter, input hidden). Echo only valid picks.
 # Do not call from command substitution — TTY read must stay in the current shell.
 # Empty Enter returns 1 so the caller can apply a default.
 # Arguments:
@@ -137,7 +137,7 @@ nds_ui_numbered_prompt() {
 nds_ui_read_menu_digit() {
     local -n _nds_ui_menu_digit=$1
     local prompt="$2" min="$3" max="$4" allow_back="${5:-false}" allow_x="${6:-false}"
-    local _nds_ui_menu_raw="" hint
+    local _nds_ui_menu_raw="" hint _chunk _paste=false
 
     nds_ui_init
     if [[ "$allow_back" == "true" && "$allow_x" == "true" ]]; then
@@ -150,11 +150,24 @@ nds_ui_read_menu_digit() {
         hint="Invalid selection. Choose ${min}-${max}."
     fi
     while true; do
-        if ! nds_ui_tty_read -rsn1 -p "$prompt" _nds_ui_menu_raw; then
+        _nds_ui_drain_tty
+        if ! nds_ui_tty_read -rsn1 -s -p "$prompt" _nds_ui_menu_raw; then
             return 1
         fi
         if [[ -z "$_nds_ui_menu_raw" || "$_nds_ui_menu_raw" == $'\n' || "$_nds_ui_menu_raw" == $'\r' ]]; then
             return 1
+        fi
+        _paste=false
+        {
+            while IFS= read -r -t 0 -n 256 _chunk; do
+                _paste=true
+            done
+        } </dev/tty 2>/dev/null || true
+        if [[ "$_paste" == true ]]; then
+            _nds_ui_drain_tty
+            printf '\n' >&2
+            nds_ui_b "Paste is not supported — type one digit."
+            continue
         fi
         if [[ "$allow_x" == "true" ]] && [[ "${_nds_ui_menu_raw,,}" == "x" ]]; then
             printf 'x\n' >&2
@@ -174,6 +187,7 @@ nds_ui_read_menu_digit() {
             return 0
         fi
         printf '\n' >&2
+        _nds_ui_drain_tty
         nds_ui_b "$hint"
     done
 }
