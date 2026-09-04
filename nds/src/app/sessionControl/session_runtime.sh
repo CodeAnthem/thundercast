@@ -2,15 +2,36 @@
 # ==================================================================================================
 # NDS - Session scratch directory
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-06-29 | Modified: 2026-08-16
+# Date:          Created: 2026-06-29 | Modified: 2026-09-04
 # Description:   Per-run RUNTIME_DIR; log path constants live in main.sh
 # ==================================================================================================
 
-# Setup runtime directory for config/secrets scratch space.
+# Description: Remove leftover /tmp/nds_* and legacy /tmp/git_util.* from prior runs.
+nds_runtime_purge_stale() {
+    local base="${TMPDIR:-/tmp}" d removed=0
+    shopt -s nullglob
+    for d in "${base}"/nds_* "${base}"/git_util.*; do
+        [[ -d "$d" ]] || continue
+        rm -rf "$d" 2>/dev/null && removed=$((removed + 1)) || true
+    done
+    shopt -u nullglob
+    if (( removed > 0 )); then
+        if declare -f info &>/dev/null; then
+            info "Removed ${removed} stale temp director(ies) under ${base}"
+        fi
+        if declare -f nds_install_log &>/dev/null \
+            && [[ -n "${NDS_INSTALL_LOG:-}" && -f "${NDS_INSTALL_LOG}" ]]; then
+            nds_install_log "runtime: purged ${removed} stale temp dir(s) under ${base}"
+        fi
+    fi
+    return 0
+}
+
+# Description: Setup runtime directory for config/secrets scratch space.
 # Truncates the session log so ISO reruns do not concatenate failed attempts.
-# Usage: nds_runtime_init
 nds_runtime_init() {
     local timestamp=""
+    nds_runtime_purge_stale
     printf -v timestamp '%(%Y%m%d_%H%M%S)T' -1
     [[ -n "$timestamp" ]] || return 1
 
@@ -20,6 +41,7 @@ nds_runtime_init() {
 
     export RUNTIME_DIR
     export NDS_RUNTIME_DIR="$RUNTIME_DIR"
+    export GIT_WORKDIR="${RUNTIME_DIR}/gitUtility"
     export NDS_INSTALL_DETAIL_LOG="${RUNTIME_DIR}/install.log"
     export NDS_NIXOS_INSTALL_LOG="${RUNTIME_DIR}/nixosInstallation.log"
     mkdir -p "$(dirname "${NDS_INSTALL_LOG:?session log path unset}")"

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Git utility - entry (define hooks only; sourcing does no work)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-29 | Modified: 2026-08-31
+# Date:          Created: 2026-08-29 | Modified: 2026-09-04
 # ==================================================================================================
 
 if (( BASH_VERSINFO[0] < 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] < 3) )); then
@@ -46,10 +46,17 @@ _git_source_dir "${_GIT_DIR}/store"
 _git_source_dir "${_GIT_DIR}/providers"
 
 # Description: Create workdir. No SM, no NDS.
+# Arguments:
+# - workdir: <String|optional> Override GIT_WORKDIR (else env, NDS runtime, or /tmp/git_util.$$)
 # Returns:
 # - <Bool> 0 after workdir exists
 git_onLoad() {
-    GIT_WORKDIR="${GIT_WORKDIR:-${TMPDIR:-/tmp}/git_util.$$}"
+    local workdir="${1:-${GIT_WORKDIR:-}}"
+    if [[ -z "$workdir" && -n "${NDS_RUNTIME_DIR:-}" ]]; then
+        workdir="${NDS_RUNTIME_DIR}/gitUtility"
+    fi
+    [[ -n "$workdir" ]] || workdir="${TMPDIR:-/tmp}/git_util.$$"
+    GIT_WORKDIR="$workdir"
     export GIT_WORKDIR
     mkdir -p "${GIT_WORKDIR}/git_repo" "${GIT_WORKDIR}/keys" || {
         err "failed to create GIT_WORKDIR"

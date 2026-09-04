@@ -644,6 +644,45 @@ LOCK
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ git/nix: clone still noisy or flake eval missing GIT_SSH"
     fi
+    if grep -q 'nds_runtime_purge_stale' "${SCRIPT_DIR}/app/sessionControl/session_runtime.sh" \
+        && grep -q 'GIT_WORKDIR="${RUNTIME_DIR}/gitUtility"' \
+            "${SCRIPT_DIR}/app/sessionControl/session_runtime.sh" \
+        && grep -q 'git_util\.\*' "${SCRIPT_DIR}/app/sessionControl/session_runtime.sh" \
+        && grep -q 'NDS_RUNTIME_DIR}/gitUtility' "${SCRIPT_DIR}/utilities/git/main.sh" \
+        && grep -q 'local workdir="${1:-${GIT_WORKDIR:-}}"' \
+            "${SCRIPT_DIR}/utilities/git/main.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ runtime: git utility under RUNTIME_DIR; stale /tmp purge on init"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ runtime: missing unified gitUtility workdir or stale temp purge"
+    fi
+    if declare -f nds_runtime_purge_stale &>/dev/null \
+        && declare -f git_onLoad &>/dev/null; then
+        local stale="${TMPDIR:-/tmp}/nds_selftest_stale_$$" rt=""
+        mkdir -p "$stale"
+        nds_runtime_purge_stale
+        if [[ ! -d "$stale" ]]; then
+            rt="${TMPDIR:-/tmp}/nds_selftest_rt_$$"
+            export NDS_RUNTIME_DIR="$rt"
+            mkdir -p "$NDS_RUNTIME_DIR"
+            unset GIT_WORKDIR
+            git_onLoad
+            if [[ "$GIT_WORKDIR" == "${NDS_RUNTIME_DIR}/gitUtility" \
+                && -d "${GIT_WORKDIR}/git_repo" ]]; then
+                TEST_PASSED=$((TEST_PASSED + 1))
+                console "  ✓ git_onLoad: defaults to NDS_RUNTIME_DIR/gitUtility"
+            else
+                TEST_FAILED=$((TEST_FAILED + 1))
+                console "  ✗ git_onLoad: expected ${NDS_RUNTIME_DIR}/gitUtility (got: ${GIT_WORKDIR:-unset})"
+            fi
+            rm -rf "$rt"
+        else
+            TEST_FAILED=$((TEST_FAILED + 1))
+            console "  ✗ nds_runtime_purge_stale: did not remove ${stale}"
+        fi
+        unset NDS_RUNTIME_DIR GIT_WORKDIR
+    fi
     if grep -q 'Try another key' \
         "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_flow.sh" \
         && grep -q 'nds_git_probe_access_with_key' \
