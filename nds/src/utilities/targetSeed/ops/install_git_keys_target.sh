@@ -267,13 +267,14 @@ nds_install_git_keys_to_target() {
     local -a deploy_keys=()
     for key_path in "${keys[@]}"; do
         [[ -f "$key_path" ]] || continue
-        [[ "$(basename "$key_path")" == nds_deploy_* ]] || continue
-        deploy_keys+=("$key_path")
+        case "$(basename "$key_path")" in
+            nds_deploy_*|nds_imported_*) deploy_keys+=("$key_path") ;;
+        esac
     done
 
     if [[ ${#deploy_keys[@]} -eq 0 ]]; then
         if [[ "$need_private" == "true" ]]; then
-            error "No deploy keys to install (need nds_deploy_* under ${NDS_GIT_DEPLOY_KEYS_DIR:-/root/.ssh})"
+            error "No deploy keys to install (need nds_deploy_* or nds_imported_* under ${NDS_GIT_DEPLOY_KEYS_DIR:-/root/.ssh})"
             return 1
         fi
         nds_install_log "git: no private flake inputs — skip deploy key install"

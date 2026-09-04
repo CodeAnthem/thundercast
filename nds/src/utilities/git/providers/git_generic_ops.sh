@@ -4,7 +4,7 @@
 # Dispatch ops: git_generic_pull, git_generic_push
 # Internal:     _git_generic_lsRemote, _clone, _fetch, _pushDir
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-29 | Modified: 2026-08-31
+# Date:          Created: 2026-08-29 | Modified: 2026-09-04
 # ==================================================================================================
 
 # Description: ls-remote with optional identity (no prompt).
@@ -27,13 +27,29 @@ _git_generic_lsRemote() {
 # Returns:
 # - <Bool> 0 on success
 _git_generic_clone() {
-    local safeUrl="$1" dest="$2" key_path="${3:-}" ssh_url
+    local safeUrl="$1" dest="$2" key_path="${3:-}" ssh_url log rc
     ssh_url=${ git_store_getUrlSsh "$safeUrl"; } || return 1
+    log="${NDS_INSTALL_DETAIL_LOG:-}"
+    [[ -n "$log" ]] || log="${NDS_INSTALL_LOG:-}"
     mkdir -p "$(dirname "$dest")"
-    _git_generic_withEnv "$key_path" clone --depth 1 "$ssh_url" "$dest" || {
-        err "clone failed: $ssh_url"
+    if [[ -n "$log" ]]; then
+        {
+            printf '\n=== git clone %s -> %s ===\n' "$ssh_url" "$dest"
+            _git_generic_withEnv "$key_path" clone --quiet --depth 1 "$ssh_url" "$dest"
+        } >>"$log" 2>&1
+        rc=$?
+    else
+        _git_generic_withEnv "$key_path" clone --quiet --depth 1 "$ssh_url" "$dest" >/dev/null 2>&1
+        rc=$?
+    fi
+    if [[ "$rc" -ne 0 ]]; then
+        if declare -f nds_install_log &>/dev/null; then
+            nds_install_log "git: clone failed ${ssh_url}"
+        elif declare -F debug &>/dev/null; then
+            debug "clone failed: ${ssh_url}"
+        fi
         return 1
-    }
+    fi
 }
 
 # Description: git fetch in an existing clone.
@@ -43,12 +59,28 @@ _git_generic_clone() {
 # Returns:
 # - <Bool> 0 on success
 _git_generic_fetch() {
-    local dest="$1" key_path="${2:-}"
+    local dest="$1" key_path="${2:-}" log rc
     [[ -d "$dest/.git" || -f "$dest/HEAD" ]] || {
-        err "not a git clone: $dest"
+        if declare -f nds_install_log &>/dev/null; then
+            nds_install_log "git: not a git clone: ${dest}"
+        elif declare -F debug &>/dev/null; then
+            debug "not a git clone: ${dest}"
+        fi
         return 1
     }
-    _git_generic_withEnv "$key_path" -C "$dest" fetch
+    log="${NDS_INSTALL_DETAIL_LOG:-}"
+    [[ -n "$log" ]] || log="${NDS_INSTALL_LOG:-}"
+    if [[ -n "$log" ]]; then
+        {
+            printf '\n=== git fetch %s ===\n' "$dest"
+            _git_generic_withEnv "$key_path" -C "$dest" fetch --quiet
+        } >>"$log" 2>&1
+        rc=$?
+    else
+        _git_generic_withEnv "$key_path" -C "$dest" fetch --quiet >/dev/null 2>&1
+        rc=$?
+    fi
+    return "$rc"
 }
 
 # Description: git push in a clone directory (optional --dry-run).

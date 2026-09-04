@@ -635,6 +635,15 @@ LOCK
         TEST_FAILED=$((TEST_FAILED + 1))
         console "  ✗ git probe: failAccess or ls-remote still prints console FAIL"
     fi
+    if grep -q 'clone --quiet' "${SCRIPT_DIR}/utilities/git/providers/git_generic_ops.sh" \
+        && grep -q '_nixos_gitInstallEnv' "${SCRIPT_DIR}/utilities/nixos/ops/nixos_flake.sh" \
+        && grep -q '"${git_env\[@\]}" nix eval' "${SCRIPT_DIR}/utilities/nixos/ops/nixos_flake.sh"; then
+        TEST_PASSED=$((TEST_PASSED + 1))
+        console "  ✓ git/nix: quiet clone + GIT_SSH on flake eval/build"
+    else
+        TEST_FAILED=$((TEST_FAILED + 1))
+        console "  ✗ git/nix: clone still noisy or flake eval missing GIT_SSH"
+    fi
     if grep -q 'Try another key' \
         "${SCRIPT_DIR}/wizard/git/wizard/ui/git_wizard_flow.sh" \
         && grep -q 'nds_git_probe_access_with_key' \
