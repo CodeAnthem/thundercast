@@ -648,17 +648,17 @@ LOCK
             "${SCRIPT_DIR}/utilities/nixos/ops/nixos_store.sh" \
         && grep -q 'nds_git_ssh_probe_url' \
             "${SCRIPT_DIR}/wizard/git/access/logic/git_access_prefetch.sh" \
-        && grep -q 'nds_git_ssh_probe_url' \
+        && ! grep -q 'nds_git_ssh_probe_url' \
             "${SCRIPT_DIR}/wizard/git/access/logic/git_access_auth.sh" \
         && grep -q 'Nix could not prefetch' \
             "${SCRIPT_DIR}/wizard/git/access/logic/git_access_prefetch.sh" \
         && ! grep -q 'return "\$rc"' \
             "${SCRIPT_DIR}/wizard/git/access/logic/git_access_prefetch.sh"; then
         TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ git prefetch: SSH probe + impure-envs; failure propagates"
+        console "  ✓ git prefetch: SSH probe at prefetch only; impure-envs; failure propagates"
     else
         TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ git prefetch: missing impure-envs or broken failure propagation"
+        console "  ✗ git prefetch: missing impure-envs, closure loop probe, or broken failure propagation"
     fi
     if grep -q 'nds_runtime_purge_stale' "${SCRIPT_DIR}/app/sessionControl/session_runtime.sh" \
         && grep -q 'GIT_WORKDIR="${RUNTIME_DIR}/gitUtility"' \
