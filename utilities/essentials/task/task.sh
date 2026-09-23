@@ -13,7 +13,7 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 _essentials_task_init() {
-    [[ "${__TASK_INITIALIZED:-false}" == true ]] && return 0
+    _essentials_init_isDone task && return 0
 
     declare -g __TASK_NAME=""
     declare -g __TASK_START=0
@@ -26,7 +26,7 @@ _essentials_task_init() {
         eventRegister trap.INT taskOnInt 10 || return 1
     fi
 
-    declare -g __TASK_INITIALIZED=true
+    _essentials_init_mark task
 }
 
 _taskTty() {

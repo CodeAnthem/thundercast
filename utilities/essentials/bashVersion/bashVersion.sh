@@ -17,9 +17,14 @@ bashVersion_check() {
 }
 
 _essentials_bashVersion_init() {
+    _essentials_init_isDone bashVersion && return 0
     local -n config="essentials_config"
     local major="${config[BASHVERSION_MAJOR]:-0}"
-    (( major == 0 )) && return 0
-    bashVersion_check "$major" "${config[BASHVERSION_MINOR]:-3}"
+    if (( major == 0 )); then
+        _essentials_init_mark bashVersion
+        return 0
+    fi
+    bashVersion_check "$major" "${config[BASHVERSION_MINOR]:-3}" || return 1
+    _essentials_init_mark bashVersion
 }
 _essentials_bashVersion_init || return 1

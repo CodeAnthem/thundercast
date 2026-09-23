@@ -124,7 +124,7 @@ Init in `chrome.sh`: config → layout → bars → hist → `eventRegister exit
 | `chrome_bars.sh` | Row model, row text per type, row/bar paint, `chrome_setHeader` / `chrome_setFooter` / `*Rows` |
 | `chrome_hist.sh` | Tee (`_chrome_tee`, runs in the fd-2 process substitution), partial mirror, markers/ack, history load/render, scroll/follow |
 
-Globals: `__CHROME_ON` `__CHROME_SUSPENDED` `__CHROME_TEMP*` `__CHROME_HEADER` `__CHROME_FOOTER` `__CHROME_*_ROWS` `__CHROME_*_SHOW` `__CHROME_*_BG/FG` `__CHROME_LINES` `__CHROME_COLS` `__CHROME_BODY_*` `__CHROME_LOG_ROW` `__CHROME_WINCH` `__CHROME_WINCH_PENDING` `__CHROME_MOUSE` `__CHROME_SCROLL` `__CHROME_TTY` `__CHROME_ERR` `__CHROME_OUT` `__CHROME_ACK` `__CHROME_HIST_PATH` `__CHROME_ACK_PATH` `__CHROME_VIEW` `__CHROME_VIEW_BASE` `__CHROME_FILTERED*` `__CHROME_MARK_*` `__CHROME_EXIT_PRIORITY` `__CHROME_INITIALIZED`. Tee-only: `__CHROME_TEE_*`. Sets tty's `__TTY_READ_TICK` / `__TTY_TICK_HOOK` while on.
+Globals: `__CHROME_ON` `__CHROME_SUSPENDED` `__CHROME_TEMP*` `__CHROME_HEADER` `__CHROME_FOOTER` `__CHROME_*_ROWS` `__CHROME_*_SHOW` `__CHROME_*_BG/FG` `__CHROME_LINES` `__CHROME_COLS` `__CHROME_BODY_*` `__CHROME_LOG_ROW` `__CHROME_WINCH` `__CHROME_WINCH_PENDING` `__CHROME_MOUSE` `__CHROME_SCROLL` `__CHROME_TTY` `__CHROME_ERR` `__CHROME_OUT` `__CHROME_ACK` `__CHROME_HIST_PATH` `__CHROME_ACK_PATH` `__CHROME_VIEW` `__CHROME_VIEW_BASE` `__CHROME_FILTERED*` `__CHROME_MARK_*` `__CHROME_EXIT_PRIORITY`. Tee-only: `__CHROME_TEE_*`. Sets tty's `__TTY_READ_TICK` / `__TTY_TICK_HOOK` while on.
 
 Intentional subshells: `${ { stty size; } … </dev/tty; }`, `${ { stty -g; } … }`, the tee process substitution.
 

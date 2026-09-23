@@ -39,7 +39,7 @@ dir=${ scriptInfo_get_dir; }
 
 ## Develop
 
-Init copies the three keys into `__ESSENTIALS_SCRIPTINFO` (`script_dir` / `script_name` / `script_version`) and sets `__SCRIPTINFO_INITIALIZED`. Reads use `${config[KEY]:-}` so `set -u` still hits the empty checks. Errors are `echo`, not `fatal`.
+Init copies the three keys into `__ESSENTIALS_SCRIPTINFO` (`script_dir` / `script_name` / `script_version`). Reads use `${config[KEY]:-}` so `set -u` still hits the empty checks. Errors are `echo`, not `fatal`.
 
 No subshells.
 

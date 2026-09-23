@@ -39,7 +39,7 @@ essentials_config[ROOTREEXEC_KEEP_ENV_PREFIX]=APP_
 
 Init namerefs `essentials_config`. On the sudo path it namerefs `originalArgs`, a local of `_essentials_loadModules`, so this init has to run inside that call. Uses `debug` / `info` / `fatal`. The loader sources this immediately after logger. `exec` replaces the process, so features below run only in the final process.
 
-Globals that must stay: `__ROOTREEXEC_INITIALIZED`. `_essentials_rootReexec_collectEnv` takes the destination array name as `$1`. Empty keep lists omit the `sudo VAR=value` args.
+Init marks `rootReexec` before the early returns. `_essentials_rootReexec_collectEnv` takes the destination array name as `$1`. Empty keep lists omit the `sudo VAR=value` args.
 
 No subshells. The prefix walk is `eval` in this shell.
 

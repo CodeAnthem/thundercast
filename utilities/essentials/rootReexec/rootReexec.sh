@@ -33,8 +33,8 @@ _essentials_rootReexec_collectEnv() {
 }
 
 _essentials_rootReexec_init() {
-    [[ "${__ROOTREEXEC_INITIALIZED:-false}" == true ]] && return 0
-    declare -g __ROOTREEXEC_INITIALIZED=true
+    _essentials_init_isDone rootReexec && return 0
+    _essentials_init_mark rootReexec
 
     local -n config="essentials_config"
     [[ $EUID -eq 0 ]] && return 0

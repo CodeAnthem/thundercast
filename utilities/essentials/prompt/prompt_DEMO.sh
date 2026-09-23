@@ -96,7 +96,7 @@ _demo_pick() {
     rc=0
     prompt --type select --options items -b "Choice" || rc=$?
     _demo_show "$rc"
-    ui_b "12 items: 1-9 jump the first nine. Item 10+ is arrows + Enter only."
+    ui_b "12 items: 1-9 moves among the first nine. Enter submits. Item 10+ is arrows + Enter."
     ui_b ""
     rc=0
     prompt --type select --options many -b "Long list" || rc=$?

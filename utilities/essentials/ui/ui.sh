@@ -13,7 +13,7 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 _essentials_ui_init() {
-    [[ "${__UI_INITIALIZED:-false}" == true ]] && return 0
+    _essentials_init_isDone ui && return 0
 
     local -n config="essentials_config"
     local banner_min="${config[UI_BANNER_MIN]:-56}"
@@ -47,7 +47,7 @@ _essentials_ui_init() {
         eventCreate ui.section.begin || return 1
     fi
 
-    declare -g __UI_INITIALIZED=true
+    _essentials_init_mark ui
 }
 
 _essentials_ui_init || return 1

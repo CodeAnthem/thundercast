@@ -13,7 +13,7 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 _essentials_tty_init() {
-    [[ "${__TTY_INITIALIZED:-false}" == true ]] && return 0
+    _essentials_init_isDone ttyHandler && return 0
 
     local -n config="essentials_config"
     local prio="${config[TTY_EXIT_PRIORITY]:-10}"
@@ -42,6 +42,6 @@ _essentials_tty_init() {
         eventRegister exit tty_restore "${__TTY_EXIT_PRIORITY}" || return 1
     fi
 
-    declare -g __TTY_INITIALIZED=true
+    _essentials_init_mark ttyHandler
 }
 _essentials_tty_init || return 1

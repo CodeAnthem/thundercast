@@ -54,7 +54,7 @@ One directory per process. A later process does not see this session’s `secret
 
 ## Develop
 
-Init runs after logger (`info` / `warn` / `fatal`). Tracks `__RUNTIME_DIR`, `__RUNTIME_SUBDIRS`, `__RUNTIME_MODE`, `__RUNTIME_INITIALIZED`.
+Init runs after logger (`info` / `warn` / `fatal`). Tracks `__RUNTIME_DIR`, `__RUNTIME_SUBDIRS`, `__RUNTIME_MODE`.
 
 No subshells. The nullglob save/restore is `${ shopt -p nullglob; }`.
 

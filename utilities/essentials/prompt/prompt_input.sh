@@ -321,7 +321,7 @@ _ui_promptDefaultFooter() {
             if [[ "${__PROMPT[plain]}" == true ]]; then
                 printf '%s' "Number + Enter to submit"
             else
-                printf '%s' "↑/↓ move   1-9 choose   Enter submit   Esc cancel"
+                printf '%s' "↑/↓ or 1-9 move   Enter submit   Esc cancel"
             fi
             ;;
         multi-select)

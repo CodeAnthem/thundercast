@@ -8,6 +8,20 @@
 # Block Script Execution
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
+# One store for feature init. A second source returns before repeating side effects.
+# -g: this file is sourced from a function. Do not re-declare; that would wipe marks.
+if ! declare -p __ESSENTIALS_INIT >/dev/null 2>&1; then
+    declare -gA __ESSENTIALS_INIT=()
+fi
+
+_essentials_init_isDone() {
+    [[ "${__ESSENTIALS_INIT[$1]:-}" == 1 ]]
+}
+
+_essentials_init_mark() {
+    __ESSENTIALS_INIT[$1]=1
+}
+
 _essentials_loadModules() {
     local -a originalArgs=("$@")
     local current_dir

@@ -32,7 +32,7 @@ Type defaults to `text` when a message is given. Remaining args are the message 
 |------|---------|
 | `--type` `-t` | `text` `multiline` `select` `multi-select` `confirm` `key` `pause` |
 | `--message` | Question text |
-| `--default` `-d` | Empty-Enter fallback. Confirm: `y`/`n`. Not valid with multi-select |
+| `--default` `-d` | Empty submit fallback. Confirm: `y`/`n`. Multiline: empty body closed by `--end`. Not valid with multi-select |
 | `--allow-empty` `-a` | Allow empty submit (text / multiline only) |
 | `--hide` `-H` `-s` | No echo (text / multiline) |
 | `--mask CHAR` | Echo CHAR per key (text only; not with `--hide`) |
@@ -51,10 +51,11 @@ Type defaults to `text` when a message is given. Remaining args are the message 
 | 0 | `submit` | Includes confirm No (`n`) and allowed empty |
 | 2 | `back` | Caller navigates |
 | 3 | `cancel` | Esc by default |
-| 1 | — | Error / EOF / no TTY |
+| 1 | — | Bad flags, no TTY session, or an internal prompt error |
+| 4 | — | Read failed (EOF). Prior multiline lines are discarded |
 | 130 | — | Ctrl+C via `taskOnInt` / `trap.INT`, not returned by `prompt` |
 
-Select: arrows move, `1-9` submits that option, Enter submits the cursor. Multi-select: Space/`1-9` toggle, Enter submits checked values as a newline-separated `UI_PROMPT_RESULT` (empty set is ok). Description lines print only when an option has one. `UI_MODE=plain` or `--plain` uses a numbered line. One-key types reject paste.
+Select: arrows or `1-9` move, Enter submits the cursor. Multi-select: Space/`1-9` toggle, Enter submits checked values as a newline-separated `UI_PROMPT_RESULT` (empty set is ok). Description lines print only when an option has one. `UI_MODE=plain` or `--plain` uses a numbered line; a select number plus Enter submits. One-key types reject paste.
 
 ### Examples
 

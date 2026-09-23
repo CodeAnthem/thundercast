@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Prompt
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-17 | Modified: 2026-09-21
+# Date:          Created: 2026-09-17 | Modified: 2026-09-23
 # ==================================================================================================
 #
 # One prompt command. Interaction only — caller validates and navigates.
@@ -13,7 +13,7 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 _essentials_prompt_init() {
-    [[ "${__PROMPT_INITIALIZED:-false}" == true ]] && return 0
+    _essentials_init_isDone prompt && return 0
 
     local -n config="essentials_config"
     declare -g __UI_NO_PAUSE="${config[UI_NO_PAUSE]:-false}"
@@ -32,7 +32,7 @@ _essentials_prompt_init() {
     # shellcheck source=./prompt_multi.sh
     loadModule "prompt/prompt_multi.sh"
 
-    declare -g __PROMPT_INITIALIZED=true
+    _essentials_init_mark prompt
 }
 
 _prompt_err() {
@@ -185,6 +185,12 @@ _ui_promptFail() {
     UI_PROMPT_ACTION=""
     UI_PROMPT_RESULT=""
     return 1
+}
+
+_ui_promptEof() {
+    UI_PROMPT_ACTION=""
+    UI_PROMPT_RESULT=""
+    return 4
 }
 
 _ui_promptCheckCombo() {

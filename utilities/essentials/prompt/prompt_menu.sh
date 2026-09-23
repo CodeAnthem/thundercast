@@ -115,8 +115,8 @@ _ui_promptMenuFancy() {
         token=""
         if ! _ui_promptGetKey token one; then
             _ui_promptSessionEnd
-            _ui_promptFail
-            return 1
+            _ui_promptEof
+            return 4
         fi
         if [[ "$token" == paste ]]; then
             _ui_promptRejectPaste
@@ -185,8 +185,7 @@ _ui_promptMenuFancy() {
                     if _ui_promptMenuIsMulti; then
                         _ui_promptMenuToggle "$idx"
                     else
-                        _ui_promptMenuFinish submit "${__UI_PROMPT_OPT_VALS[idx]}" "$rows"
-                        return $?
+                        __PROMPT[cursor]=$idx
                     fi
                 fi
                 ;;
@@ -204,8 +203,8 @@ _ui_promptMenuPlain() {
         line=""
         if ! tty_read -r line; then
             _ui_promptSessionEnd
-            _ui_promptFail
-            return 1
+            _ui_promptEof
+            return 4
         fi
         if [[ -z "$line" ]]; then
             if _ui_promptMenuIsMulti || [[ -n "${__PROMPT[default]}" ]]; then

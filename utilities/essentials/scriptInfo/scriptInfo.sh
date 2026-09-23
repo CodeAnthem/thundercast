@@ -12,7 +12,7 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 _essentials_scriptInfo_init() {
-    [[ "${__SCRIPTINFO_INITIALIZED:-false}" == true ]] && return 0
+    _essentials_init_isDone scriptInfo && return 0
 
     local -n config="essentials_config"
     declare -gA __ESSENTIALS_SCRIPTINFO=(
@@ -23,7 +23,7 @@ _essentials_scriptInfo_init() {
     [[ -n "${__ESSENTIALS_SCRIPTINFO[script_dir]}" ]] || { echo "[ERROR] - [ScriptInfo] - SCRIPTINFO_DIR is required" >&2; exit 1; }
     [[ -n "${__ESSENTIALS_SCRIPTINFO[script_name]}" ]] || { echo "[ERROR] - [ScriptInfo] - SCRIPTINFO_NAME is required" >&2; exit 1; }
     [[ -n "${__ESSENTIALS_SCRIPTINFO[script_version]}" ]] || { echo "[ERROR] - [ScriptInfo] - SCRIPTINFO_VERSION is required" >&2; exit 1; }
-    declare -g __SCRIPTINFO_INITIALIZED=true
+    _essentials_init_mark scriptInfo
 }
 _essentials_scriptInfo_init || return 1
 

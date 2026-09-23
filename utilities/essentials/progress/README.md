@@ -52,7 +52,7 @@ progress_end "Copy"
 
 Init in `progress.sh`: config → state → `eventRegister ui.line.take progress_yield`.
 
-Globals that must stay: `__PROGRESS_OPEN` `__PROGRESS_CUR` `__PROGRESS_MAX` `__PROGRESS_LABEL` `__PROGRESS_LAST` `__PROGRESS_WIDTH` `__PROGRESS_FILL` `__PROGRESS_EMPTY` `__PROGRESS_INITIALIZED`. Reads `__UI_INDENT_B`.
+Globals that must stay: `__PROGRESS_OPEN` `__PROGRESS_CUR` `__PROGRESS_MAX` `__PROGRESS_LABEL` `__PROGRESS_LAST` `__PROGRESS_WIDTH` `__PROGRESS_FILL` `__PROGRESS_EMPTY`. Reads `__UI_INDENT_B`.
 
 Do not:
 

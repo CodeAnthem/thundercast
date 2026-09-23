@@ -12,7 +12,7 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 _essentials_eventBus_init() {
-    [[ "${__EVENT_INITIALIZED:-false}" == true ]] && return 0
+    _essentials_init_isDone eventBus && return 0
 
     # shellcheck source=./eventBus_registry.sh
     loadModule "eventBus/eventBus_registry.sh"
@@ -20,6 +20,6 @@ _essentials_eventBus_init() {
     # shellcheck source=./eventBus_dispatch.sh
     loadModule "eventBus/eventBus_dispatch.sh"
 
-    declare -g __EVENT_INITIALIZED=true
+    _essentials_init_mark eventBus
 }
 _essentials_eventBus_init || return 1

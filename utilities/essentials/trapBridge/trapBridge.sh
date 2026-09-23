@@ -12,7 +12,7 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 _essentials_trapBridge_init() {
-    [[ "${__TRAP_INITIALIZED:-false}" == true ]] && return 0
+    _essentials_init_isDone trapBridge && return 0
 
     local -n config="essentials_config"
 
@@ -24,6 +24,6 @@ _essentials_trapBridge_init() {
         loadModule "trapBridge/trapBridge_presets.sh"
     fi
 
-    declare -g __TRAP_INITIALIZED=true
+    _essentials_init_mark trapBridge
 }
 _essentials_trapBridge_init || return 1

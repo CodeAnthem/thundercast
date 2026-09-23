@@ -14,7 +14,7 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 _essentials_chrome_init() {
-    [[ "${__CHROME_INITIALIZED:-false}" == true ]] && return 0
+    _essentials_init_isDone chrome && return 0
 
     local -n config="essentials_config"
     local prio="${config[CHROME_EXIT_PRIORITY]:-5}" key
@@ -87,7 +87,7 @@ _essentials_chrome_init() {
         eventRegister exit chrome_end "${__CHROME_EXIT_PRIORITY}" || return 1
     fi
 
-    declare -g __CHROME_INITIALIZED=true
+    _essentials_init_mark chrome
 }
 
 chrome_isOn() {

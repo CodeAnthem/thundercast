@@ -13,7 +13,7 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 _essentials_progress_init() {
-    [[ "${__PROGRESS_INITIALIZED:-false}" == true ]] && return 0
+    _essentials_init_isDone progress && return 0
 
     local -n config="essentials_config"
     declare -g __PROGRESS_FILL="${config[PROGRESS_FILL]:-#}"
@@ -38,7 +38,7 @@ _essentials_progress_init() {
         eventRegister ui.line.take progress_yield || return 1
     fi
 
-    declare -g __PROGRESS_INITIALIZED=true
+    _essentials_init_mark progress
 }
 
 _progressTty() {

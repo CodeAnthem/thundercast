@@ -8,7 +8,7 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 _essentials_logger_init() {
-    [[ "${__LOGGER_INITIALIZED:-false}" == true ]] && return 0
+    _essentials_init_isDone logger && return 0
 
     local -n config="essentials_config"
     declare -g LOG_COLOR="${config[LOG_COLOR]:-true}"
@@ -40,6 +40,6 @@ _essentials_logger_init() {
     _essentials_logger_compose_init "${config[LOG_COMPOSE_FILENAME]:-compose.log}" || return 1
     unset -f _essentials_logger_compose_init
 
-    declare -g __LOGGER_INITIALIZED=true
+    _essentials_init_mark logger
 }
 _essentials_logger_init || return 1

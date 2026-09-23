@@ -122,7 +122,7 @@ runtime_purgeAll() {
 }
 
 _essentials_sessionDir_init() {
-    [[ "${__RUNTIME_INITIALIZED:-false}" == true ]] && return 0
+    _essentials_init_isDone sessionDir && return 0
 
     local -n config="essentials_config"
     local base="${config[RUNTIME_BASE]:-${TMPDIR:-/tmp}}"
@@ -154,6 +154,6 @@ _essentials_sessionDir_init() {
         done
     fi
 
-    declare -g __RUNTIME_INITIALIZED=true
+    _essentials_init_mark sessionDir
 }
 _essentials_sessionDir_init || return 1

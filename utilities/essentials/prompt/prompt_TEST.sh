@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Prompt tests
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-17 | Modified: 2026-09-21
+# Date:          Created: 2026-09-17 | Modified: 2026-09-23
 # ==================================================================================================
 
 # shellcheck source=../testEnvironment/testEnvironment.sh
@@ -226,9 +226,12 @@ prompt --type select --options opts "Choice" || exit 1
     _prompt_isolated '
 __UI_MODE=auto
 declare -a opts=(one two three)
-_keys=(2)
+_keys=(2 "")
 _i=0
 tty_getc() {
+    if (( _i >= ${#_keys[@]} )); then
+        return 1
+    fi
     printf -v "$1" "%s" "${_keys[_i]}"
     _i=$((_i + 1))
     return 0
@@ -237,9 +240,33 @@ prompt --type select --options opts "Choice" || exit 1
 [[ "$UI_PROMPT_RESULT" == two && "$UI_PROMPT_ACTION" == submit ]]
 ' || rc=$?
     if [[ "$rc" -eq 0 ]]; then
-        bts_pass "fancy select number submits"
+        bts_pass "fancy select number moves and enter submits"
     else
         bts_fail "fancy number rc=$rc err=$(printf '%q' "${__PROMPT_ISOLATED_ERR}")"
+    fi
+
+    rc=0
+    _prompt_isolated '
+__UI_MODE=auto
+declare -a opts=(one two three)
+_keys=(2)
+_i=0
+tty_getc() {
+    if (( _i >= ${#_keys[@]} )); then
+        return 1
+    fi
+    printf -v "$1" "%s" "${_keys[_i]}"
+    _i=$((_i + 1))
+    return 0
+}
+rc=0
+prompt --type select --options opts "Choice" || rc=$?
+[[ "$rc" -eq 4 && -z "$UI_PROMPT_RESULT" && -z "$UI_PROMPT_ACTION" ]]
+' || rc=$?
+    if [[ "$rc" -eq 0 ]]; then
+        bts_pass "fancy select number does not submit"
+    else
+        bts_fail "fancy number hold rc=$rc err=$(printf '%q' "${__PROMPT_ISOLATED_ERR}")"
     fi
 
     rc=0
@@ -351,6 +378,57 @@ prompt --type text --default nixos "Hostname" || exit 1
         bts_pass "text empty uses default"
     else
         bts_fail "text default rc=$rc err=$(printf '%q' "${__PROMPT_ISOLATED_ERR}")"
+    fi
+
+    rc=0
+    _prompt_isolated '
+tty_getc() { return 1; }
+rc=0
+prompt --type text "Name" || rc=$?
+[[ "$rc" -eq 4 && -z "$UI_PROMPT_RESULT" && -z "$UI_PROMPT_ACTION" ]]
+' || rc=$?
+    if [[ "$rc" -eq 0 ]]; then
+        bts_pass "text EOF is status 4"
+    else
+        bts_fail "text eof rc=$rc err=$(printf '%q' "${__PROMPT_ISOLATED_ERR}")"
+    fi
+
+    rc=0
+    _prompt_isolated '
+tty_read() {
+    local var="${!#}"
+    printf -v "$var" "DONE"
+    return 0
+}
+prompt --type multiline --end DONE --default fallback "Notes" || exit 1
+[[ "$UI_PROMPT_RESULT" == fallback && "$UI_PROMPT_ACTION" == submit ]]
+' || rc=$?
+    if [[ "$rc" -eq 0 ]]; then
+        bts_pass "multiline empty uses default"
+    else
+        bts_fail "multiline default rc=$rc err=$(printf '%q' "${__PROMPT_ISOLATED_ERR}")"
+    fi
+
+    rc=0
+    _prompt_isolated '
+_n=0
+tty_read() {
+    local var="${!#}"
+    if (( _n == 0 )); then
+        printf -v "$var" "kept"
+        _n=1
+        return 0
+    fi
+    return 1
+}
+rc=0
+prompt --type multiline --end DONE --default fallback "Notes" || rc=$?
+[[ "$rc" -eq 4 && -z "$UI_PROMPT_RESULT" && -z "$UI_PROMPT_ACTION" ]]
+' || rc=$?
+    if [[ "$rc" -eq 0 ]]; then
+        bts_pass "multiline EOF discards lines and skips default"
+    else
+        bts_fail "multiline eof rc=$rc err=$(printf '%q' "${__PROMPT_ISOLATED_ERR}")"
     fi
 
     rc=0

@@ -38,7 +38,7 @@ bashVersion_check 5 3 || exit 1
 
 ## Develop
 
-`_essentials_bashVersion_init` runs at source, before every other feature. It namerefs `essentials_config`. Major defaults to `0`; `0` returns before `bashVersion_check`. Any other major is passed through with `BASHVERSION_MINOR` (or `3`). The file ends with `_essentials_bashVersion_init || return 1`.
+`_essentials_bashVersion_init` runs at source, before every other feature. It namerefs `essentials_config`. Major defaults to `0`; `0` marks init and returns before `bashVersion_check`. Any other major is passed through with `BASHVERSION_MINOR` (or `3`), and init is marked only when that check returns 0. `bashVersion_check` stays callable. The file ends with `_essentials_bashVersion_init || return 1`.
 
 Layout: `bashVersion.sh` — `bashVersion_check`, then init. The loader sources this file first.
 

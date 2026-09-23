@@ -96,7 +96,7 @@ Init in `ttyHandler.sh`: config → controller → presets → `eventRegister ex
 
 Files: `ttyHandler.sh` init; `tty_controller.sh` stty/drain/read/getc/`tty_allow`; `tty_presets.sh` `tty_setPreset`.
 
-Globals: `__TTY_GUARD` `__TTY_STTY` `__TTY_DEPTH` `__TTY_POLICY` `__TTY_ALLOW_SET` `__TTY_ALLOW_BODY` `__TTY_READ_TICK` `__TTY_TICK_HOOK` `__TTY_READING` `__TTY_EXIT_PRIORITY` `__TTY_INITIALIZED`. Map keys are byte codes (`printf %d "'$ch"`) because `unset` of a raw `"` key is a no-op. `_tty_allowAppendPreset` writes `__TTY_ALLOW_BODY`. `decimal` / `hex` / `alpha` / `alnum` are composed from `digits` / `upper` / `lower`. `tty_getc` locals are `_tty_*` so `printf -v` cannot hit them when the dest is `ch` or `dest`.
+Globals: `__TTY_GUARD` `__TTY_STTY` `__TTY_DEPTH` `__TTY_POLICY` `__TTY_ALLOW_SET` `__TTY_ALLOW_BODY` `__TTY_READ_TICK` `__TTY_TICK_HOOK` `__TTY_READING` `__TTY_EXIT_PRIORITY`. Map keys are byte codes (`printf %d "'$ch"`) because `unset` of a raw `"` key is a no-op. `_tty_allowAppendPreset` writes `__TTY_ALLOW_BODY`. `decimal` / `hex` / `alpha` / `alnum` are composed from `digits` / `upper` / `lower`. `tty_getc` locals are `_tty_*` so `printf -v` cannot hit them when the dest is `ch` or `dest`.
 
 Do not:
 

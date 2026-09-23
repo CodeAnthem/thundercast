@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Prompt - Types
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-18 | Modified: 2026-09-21
+# Date:          Created: 2026-09-18 | Modified: 2026-09-23
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
@@ -37,8 +37,8 @@ _ui_promptConfirm() {
         token=""
         if ! _ui_promptGetKey token one; then
             _ui_promptSessionEnd
-            _ui_promptFail
-            return 1
+            _ui_promptEof
+            return 4
         fi
         if [[ "$token" == paste ]]; then
             _ui_promptRejectPaste
@@ -118,8 +118,8 @@ _ui_promptText() {
         case "$rc" in
             1)
                 _ui_promptSessionEnd
-                _ui_promptFail
-                return 1
+                _ui_promptEof
+                return 4
                 ;;
             2)
                 _ui_promptSessionEnd
@@ -193,7 +193,7 @@ _ui_promptMultilineFinish() {
 }
 
 _ui_promptMultiline() {
-    local line="" block="" n=0 preset=cooked
+    local line="" block="" n=0 preset=cooked eof=false
     [[ "${__PROMPT[hide]}" == true ]] && preset=hidden
 
     _ui_promptHead
@@ -206,7 +206,12 @@ _ui_promptMultiline() {
     }
     tty_drain
 
-    while tty_read -r line || [[ -n "$line" ]]; do
+    while true; do
+        line=""
+        if ! tty_read -r line; then
+            eof=true
+            break
+        fi
         n=$((n + 1))
         if ((n > 200)); then
             _ui_promptMultilineFinish
@@ -229,13 +234,21 @@ _ui_promptMultiline() {
     _ui_promptMultilineFinish
     if [[ "${__PROMPT[hide]}" == true ]]; then
         printf '\r\033[K' >&2
-        if ((n > 0)); then
+        if [[ "$eof" == true ]]; then
+            printf '\n' >&2
+        elif ((n > 0)); then
             ui_i "Received (${n} line(s))."
         else
             printf '\n' >&2
         fi
     fi
-    if [[ -z "$block" && "${__PROMPT[allow_empty]}" != true ]]; then
+    if [[ "$eof" == true ]]; then
+        _ui_promptEof
+        return 4
+    fi
+    if [[ -z "$block" && -n "${__PROMPT[default]}" ]]; then
+        block="${__PROMPT[default]}"
+    elif [[ -z "$block" && "${__PROMPT[allow_empty]}" != true ]]; then
         _ui_promptFail
         return 1
     fi
@@ -251,8 +264,8 @@ _ui_promptKey() {
         token=""
         if ! _ui_promptGetKey token one; then
             _ui_promptSessionEnd
-            _ui_promptFail
-            return 1
+            _ui_promptEof
+            return 4
         fi
         if [[ "$token" == paste ]]; then
             _ui_promptRejectPaste
@@ -276,8 +289,8 @@ _ui_promptPause() {
             token=""
             if ! _ui_promptGetKey token one; then
                 _ui_promptSessionEnd
-                _ui_promptFail
-                return 1
+                _ui_promptEof
+                return 4
             fi
             case "$token" in
                 enter)

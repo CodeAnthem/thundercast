@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Test environment (dummy config + load)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-18 | Modified: 2026-09-22
+# Date:          Created: 2026-09-18 | Modified: 2026-09-23
 # ==================================================================================================
 
 _ESSENTIALS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
@@ -40,6 +40,12 @@ _essentials_test_ensureConfig() {
     )
 }
 
+_essentials_test_ensureInit() {
+    declare -F _essentials_init_isDone >/dev/null && return 0
+    # shellcheck source=../essentials.sh
+    source "${_ESSENTIALS_ROOT}/essentials.sh"
+}
+
 _essentials_test_ensureLoadModule() {
     declare -F loadModule >/dev/null && return 0
     loadModule() {
@@ -67,7 +73,7 @@ _essentials_test_loadOne() {
             source "${_ESSENTIALS_ROOT}/eventBus/eventBus.sh"
             ;;
         logger)
-            [[ "${__LOGGER_INITIALIZED:-false}" == true ]] && return 0
+            _essentials_init_isDone logger && return 0
             # shellcheck source=./logger/logger.sh
             source "${_ESSENTIALS_ROOT}/logger/logger.sh"
             logger_scopeCreate "Essentials Test" "essentials_test" >/dev/null
@@ -129,7 +135,7 @@ _essentials_test_loadOne() {
             ;;
         rootReexec)
             _essentials_test_loadOne logger
-            [[ "${__ROOTREEXEC_INITIALIZED:-false}" == true ]] && return 0
+            _essentials_init_isDone rootReexec && return 0
             # shellcheck source=./rootReexec/rootReexec.sh
             source "${_ESSENTIALS_ROOT}/rootReexec/rootReexec.sh"
             ;;
@@ -143,6 +149,7 @@ _essentials_test_loadOne() {
 essentials_test_load() {
     local name
     _essentials_test_ensureConfig
+    _essentials_test_ensureInit || return 1
     _essentials_test_ensureLoadModule
     for name in "$@"; do
         _essentials_test_loadOne "$name" || return 1

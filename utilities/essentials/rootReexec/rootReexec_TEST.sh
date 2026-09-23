@@ -14,10 +14,10 @@ suite_rootReexec() {
 
     essentials_test_load rootReexec
 
-    if [[ "${__ROOTREEXEC_INITIALIZED:-false}" == true ]]; then
+    if _essentials_init_isDone rootReexec; then
         bts_pass "ROOTREEXEC_ROOT=false loads without exec"
     else
-        bts_fail "__ROOTREEXEC_INITIALIZED was not set"
+        bts_fail "rootReexec init was not marked"
     fi
 
     ROOTREEXEC_TEST_KEEP=one
