@@ -41,7 +41,7 @@ action_preview() {
 # ----------------------------------------------------------------------------------
 
 action_setup() {
-    console "Running full NDS self-tests (same as CI / bash nds/dev/selftest.sh)."
+    console "NDS selftest is parked (nds/ mid-refactor). Running nds/dev/selftest.sh."
     local root
     root="$(cd "${SCRIPT_DIR}/../.." && pwd)"
     bash "${root}/nds/dev/selftest.sh" || exit 1

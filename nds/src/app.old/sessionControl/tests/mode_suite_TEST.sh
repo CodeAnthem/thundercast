@@ -10,12 +10,12 @@ suite_mode() {
     local -A cfg=()
 
     unset NDS_MODE NDS_UNATTENDED NDS_AUTO_CONFIRM
-    nds_mode_resolve || { TEST_FAILED=$((TEST_FAILED + 1)); console "  ✗ mode_resolve: default"; return; }
+    nds_mode_resolve || { bts_fail "fail"; console "  ✗ mode_resolve: default"; return; }
     if [[ "$NDS_MODE" == "interactive" ]] && nds_mode_is_interactive; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ mode_resolve: default interactive"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ mode_resolve: default interactive"
     fi
 
@@ -23,10 +23,10 @@ suite_mode() {
     export NDS_UNATTENDED=true
     nds_mode_resolve || true
     if nds_mode_is_unattended; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ mode_resolve: NDS_UNATTENDED → unattended"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ mode_resolve: NDS_UNATTENDED"
     fi
 
@@ -34,19 +34,19 @@ suite_mode() {
     export NDS_AUTO_CONFIRM=1
     nds_mode_resolve || true
     if nds_mode_is_unattended; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ mode_resolve: NDS_AUTO_CONFIRM → unattended"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ mode_resolve: NDS_AUTO_CONFIRM"
     fi
 
     export NDS_MODE=bogus
     if ! nds_mode_resolve 2>/dev/null; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ mode_resolve: rejects invalid NDS_MODE"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ mode_resolve: should reject invalid NDS_MODE"
     fi
 
@@ -57,14 +57,14 @@ suite_mode() {
             cfg[DISK_TARGET]="/dev/sda"
             nds_cfg_aa_to_store cfg
             if [[ "${CONFIG_DATA[DISK_TARGET]}" == "/dev/sda" ]]; then
-                TEST_PASSED=$((TEST_PASSED + 1))
+                bts_pass "ok"
                 console "  ✓ aa bridge: from_store / to_store round-trip"
             else
-                TEST_FAILED=$((TEST_FAILED + 1))
+                bts_fail "fail"
                 console "  ✗ aa bridge: to_store"
             fi
         else
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ aa bridge: from_store"
         fi
         CONFIG_DATA[DISK_TARGET]=""
@@ -74,10 +74,10 @@ suite_mode() {
         cfg=([A]="1")
         if ! nds_feature_require_keys cfg A B 2>/dev/null \
             && nds_feature_require_keys cfg A; then
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ feature_require_keys: missing vs present"
         else
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ feature_require_keys"
         fi
     fi
@@ -98,16 +98,16 @@ suite_mode() {
             "This action git-pushes host files." \
             && [[ "$_cf_need" == "write" ]] \
             && [[ "$_cf_reason" == "This action git-pushes host files." ]]; then
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ action_call_feature: KEY=value vs extra positionals"
         else
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ action_call_feature: extra args not passed through"
         fi
         unset -f _nds_test_call_feature
         nds_cfg_set FLAKE_REPO_URL "$_cf_saved_url"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ action_call_feature: missing"
     fi
 
@@ -120,15 +120,15 @@ suite_mode() {
             nds_cfg_set X "updated"
             nds_cfg_aa_unbind
             if [[ "${live[X]}" == "updated" && "${CONFIG_DATA[X]}" == "from-store" ]]; then
-                TEST_PASSED=$((TEST_PASSED + 1))
+                bts_pass "ok"
                 console "  ✓ cfg_aa_bind: get/set redirect without store write"
             else
-                TEST_FAILED=$((TEST_FAILED + 1))
+                bts_fail "fail"
                 console "  ✗ cfg_aa_bind: store pollution or miss"
             fi
         else
             nds_cfg_aa_unbind
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ cfg_aa_bind: get did not hit AA"
         fi
         CONFIG_DATA[X]="$saved_cd"
@@ -136,10 +136,10 @@ suite_mode() {
 
     if declare -f nds_aa_ask_string &>/dev/null; then
         if ! nds_aa_ask_string X "x" 2>/dev/null; then
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ aa_ask: rejects when AA unbound"
         else
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ aa_ask: should reject when unbound"
         fi
     fi
@@ -148,10 +148,10 @@ suite_mode() {
         export NDS_MODE=unattended
         # Empty store + no presets → validate may fail; ensure it does not open menu (returns 1).
         if ! nds_cfg_menu_or_skip 2>/dev/null; then
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ menu_or_skip: unattended fails without valid config"
         else
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ menu_or_skip: unattended completed with empty/valid set"
         fi
     fi
@@ -161,26 +161,26 @@ suite_mode() {
         unset NDS_REBOOT_FORCE
         export NDS_MODE=unattended
         if ! nds_unattended_wants_reboot; then
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ unattended: no reboot without NDS_REBOOT_FORCE"
         else
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ unattended: must not reboot without NDS_REBOOT_FORCE"
         fi
         export NDS_REBOOT_FORCE=true
         if nds_unattended_wants_reboot; then
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ unattended: NDS_REBOOT_FORCE reboots"
         else
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ unattended: NDS_REBOOT_FORCE should reboot"
         fi
         export NDS_MODE=interactive
         if ! nds_unattended_wants_reboot; then
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ interactive: NDS_REBOOT_FORCE ignored"
         else
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ interactive: NDS_REBOOT_FORCE must not force"
         fi
         if [[ -n "$saved_force" ]]; then export NDS_REBOOT_FORCE="$saved_force"; else unset NDS_REBOOT_FORCE; fi

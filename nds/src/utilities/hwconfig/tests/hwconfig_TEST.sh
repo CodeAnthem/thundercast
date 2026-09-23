@@ -8,14 +8,8 @@
 suite_hwconfig() {
     local out
 
-    _hw_ok() {
-        TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ hwconfig: $1"
-    }
-    _hw_fail() {
-        TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ hwconfig: $1"
-    }
+    _hw_ok() { bts_pass "$1"; }
+    _hw_fail() { bts_fail "$1"; }
     _hw_eq() {
         local name="$1" got="$2" want="$3"
         if [[ "$got" == "$want" ]]; then _hw_ok "$name"

@@ -10,20 +10,14 @@ suite_disk_utility() {
 
     if ! declare -f disk_part &>/dev/null; then
         nds_requireUtility disk || {
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ disk utility not loadable"
             return 0
         }
     fi
 
-    _disk_util_ok() {
-        TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ diskutil: $1"
-    }
-    _disk_util_fail() {
-        TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ diskutil: $1"
-    }
+    _disk_util_ok() { bts_pass "$1"; }
+    _disk_util_fail() { bts_fail "$1"; }
     _disk_util_assert() {
         local name="$1"; shift
         if "$@"; then _disk_util_ok "$name"; else _disk_util_fail "$name"; fi

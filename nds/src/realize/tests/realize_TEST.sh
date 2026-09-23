@@ -8,14 +8,8 @@
 suite_realize() {
     local out f
 
-    _rz_ok() {
-        TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ realize: $1"
-    }
-    _rz_fail() {
-        TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ realize: $1"
-    }
+    _rz_ok() { bts_pass "$1"; }
+    _rz_fail() { bts_fail "$1"; }
     _rz_eq() {
         local name="$1" got="$2" want="$3"
         if [[ "$got" == "$want" ]]; then _rz_ok "$name"; else _rz_fail "$name ($got != $want)"; fi

@@ -10,7 +10,7 @@ suite_facter() {
     local fixture sample tmp cleaned
 
     if ! declare -f facter_sanitize &>/dev/null; then
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ sanitize helper missing"
         return 0
     fi
@@ -28,20 +28,20 @@ let
         (report.hardware.cpu or []);
 in has
 " &>/dev/null; then
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ fixture should fail nixpkgs-style cpu fold before sanitize"
     else
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ dirty facter.json triggers set-vs-null (known VMware shape)"
     fi
 
     tmp=$(mktemp)
     cp "$sample" "$tmp"
     if facter_sanitize "$tmp"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ sanitize rewrites report"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ sanitize failed"
         rm -f "$sample" "$tmp"
         return 0
@@ -56,10 +56,10 @@ in { ok = has; n = builtins.length report.hardware.cpu; }
 " 2>/dev/null) || cleaned=""
 
     if [[ "$cleaned" == *'"ok":true'* ]] && [[ "$cleaned" == *'"n":1'* ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ sanitized cpu list is non-null and nix-foldable"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ sanitized fold failed: ${cleaned:-empty}"
     fi
 
@@ -77,10 +77,10 @@ let
   has = builtins.any ({ features ? [], ... }: true) (report.hardware.cpu or []);
 in has
 " &>/dev/null; then
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ real VMware backup facter.json sanitize + fold ok"
         else
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ real VMware backup facter.json still broken after sanitize"
         fi
         rm -f "$tmp"

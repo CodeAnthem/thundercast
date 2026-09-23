@@ -14,8 +14,5 @@ source "${ROOT}/utilities/bashTestSuite/main.sh"
 source "${NDS_SRC}/utilities/git/main.sh"
 # shellcheck disable=SC1091
 source "${NDS_SRC}/utilities/git/tests/git_utility_TEST.sh"
-TEST_PASSED=0
-TEST_FAILED=0
 suite_git_utility
-print_test_summary
-[[ "$TEST_FAILED" -eq 0 ]]
+bts_summary

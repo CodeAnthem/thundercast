@@ -48,10 +48,10 @@ suite_structure() {
         console "  ✗ leftover install/, tools/, app/ensure/, or action-local realize logic"
     fi
     if [[ "$missing" -eq 0 ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ post-drain feature roots present"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
     fi
 
     missing=0
@@ -66,18 +66,18 @@ suite_structure() {
         [[ -f "$f" ]] || { missing=1; console "  ✗ missing action setup: ${f#"$SCRIPT_DIR"/}"; }
     done
     if [[ "$missing" -eq 0 ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ core action setup.sh files present"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
     fi
 
     if declare -f _nds_app_warmupGitGh &>/dev/null \
         && ! declare -f _nds_app_warmupGitGh | grep -qE 'nds_ensure_gh|git_gh_prefetch|git_gh_ensure'; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ warmup does not prefetch gh"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ warmup still prefetches gh"
     fi
 
@@ -87,10 +87,10 @@ suite_structure() {
         && declare -f nds_realize_run &>/dev/null \
         && declare -f disk_prepare &>/dev/null \
         && declare -f nds_lib_getHostIP &>/dev/null; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ key public APIs present"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ missing key public APIs"
     fi
 
@@ -106,17 +106,17 @@ suite_structure() {
             "${SCRIPT_DIR}/app/settingsManager/logic" \
             --glob '*.sh' 2>/dev/null || true)
         if [[ -n "$hits" ]]; then
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ UI calls still in non-UI logic:"
             while IFS= read -r line; do
                 console "      $line"
             done <<< "$hits"
         else
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ no prompt UI calls in utility/settings/bundle logic"
         fi
     else
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ (skip UI-in-logic grep — rg not installed)"
     fi
 
@@ -129,10 +129,10 @@ suite_structure() {
         util_hits=$(rg -n 'nds_realize_|_nds_realize_|nds_install_ui_' "${SCRIPT_DIR}/utilities" \
             --glob '*.sh' --glob '!**/tests/**' 2>/dev/null || true)
         if [[ -z "$ctx_hits" && -z "$util_hits" ]]; then
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ no NDS_CTX_* snapshot; no utility → realize/prompt callbacks"
         else
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ layering violations:"
             while IFS= read -r line; do
                 [[ -n "$line" ]] && console "      $line"

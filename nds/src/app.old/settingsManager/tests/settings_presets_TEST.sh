@@ -15,19 +15,19 @@ suite_presets() {
     nds_preset_inject_from_flake "$tmpdir"
     count=$NDS_PRESET_INJECT_COUNT
     if [[ "$count" -eq 1 ]] && [[ "${PRESET_REGISTRY[custom]:-}" == "enabled" ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ inject_from_flake: loads and enables custom preset"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ inject_from_flake: expected 1 preset enabled"
     fi
 
     if declare -f custom_defaults &>/dev/null && declare -f custom_configure &>/dev/null \
         && [[ "${PRESET_HOOKS[custom__validate]:-}" == "custom_validate" ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ inject_from_flake: hooks registered"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ inject_from_flake: missing custom_* hooks / PRESET_HOOKS"
     fi
 
@@ -40,10 +40,10 @@ suite_presets() {
     enabled_out="${ nds_cfg_preset_get_all_enabled; }"
     if [[ "$menu_out" != *disk* ]] && [[ "$enabled_out" == *disk* ]] \
         && ! nds_cfg_preset_is_menu disk; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ preset menu: hide keeps preset enabled"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ preset menu: hide dropped enable or still listed"
     fi
     if [[ -n "$saved_menu" ]]; then

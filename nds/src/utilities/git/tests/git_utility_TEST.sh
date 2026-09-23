@@ -16,7 +16,7 @@ suite_git_utility() {
     local prev_interactive="${GIT_INTERACTIVE-}"
 
     if ! declare -f git_store_index &>/dev/null; then
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ git utility not loaded"
         return 0
     fi
@@ -25,7 +25,7 @@ suite_git_utility() {
     GIT_WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/git_test.XXXXXX")"
     export GIT_WORKDIR
     git_onLoad || {
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ git_onLoad failed"
         rm -rf "$GIT_WORKDIR"
         return 0
@@ -37,11 +37,11 @@ suite_git_utility() {
     BAD_URL="git@example.invalid:x/y.git"
 
     _git_util_ok() {
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ gitutil: $1"
     }
     _git_util_fail() {
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ gitutil: $1"
     }
     _git_util_assert() {

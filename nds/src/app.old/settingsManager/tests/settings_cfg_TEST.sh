@@ -7,41 +7,41 @@
 
 suite_cfg() {
     if [[ ${#PRESET_REGISTRY[@]} -eq 0 ]]; then
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ no presets registered"
         return 0
     fi
 
-    TEST_PASSED=$((TEST_PASSED + 1))
+    bts_pass "ok"
     console "  ✓ presets registered: ${#PRESET_REGISTRY[@]}"
 
     local required_presets=(disk encryption region network boot access quick)
     local preset
     for preset in "${required_presets[@]}"; do
         if [[ "${PRESET_REGISTRY[$preset]:-}" == "enabled" ]]; then
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ preset enabled: $preset"
         else
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ preset missing or disabled: $preset"
         fi
     done
 
     CONFIG_DATA[NETWORK_HOSTNAME]=""
     if network_validate &>/dev/null; then
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ network_validate should reject empty hostname"
     else
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ network_validate rejects empty hostname"
     fi
 
     CONFIG_DATA[NETWORK_HOSTNAME]="myhost"
     if network_validate &>/dev/null; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ network_validate accepts valid hostname"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ network_validate should accept valid hostname"
     fi
 
@@ -58,10 +58,10 @@ suite_cfg() {
     nds_cfg_set ENCRYPTION_REMOTE_SHUTDOWN "15"
     _ve_out=${ nds_cfg_validate_all encryption 2>&1; } || true
     if [[ "$_ve_out" == *"30-3600"* ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ validate_all prints unlock shutdown range error"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ validate_all hid unlock shutdown range error"
     fi
     nds_cfg_set ENCRYPTION "$_ve_enc"
@@ -77,37 +77,37 @@ suite_cfg() {
     grouped="${ nds_cfg_export_grouped; }"
     if [[ "$(grep -c '^export ' <<<"$grouped")" -ge 3 ]] \
        && grep -q 'NDS_REGION_TIMEZONE="Europe/Test"' <<<"$grouped"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ grouped export: one export per line, portable value present"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ grouped export malformed"
     fi
     if grep -qE '^# This machine only' <<<"$grouped" \
        && grep -q 'NDS_DISK_TARGET="/dev/testdisk"' <<<"$grouped"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ grouped export: hardware split holds DISK_TARGET"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ grouped export: hardware split missing DISK_TARGET"
     fi
     if grep -qE '^# Menu control' <<<"$grouped" \
        && grep -q 'NDS_SKIP_MENU="false"' <<<"$grouped" \
        && grep -q 'NDS_AUTO_CONFIRM="false"' <<<"$grouped"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ grouped export: menu skip flags default false"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ grouped export: menu skip flags missing"
     fi
 
     if ! grep -Pz '# Configuration — portable[^\n]*\n\nexport ' <<<"$grouped" \
        && ! grep -Pz '# This machine only[^\n]*\n\nexport ' <<<"$grouped" \
        && ! grep -Pz '# Menu control[^\n]*\n\nexport ' <<<"$grouped"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ grouped export: no blank line between section comment and exports"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ grouped export: unexpected blank line after section comment"
     fi
 
@@ -118,10 +118,10 @@ suite_cfg() {
     if awk '/^# This machine only/,/^# Menu control/' <<<"$grouped" | grep -q 'NDS_PLATFORM_RUN_ON_VM' \
        && awk '/^# This machine only/,/^# Menu control/' <<<"$grouped" | grep -q 'NDS_PLATFORM_VM_TYPE' \
        && ! awk '/^# Configuration — portable/,/^# This machine only/' <<<"$grouped" | grep -q 'NDS_PLATFORM_'; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ grouped export: platform vars in machine-only section"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ grouped export: platform vars not in machine-only section"
     fi
 
@@ -137,10 +137,10 @@ suite_cfg() {
     grouped="${ nds_cfg_export_grouped; }"
     if grep -q 'NDS_FLAKE_REPO_URL="git@github.com:org/flake.git"' <<<"$grouped" \
        && grep -q 'NDS_INSTALL_MODE="remote"' <<<"$grouped"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ env apply + export: FLAKE_REPO_URL and INSTALL_MODE when set"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ env apply + export: missing FLAKE_REPO_URL or INSTALL_MODE"
     fi
 
@@ -154,10 +154,10 @@ suite_cfg() {
     export NDS_FLAKE_LOCATION="git@github.com:org/via-location.git"
     nds_cfg_apply_env_all
     if [[ "${ nds_cfg_get FLAKE_REPO_URL; }" == "git@github.com:org/via-location.git" ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ FLAKE_LOCATION syncs to FLAKE_REPO_URL via env"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ FLAKE_LOCATION sync failed (got: ${ nds_cfg_get FLAKE_REPO_URL; })"
     fi
     unset NDS_FLAKE_LOCATION
@@ -169,26 +169,26 @@ suite_cfg() {
     export NDS_GH_BIN="/nix/store/fake-gh/bin/gh"
     nds_cfg_apply_env_all
     if [[ "${ nds_cfg_get ENCRYPTION; }" == "false" ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ env: NDS_ENCRYPTION=false reaches CONFIG_DATA"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ env: NDS_ENCRYPTION=false ignored (got: ${ nds_cfg_get ENCRYPTION; })"
     fi
     if [[ -z "${CONFIG_DATA[GH_BIN]:-}" ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ env: NDS_GH_BIN is runtime, not CONFIG_DATA"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ env: NDS_GH_BIN leaked into CONFIG_DATA"
     fi
     export NDS_GIT_IMPORT_KEY="SECRETKEYMATERIAL"
     nds_cfg_apply_env_all
     if [[ "${CONFIG_DATA[GIT_IMPORT_KEY]:-}" != "SECRETKEYMATERIAL" ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ env: NDS_GIT_IMPORT_KEY is runtime, not CONFIG_DATA"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ env: NDS_GIT_IMPORT_KEY leaked into CONFIG_DATA"
     fi
     unset NDS_GIT_IMPORT_KEY
@@ -198,10 +198,10 @@ suite_cfg() {
     NDS_GIT_KEY_BODY['__nds_cfg_leak_test__']='SECRETPEM'
     nds_cfg_apply_env_all
     if [[ -z "${CONFIG_DATA[GIT_KEY_BODY]:-}" ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ env: NDS_GIT_KEY_BODY is runtime, not CONFIG_DATA"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ env: NDS_GIT_KEY_BODY leaked into CONFIG_DATA"
     fi
     unset 'NDS_GIT_KEY_BODY[__nds_cfg_leak_test__]'
@@ -209,10 +209,10 @@ suite_cfg() {
     export NDS_GIT_PERSIST_ACCESS=false
     nds_cfg_apply_env_all
     if [[ "${ nds_cfg_get GIT_PERSIST_ACCESS; }" == "false" ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ env: NDS_GIT_PERSIST_ACCESS=false reaches CONFIG_DATA"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ env: NDS_GIT_PERSIST_ACCESS ignored (got: ${ nds_cfg_get GIT_PERSIST_ACCESS; })"
     fi
     unset NDS_GIT_PERSIST_ACCESS
@@ -225,19 +225,19 @@ suite_cfg() {
     export NDS_SCOPED_CONFIG_FILE="$scoped_tmp"
     nds_cfg_apply_env_all
     if [[ "${ nds_cfg_get ENCRYPTION; }" == "false" ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ env: config file export NDS_ENCRYPTION reaches CONFIG_DATA"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ env: config file export NDS_ENCRYPTION ignored (got: ${ nds_cfg_get ENCRYPTION; })"
     fi
     printf '%s\n' "declare -gA NDS_GIT_METHOD=( ['git@github.com:nds-test/cfg.git']='account' )" >"$scoped_tmp"
     nds_cfg_apply_env_all
     if [[ "${NDS_GIT_METHOD['git@github.com:nds-test/cfg.git']:-}" == "account" ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ env: config file git URL map reaches NDS_GIT_METHOD"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ env: config file git URL map ignored"
     fi
     unset 'NDS_GIT_METHOD[git@github.com:nds-test/cfg.git]'
@@ -249,10 +249,10 @@ suite_cfg() {
     CONFIG_DATA[NETWORK_HOSTNAME]="menu-skip-host"
     export NDS_SKIP_MENU=true NDS_AUTO_CONFIRM=true
     if nds_cfg_menu_or_skip network </dev/null 2>/dev/null; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ menu_or_skip: skips when env flags set and preset valid"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ menu_or_skip: should skip with NDS_SKIP_MENU + valid network preset"
     fi
     unset NDS_SKIP_MENU NDS_AUTO_CONFIRM
@@ -262,10 +262,10 @@ suite_cfg() {
     if ! grep -q 'declare -A NDS_FLAKE' <<<"$grouped" \
        && ! grep -q 'declare -A NDS_DISK' <<<"$grouped" \
        && grep -q '^export NDS_' <<<"$grouped"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ grouped export: no preset arrays, scalar exports present"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ grouped export: unexpected preset arrays or missing exports"
     fi
 
@@ -273,10 +273,10 @@ suite_cfg() {
     grouped="${ nds_cfg_export_grouped; }"
     if grep -q 'declare -gA NDS_GIT_METHOD' <<<"$grouped" \
        && grep -q 'nds-test/cfg.git' <<<"$grouped"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ grouped export: git URL map when set"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ grouped export: missing git URL map"
     fi
     unset 'NDS_GIT_METHOD[git@github.com:nds-test/cfg.git]'
@@ -292,10 +292,10 @@ suite_cfg() {
        && grep -q '^export NDS_AUTO_CONFIRM="true"' <<<"$restore" \
        && grep -qE '^curl -sSL .*start.sh \| bash$' <<<"$restore" \
        && ! grep -q $'\u2014' <<<"$restore"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ restore export: settings, runtime, live curl, no em dash"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ restore export: expected settings + runtime + live curl"
     fi
     unset NDS_CURRENT_ACTION NDS_MODE NDS_AUTO_CONFIRM
@@ -305,10 +305,10 @@ suite_cfg() {
     if nds_cfg_ask_numbered_choice SCAFFOLD_MODE "existing|new" \
         "existing=Use an existing host|new=Scaffold a new host from a role" "new" \
         && [[ "${ nds_cfg_get SCAFFOLD_MODE; }" == "existing" ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ numbered choice: unattended keeps existing over default"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ numbered choice: unattended overwrote existing with default"
     fi
     unset NDS_MODE
@@ -322,10 +322,10 @@ suite_cfg() {
        && grep -q 'thundercore.git' <<<"$restore" \
        && ! grep -q ')# Runtime' <<<"$restore" \
        && grep -q '^# Runtime$' <<<"$restore"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ restore export: git maps include every closure URL"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ restore export: missing closure git URLs or maps glued to # Runtime"
     fi
     unset 'NDS_GIT_METHOD[git@github.com:CodeAnthem/dp_cluster.git]'
@@ -354,10 +354,10 @@ EOF
        && [[ "${NDS_MODE:-}" == "unattended" ]] \
        && [[ "${NDS_GIT_METHOD['git@github.com:nds-test/a.git']:-}" == "account" ]] \
        && [[ "${NDS_GIT_METHOD['git@github.com:nds-test/b.git']:-}" == "account" ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ config file: settings + runtime + multi-repo git maps"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ config file: settings/runtime/git maps not applied"
     fi
     rm -f "$file_tmp"
@@ -380,10 +380,10 @@ EOF
     if grep -q 'NDS_ENCRYPTION_ENABLED="false"' <<<"$modified" \
        && grep -q 'NDS_FLAKE_HOST="control-toolkit"' <<<"$modified" \
        && ! grep -q 'declare -A' <<<"$modified"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ export_modified: changed env only, no arrays"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ export_modified: expected changed env only"
     fi
 
@@ -398,10 +398,10 @@ EOF
         && ! grep -q 'nds_cfg_summary_row "Host"' "$_tk" \
         && grep -q 'nds_cfg_preset_set_menu installFlake false' "$_tk_setup" \
         && grep -q 'nds_cfg_is INSTALL_COMPOSER toolkit' "$_if"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ toolkit: restore toggle, no host prompt, installFlake hidden"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ toolkit: still prompts host/mode or shows Your flake"
     fi
 }

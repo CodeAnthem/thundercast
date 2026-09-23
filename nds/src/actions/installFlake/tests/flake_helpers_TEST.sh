@@ -8,14 +8,8 @@
 suite_flake_helpers() {
     local out tmp lock_dir roles_dir
 
-    _fh_ok() {
-        TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ flake_helpers: $1"
-    }
-    _fh_fail() {
-        TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ flake_helpers: $1"
-    }
+    _fh_ok() { bts_pass "$1"; }
+    _fh_fail() { bts_fail "$1"; }
     _fh_eq() {
         local name="$1" got="$2" want="$3"
         if [[ "$got" == "$want" ]]; then _fh_ok "$name"

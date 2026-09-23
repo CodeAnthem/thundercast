@@ -18,15 +18,15 @@ _nds_test_import_action() {
         action_on_accept action_extend_settings_manager 2>/dev/null || true
 
     if ! nds_import_file "$setup"; then
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ import ${name}/setup.sh"
         return 0
     fi
     if declare -f action_setup &>/dev/null && declare -f action_preview &>/dev/null; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ import ${name}: action_setup + action_preview"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ import ${name}: missing action_setup/action_preview"
     fi
 }
@@ -40,7 +40,7 @@ suite_actions() {
     declare -gA NDS_ACTION_DATA=()
 
     if ! nds_app_actionManager_logic_discover "${SCRIPT_DIR}/actions"; then
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ nds_app_actionManager_logic_discover failed"
         return 0
     fi
@@ -64,18 +64,18 @@ suite_actions() {
 
     if [[ "$have_classic" -eq 1 && "$have_flake" -eq 1 && "$have_remote" -eq 1 \
         && "$have_addrole" -eq 1 && "$have_toolkit" -eq 1 && "$have_apply" -eq 1 ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ discover: classicInstall / installFlake / remoteAction / addFleetHost / toolkit / apply"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ discover: missing production actions (${names[*]})"
     fi
 
     if [[ "$have_test" -eq 0 && "$have_smoke" -eq 0 ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ discover: test/uiSmoke hidden without NDS_TEST"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ discover: debug actions visible without NDS_TEST"
     fi
 
@@ -92,10 +92,10 @@ suite_actions() {
     unset NDS_TEST
 
     if [[ "$have_test" -eq 1 && "$have_smoke" -eq 1 ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ discover: test + uiSmoke when NDS_TEST=true"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ discover: NDS_TEST did not surface test/uiSmoke"
     fi
 
@@ -103,10 +103,10 @@ suite_actions() {
     _NDS_IMPORT_FIXTURE_MARKER=""
     if nds_import_file "${SCRIPT_DIR}/app/actionManager/tests/fixtures/app_sourced_return.sh" \
         && [[ "${_NDS_IMPORT_FIXTURE_MARKER}" == "sourced" ]]; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ import: sourced file with top-level return"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ import: sourced file with top-level return"
     fi
 
@@ -131,10 +131,10 @@ suite_actions() {
             "${SCRIPT_DIR}/actions/remoteAction/logic/install_flake_cast.sh" \
         && ! grep -q 'nds_cast_ui_confirm_source' \
             "${SCRIPT_DIR}/wizard/install/ui/install_flake_cast.sh"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ remoteAction: one untrusted-repo warning, before first fetch"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ remoteAction: warning missing, duplicated, or still in preview"
     fi
 
@@ -146,18 +146,18 @@ suite_actions() {
             g && /nds_cast_clone "/ { c=1; if (!f) exit 1 }
             END { exit (f && c) ? 0 : 1 }
         ' "${SCRIPT_DIR}/actions/remoteAction/logic/install_flake_cast.sh"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ remoteAction: confirm fetch before cloning catalog"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ remoteAction: catalog cloned without confirm fetch"
     fi
     if grep -q 'remote_action_config || exit' \
         "${SCRIPT_DIR}/actions/remoteAction/setup.sh"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ remoteAction: remote_action_config failure aborts setup"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ remoteAction: remote_action_config failure is ignored"
     fi
     if awk '
@@ -171,10 +171,10 @@ suite_actions() {
             "${SCRIPT_DIR}/wizard/install/logic/install_leaf_open.sh" \
         && ! grep -q 'nds_cfg_prompt_errors' \
             "${SCRIPT_DIR}/actions/remoteAction/setup.sh"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ remoteAction: one settings menu after compose config; open_leaf write probe"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ remoteAction: settings menu count, write probe, or early prompt_errors"
     fi
 
@@ -197,10 +197,10 @@ suite_actions() {
         ' "${SCRIPT_DIR}/actions/remoteAction/setup.sh" \
         && grep -q 'NDS_INSTALL_CONFIRMED' \
             "${SCRIPT_DIR}/realize/main.sh"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ composers confirm disk wipe before git-push compose"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ composers push/compose before disk confirm"
     fi
 
@@ -210,10 +210,10 @@ suite_actions() {
             "${SCRIPT_DIR}/actions/remoteAction/logic/install_flake_cast.sh" \
         && grep -q 'addFleetHost|toolkit) return 1' \
             "${SCRIPT_DIR}/actions/remoteAction/logic/install_flake_cast.sh"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ remoteAction: empty catalog does not default CAST_ACTION=addFleetHost"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ remoteAction: empty catalog still defaults to addFleetHost or stubs load"
     fi
 
@@ -223,10 +223,10 @@ suite_actions() {
             "${SCRIPT_DIR}/../../fleet/nds-actions/toolkit/setup.sh" \
         && grep -q 'nds_cfg_preset_set_menu installFlake false' \
             "${SCRIPT_DIR}/../../fleet/nds-actions/toolkit/setup.sh"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ toolkit: INSTALL_MODE=remote is refused, installFlake hidden"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ toolkit: remote install is not hard-blocked or Your flake still listed"
     fi
 
@@ -234,10 +234,10 @@ suite_actions() {
         && grep -q 'nds_sm_menu' "${SCRIPT_DIR}/actions/classicInstall/setup.sh" \
         && grep -q 'nds_sm_validate' "${SCRIPT_DIR}/actions/installFlake/setup.sh" \
         && grep -q 'nds_sm_menu' "${SCRIPT_DIR}/actions/installFlake/setup.sh"; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ classicInstall/installFlake use nds_sm_validate/menu"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ classicInstall/installFlake still call nds_cfg_validate_all directly"
     fi
 }

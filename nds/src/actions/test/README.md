@@ -1,7 +1,7 @@
 # Test action
 
-Runs the **full** NDS selftest suite (same as CI / `bash nds/dev/selftest.sh`) from
-the live menu. Read-only — no system changes.
+Would run `bash nds/dev/selftest.sh` from the live menu. That runner is **parked**
+while `nds/` is under refactor (no `nds/` tests). Read-only — no system changes.
 
 Shown only when:
 

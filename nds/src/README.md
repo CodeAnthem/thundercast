@@ -17,7 +17,7 @@ Entry: `app/main.sh`. Foundation log: `logger/`. Interactive chrome: `ui/`. Gene
 
 Feature folders use `logic/` + `ui/` (+ colocated `*_TEST.sh`). Actions are a single `setup.sh`. Pure **data** under `data/` is not auto-sourced.
 
-Shared test framework: repo-root `utilities/bashTestSuite`. Run: `bash nds/dev/selftest.sh`.
+Shared test framework: `utilities/bashTestSuite` (own product). NDS selftest is parked (`bash nds/dev/selftest.sh`).
 
 `nds_app_bootstrap` in `main.sh` is the only early load list. After an action is imported, `nds_app_prepareAction` loads settingsManager, then git / bundleManager / install.
 

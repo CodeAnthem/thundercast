@@ -6,7 +6,7 @@
 # Description:   Per-run RUNTIME_DIR; log path constants live in main.sh
 # ==================================================================================================
 
-# Description: Remove leftover /tmp/nds_* and legacy /tmp/git_util.* from prior runs.
+# Description: Remove leftover /tmp/nds_*
 nds_runtime_purge_stale() {
     local base="${TMPDIR:-/tmp}" d removed=0
     shopt -s nullglob

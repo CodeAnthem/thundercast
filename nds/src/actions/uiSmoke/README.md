@@ -19,7 +19,7 @@ menu wiring after a UI change.
 
 | Action | Flag | Purpose |
 |--------|------|---------|
-| `test` | `NDS_TEST=true` | Full CI selftest suite (automated, read-only) |
+| `test` | `NDS_TEST=true` | Parked NDS selftest stub (automated, read-only) |
 | `uiSmoke` | `NDS_TEST=true` | This interactive prompt walk |
 
-Automated selftests: `bash nds/dev/selftest.sh` (also CI).
+Automated selftests: parked at `bash nds/dev/selftest.sh`. Use essentials / bashTestSuite runners instead.

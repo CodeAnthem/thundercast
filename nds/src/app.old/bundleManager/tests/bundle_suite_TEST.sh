@@ -11,19 +11,19 @@ suite_bundle() {
         && declare -f nds_bundle_path &>/dev/null \
         && declare -f nds_bundle_finish &>/dev/null \
         && declare -f nds_bundle_print_reboot_hint &>/dev/null; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ bundle: register/create/path/finish API loaded"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ bundle: core API missing"
     fi
 
     if nds_import_file "${SCRIPT_DIR}/app/bundleManager/tests/bundle_register_TEST.sh" 2>/dev/null \
         && nds_test_bundle_register_api; then
-        TEST_PASSED=$((TEST_PASSED + 1))
+        bts_pass "ok"
         console "  ✓ bundle: register hooks materialize files"
     else
-        TEST_FAILED=$((TEST_FAILED + 1))
+        bts_fail "fail"
         console "  ✗ bundle: register hooks materialize"
     fi
 
@@ -38,10 +38,10 @@ suite_bundle() {
             && grep -q '\*\*NixOS version:\*\* ' "$dest" \
             && grep -q 'nds-restore.recipe' "$dest" \
             && ! grep -q $'\u2014' "$dest"; then
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ bundle: QUICK_START.md records versions, nds-restore.recipe, no em dash"
         else
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ bundle: QUICK_START.md missing versions, nds-restore.recipe, or has em dash"
         fi
         rm -f "$dest"
@@ -54,10 +54,10 @@ suite_bundle() {
         _nds_bundle_quickstart "${qs_stage}/QUICK_START.md"
         if grep -q 'secrets/git' "${qs_stage}/QUICK_START.md" \
             && grep -q 'Recreate this install' "${qs_stage}/QUICK_START.md"; then
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ bundle: QUICK_START.md documents secrets/git keys"
         else
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ bundle: QUICK_START.md missing secrets/git section"
         fi
         rm -rf "$qs_stage"
@@ -72,10 +72,10 @@ suite_bundle() {
             && grep -q 'Operator keys (keep this zip)' "${qs_stage}/QUICK_START.md" \
             && grep -q 'CAST_TOOLKIT_BUNDLE' "${qs_stage}/QUICK_START.md" \
             && ! grep -q $'\u2014' "${qs_stage}/QUICK_START.md"; then
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ bundle: QUICK_START.md documents toolkit operator keys"
         else
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ bundle: QUICK_START.md missing toolkit operator-key warning"
         fi
         rm -rf "$qs_stage"
@@ -98,10 +98,10 @@ suite_bundle() {
             && grep -q 'Initrd host key vs your unlock key' "$dest" \
             && grep -q 'IdentitiesOnly=yes' "$dest" \
             && ! grep -q 'Need to create that key first' "$dest"; then
-            TEST_PASSED=$((TEST_PASSED + 1))
+            bts_pass "ok"
             console "  ✓ bundle: QUICK_START.md remote unlock before first login"
         else
-            TEST_FAILED=$((TEST_FAILED + 1))
+            bts_fail "fail"
             console "  ✗ bundle: QUICK_START.md remote unlock order/content"
         fi
         rm -f "$dest"

@@ -2,30 +2,89 @@
 # ==================================================================================================
 # DPS Project - Bootstrap NixOS - App entry point
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-12 | Modified: 2026-09-03
+# Date:          Created: 2025-10-12 | Modified: 2026-09-23
 # ==================================================================================================
 # shellcheck disable=SC2162
 set -euo pipefail
 
-# $(command) (stdout in the current shell) needs Bash 5.3+.
-if (( BASH_VERSINFO[0] < 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] < 3) )); then
-    printf 'NDS requires Bash 5.3 or newer (found %s).\n' "${BASH_VERSION}" >&2
-    exit 1
-fi
 
-_nds_app_here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd || exit 1)"
-: "${APP_DIR:=${_nds_app_here}}"
-: "${SCRIPT_DIR:=$(cd "${APP_DIR}/.." && pwd || exit 1)}"
-: "${SCRIPT_VERSION:=$(< "${SCRIPT_DIR}/../VERSION")}"
-: "${SCRIPT_NAME:=Thunderboot - Nix Deploy System}"
+_nds_setup_essentials() {
+    # Get path to script source
+    local current_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)" || exit 1
+    local script_source="${current_dir%/*}"
 
-# Session events (info/warn). Merged into published nds.log.
-: "${NDS_INSTALL_LOG:=/tmp/nds_session.log}"
-# NDS step dumps (partition, facter, …). Rebased under RUNTIME_DIR in nds_runtime_init.
-: "${NDS_INSTALL_DETAIL_LOG:=/tmp/nds_install.log}"
-# nixos-install / nixos-anywhere stdout. Kept separate because it is huge.
-: "${NDS_NIXOS_INSTALL_LOG:=/tmp/nds_nixosInstallation.log}"
-export NDS_INSTALL_LOG NDS_INSTALL_DETAIL_LOG NDS_NIXOS_INSTALL_LOG
+    # Essentials Configuration
+    local -A essentials_config=(
+        # BashVersion
+        [BASHVERSION_MAJOR]="5"
+        [BASHVERSION_MINOR]="3"
+        # Logger
+        [LOG_ROOT]="${script_source}/logs"
+        # [LOG_ROOT]="/tmp/logs"
+        [LOG_PURGE]="true"
+        [LOG_MINLEVEL]="verbose"
+        [LOG_STDERRLEVEL]="warn"
+        [LOG_INDENT]="2"
+        [LOG_COLOR]="true"
+        [LOG_COMPOSE_FILENAME]="nds.log"
+        # rootReexec
+        [ROOTREEXEC_ROOT]="true"
+        [ROOTREEXEC_SCRIPT]="${current_dir}/main.sh"
+        [ROOTREEXEC_PURPOSE]="NixOS deployment"
+        [ROOTREEXEC_KEEP_ENV_PREFIX]="NDS_"
+        # [ROOTREEXEC_KEEP_ENV_VARS]="DEBUG"
+        # TrapHandler
+        [TRAP_PRESETS]="true"
+        # ScriptInfo
+        [SCRIPTINFO_DIR]="${script_source}"
+        [SCRIPTINFO_NAME]="Thundercast - Nix Deploy System"
+        [SCRIPTINFO_VERSION]="$(< "${script_source}/VERSION")"
+        # TTY
+        [TTY_EXIT_PRIORITY]="10"
+        # Runtime
+        [RUNTIME_PREFIX]="nds"
+        [RUNTIME_SUBDIRS]="config secrets"
+        [RUNTIME_PURGE_STALE]="true"
+        # UI
+        [UI_MODE]="auto"
+    )
+
+    # Load Essentials
+    source "${current_dir}/../../../utilities/essentials/essentials.sh" || {
+        echo "Failed to source essentials.sh" >&2
+        exit 1
+    }
+
+    _essentials_loadModules "$@" || {
+        echo "Failed to load modules" >&2
+        exit 1
+    }
+}
+_nds_setup_essentials "$@"
+
+
+
+
+
+
+
+
+
+
+
+
+# Test
+logger_scopeCreate "NixOS Deployment System" "default"
+verbose "This is a verbose message"
+debug "This is a debug message"
+info "This is a info message"
+warn "This is a warn message"
+error "This is a error message"
+
+logger_compose "Thundercast NDS Log" "default"
+logger_composeRead 5
+fatal "This is a fatal message"
+
 
 declare -gA NDS_HOOK_FUNCTIONS=(
     ["exit_msg"]="hook_exit_msg"
@@ -36,29 +95,6 @@ declare -g NDS_SETTINGS_LOADED=false
 
 # shellcheck disable=SC1091
 source "${APP_DIR}/moduleLoader/moduleLoader.sh"
-
-_nds_app_elevateToRoot() {
-    [[ $EUID -eq 0 ]] && return 0
-    if ! command -v sudo &>/dev/null; then
-        printf '  [FAIL] - NDS must run as root, but sudo is not available.\n' >&2
-        exit 1
-    fi
-    if sudo -n true 2>/dev/null; then
-        printf '  [INFO] - NDS requires root — re-running as root (sudo is passwordless).\n' >&2
-    else
-        printf '  [INFO] - NDS requires root — re-running via sudo.\n' >&2
-    fi
-    local nds_vars=()
-
-    while IFS='=' read -r name value; do
-        [[ "$name" =~ ^NDS_ ]] || continue
-        nds_vars+=("$name=$value")
-    done < <(env)
-    if [[ ${#nds_vars[@]} -gt 0 ]]; then
-        exec sudo "${nds_vars[@]}" DEBUG="${DEBUG:-0}" bash "${BASH_SOURCE[0]}" "${_nds_app_originalArgs[@]}"
-    fi
-    exec sudo DEBUG="${DEBUG:-0}" bash "${BASH_SOURCE[0]}" "${_nds_app_originalArgs[@]}"
-}
 
 # Description: Leftover gh session probe only — do not nix-prefetch gh.
 _nds_app_warmupGitGh() {
@@ -183,6 +219,8 @@ nds_app_run() {
 main() {
     declare -ga _nds_app_originalArgs=("$@")
 
+    _nds_setup_essentials || exit 1
+
     nds_app_bootstrap "$SCRIPT_DIR" || exit 1
 
     nds_app_session_cli_parseArgs "$@" || {
@@ -191,7 +229,6 @@ main() {
         exit "$rc"
     }
 
-    _nds_app_elevateToRoot
     nds_app_run
 }
 

@@ -8,14 +8,8 @@
 suite_cast_catalog() {
     local root out
 
-    _cc_ok() {
-        TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ cast_catalog: $1"
-    }
-    _cc_fail() {
-        TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ cast_catalog: $1"
-    }
+    _cc_ok() { bts_pass "$1"; }
+    _cc_fail() { bts_fail "$1"; }
     _cc_eq() {
         local name="$1" got="$2" want="$3"
         if [[ "$got" == "$want" ]]; then _cc_ok "$name"

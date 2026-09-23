@@ -9,14 +9,8 @@ suite_nixos_store() {
     local out base="experimental-features = nix-command flakes"
     local root
 
-    _ns_ok() {
-        TEST_PASSED=$((TEST_PASSED + 1))
-        console "  ✓ nixos_store: $1"
-    }
-    _ns_fail() {
-        TEST_FAILED=$((TEST_FAILED + 1))
-        console "  ✗ nixos_store: $1"
-    }
+    _ns_ok() { bts_pass "$1"; }
+    _ns_fail() { bts_fail "$1"; }
 
     if ! declare -f nixos_combinedNixConfig &>/dev/null; then
         _ns_fail "combined_nix_config missing"
