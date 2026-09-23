@@ -1,25 +1,25 @@
-name: NDS shellcheck
+name: essentials shellcheck
 
 on:
   push:
     branches: [main, master]
     paths:
-      - 'nds/**'
+      - 'utilities/essentials/**'
       - '.github/scripts/**'
       - '.shellcheckrc'
-      - '.github/workflows/nds-shellcheck.yml'
+      - '.github/workflows/essentials-shellcheck.yml'
   pull_request:
     branches: [main, master]
     paths:
-      - 'nds/**'
+      - 'utilities/essentials/**'
       - '.github/scripts/**'
       - '.shellcheckrc'
-      - '.github/workflows/nds-shellcheck.yml'
+      - '.github/workflows/essentials-shellcheck.yml'
 
 jobs:
   shellcheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: NDS shellcheck
-        run: bash nds/dev/shellcheck.sh
+      - name: essentials shellcheck
+        run: bash utilities/essentials/dev/shellcheck.sh

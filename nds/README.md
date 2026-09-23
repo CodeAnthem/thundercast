@@ -28,9 +28,13 @@ bash nds/src/app/main.sh
 
 ## Tests
 
+NDS selftest is parked while `nds/` is under refactor. It does not run `nds/` tests or essentials.
+
 ```bash
-bash nds/dev/selftest.sh
+bash nds/dev/selftest.sh          # parked — no nds/ tests
 bash nds/dev/shellcheck.sh
+bash utilities/essentials/dev/selftest.sh
+bash utilities/bashTestSuite/dev/selftest.sh
 ```
 
 Requires Bash 5.3+.

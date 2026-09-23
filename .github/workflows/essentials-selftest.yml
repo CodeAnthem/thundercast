@@ -1,0 +1,23 @@
+name: essentials selftest
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'utilities/essentials/**'
+      - 'utilities/bashTestSuite/**'
+      - '.github/workflows/essentials-selftest.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'utilities/essentials/**'
+      - 'utilities/bashTestSuite/**'
+      - '.github/workflows/essentials-selftest.yml'
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: essentials selftest
+        run: bash utilities/essentials/dev/selftest.sh

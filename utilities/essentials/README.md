@@ -1,5 +1,8 @@
 # Essentials
 
+[![essentials selftest](https://github.com/CodeAnthem/thundercast/actions/workflows/essentials-selftest.yml/badge.svg)](https://github.com/CodeAnthem/thundercast/actions/workflows/essentials-selftest.yml)
+[![essentials shellcheck](https://github.com/CodeAnthem/thundercast/actions/workflows/essentials-shellcheck.yml/badge.svg)](https://github.com/CodeAnthem/thundercast/actions/workflows/essentials-shellcheck.yml)
+
 Shared runtime for a Bash program: events, logging, script identity, and a terminal UI.
 
 ## Overview
@@ -57,5 +60,6 @@ Feature init shares `__ESSENTIALS_INIT`. A feature starts with `_essentials_init
 Feature tests are [bashTestSuite](../bashTestSuite/README.md) suites. They load a dummy `essentials_config` from `testEnvironment/testEnvironment.sh`.
 
 ```bash
-bash utilities/bashTestSuite/main.sh utilities/essentials/
+bash utilities/essentials/dev/selftest.sh
+bash utilities/essentials/dev/shellcheck.sh
 ```

@@ -12,7 +12,6 @@ source "${ROOT}/.github/scripts/shellcheck-lib.sh"
 mapfile -t SCRIPTS < <(
     {
         find "${ROOT}/nds/src" -name '*.sh' ! -path '*/tests/*' ! -name '*_TEST.sh'
-        find "${ROOT}/utilities/bashTestSuite" -name '*.sh' 2>/dev/null || true
         [[ -f "${ROOT}/nds/start.sh" ]] && printf '%s\n' "${ROOT}/nds/start.sh"
         [[ -f "${ROOT}/nds/dev/selftest.sh" ]] && printf '%s\n' "${ROOT}/nds/dev/selftest.sh"
     } | sort -u
@@ -21,5 +20,5 @@ mapfile -t SCRIPTS < <(
 ci_shellcheck_resolve
 "${SHELLCHECK_BIN}" --version
 echo "Linting ${#SCRIPTS[@]} NDS scripts…" >&2
-ver="$(< "${ROOT}/nds/VERSION")"
+ver="$(< "${ROOT}/nds/src/VERSION")"
 ci_shellcheck_lint "NDS v${ver}" "${ROOT}/.shellcheckrc" SCRIPTS

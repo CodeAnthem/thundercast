@@ -5,13 +5,11 @@ on:
     branches: [main, master]
     paths:
       - 'nds/**'
-      - 'utilities/bashTestSuite/**'
       - '.github/workflows/nds-selftest.yml'
   pull_request:
     branches: [main, master]
     paths:
       - 'nds/**'
-      - 'utilities/bashTestSuite/**'
       - '.github/workflows/nds-selftest.yml'
 
 jobs:

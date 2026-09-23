@@ -249,7 +249,9 @@ Link here from your leaf README for live-ISO installs. Copy `fleet/exampleRepo/`
 
 ```bash
 bash nds/dev/shellcheck.sh              # lint (installs ShellCheck to ~/.cache if needed)
-bash nds/dev/selftest.sh                # read-only NDS self-tests (CI gate)
+bash nds/dev/selftest.sh                # parked — no nds/ tests (mid-refactor)
+bash utilities/essentials/dev/selftest.sh
+bash utilities/bashTestSuite/dev/selftest.sh
 bash tcast/dev/selftest.sh
 bash fleet/dev/selftest.sh              # toolkit + tcast-sops (needs age + sops)
 DEBUG=1 sudo bash nds/src/app/main.sh   # from a checkout

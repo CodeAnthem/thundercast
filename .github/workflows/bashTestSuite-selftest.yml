@@ -1,0 +1,21 @@
+name: bashTestSuite selftest
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'utilities/bashTestSuite/**'
+      - '.github/workflows/bashTestSuite-selftest.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'utilities/bashTestSuite/**'
+      - '.github/workflows/bashTestSuite-selftest.yml'
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: bashTestSuite selftest
+        run: bash utilities/bashTestSuite/dev/selftest.sh

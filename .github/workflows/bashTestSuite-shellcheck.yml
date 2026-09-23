@@ -1,0 +1,25 @@
+name: bashTestSuite shellcheck
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'utilities/bashTestSuite/**'
+      - '.github/scripts/**'
+      - '.shellcheckrc'
+      - '.github/workflows/bashTestSuite-shellcheck.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'utilities/bashTestSuite/**'
+      - '.github/scripts/**'
+      - '.shellcheckrc'
+      - '.github/workflows/bashTestSuite-shellcheck.yml'
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: bashTestSuite shellcheck
+        run: bash utilities/bashTestSuite/dev/shellcheck.sh

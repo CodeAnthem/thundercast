@@ -20,7 +20,7 @@ This repository contains **no cluster secrets**, no private keys, and no org-spe
    ls /tmp/thundercast   # or /tmp/<NDS_REPO_NAME> when using a fork
    ```
 3. **Manual steps** — clone with git and run `sudo bash nds/src/app/main.sh` yourself when you are satisfied.
-4. **CI** — path-filtered per product: [NDS ShellCheck](../.github/workflows/nds-shellcheck.yml) / [NDS selftest](../.github/workflows/nds-selftest.yml) (and matching `tcast-*` / `fleet-*` workflows). Run the same locally before opening a PR. Operator backlog: [nds/docs/TODO.md](../nds/docs/TODO.md).
+4. **CI** — path-filtered per product: [essentials](../.github/workflows/essentials-selftest.yml) / [bashTestSuite](../.github/workflows/bashTestSuite-selftest.yml), plus matching `*-shellcheck` workflows, and `tcast-*` / `fleet-*`. NDS selftest is parked (nds mid-refactor); NDS ShellCheck still runs. Run the same locally before opening a PR. Operator backlog: [nds/docs/TODO.md](../nds/docs/TODO.md).
 
 ## Forks and renamed repositories
 
