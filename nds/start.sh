@@ -1,224 +1,206 @@
 #!/usr/bin/env bash
 # ==================================================================================================
-# NDS - Live ISO quickstart
+# Get a git repository onto disk
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-12 | Modified: 2026-09-01
-# Description:   One-liner: clone repo to /tmp and run nds/src/app/main.sh
+# Date:          Created: 2025-10-12 | Modified: 2026-09-23
+# Description:   Clone or update a repository, then optionally execute a script inside it.
 # ==================================================================================================
 
 set -euo pipefail
 
 # ----------------------------------------------------------------------------------
-# REPOSITORY RESOLUTION
+# CONFIG
 # ----------------------------------------------------------------------------------
-# Priority: NDS_REPO_URL env → git remote when start.sh is in a checkout → canonical default
-nds_resolve_repo_url() {
-    if [[ -n "${NDS_REPO_URL:-}" ]]; then
-        echo "$NDS_REPO_URL"
-        return 0
-    fi
+REPO_URL=https://github.com/CodeAnthem/thundercast.git
+REPO_DIR=/tmp/thundercast
+ENTRY=nds/src/app/main.sh
 
-    local script_dir
-    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-    if git -C "$script_dir" rev-parse --is-inside-work-tree &>/dev/null; then
-        local remote
-        remote="$(git -C "$script_dir" config --get remote.origin.url 2>/dev/null || true)"
-        if [[ -n "$remote" ]]; then
-            echo "$remote"
-            return 0
-        fi
-    fi
-
-    echo "https://github.com/CodeAnthem/thundercast.git"
-}
+readonly REPO_URL REPO_DIR ENTRY
+readonly -a DEFAULT_BRANCHES=(main master)
 
 # ----------------------------------------------------------------------------------
-# SCRIPT METADATA
-# ----------------------------------------------------------------------------------
-REPO_URL="${ nds_resolve_repo_url; }"
-readonly REPO_URL
-readonly REPO_NAME="${NDS_REPO_NAME:-$(basename "${REPO_URL%.git}")}"
-readonly REPO_PATH="/tmp/${REPO_NAME}"
-readonly REPO_PATH_BOOTSTRAPPER="${REPO_PATH}/nds/src/app/"
-readonly REPO_TARGET_SCRIPT="main.sh"
-readonly DEFAULT_BRANCHES=("main" "master")
-
-# ----------------------------------------------------------------------------------
-# GLOBAL VARIABLES
+# RUNTIME
 # ----------------------------------------------------------------------------------
 NO_EXEC=0
+TARGET_BRANCH=""
+TARGET_SCRIPT_ARGS=()
+REMOTE_HEADS=""
 
 # ----------------------------------------------------------------------------------
-# FORMAT HELPER (mimic src/logger/logger.sh tags — start.sh runs before NDS loads)
+# HELPERS
 # ----------------------------------------------------------------------------------
-console() { echo "${1:-}" >&2; }
-qs_info() { printf '  [INFO] - %s\n' "${1:-}" >&2; }
-qs_ok()   { printf '  [OK] - %s\n' "${1:-}" >&2; }
-qs_warn() { printf '  [WARN] - %s\n' "${1:-}" >&2; }
-qs_fail() { printf '  [FAIL] - %s\n' "${1:-}" >&2; }
+log() { printf '  [%s] - %s\n' "$1" "$2" >&2; }
+
+die() {
+    log FAIL "$1"
+    shift
+    [[ $# -eq 0 ]] || printf '  -> %s\n' "$@" >&2
+    exit 1
+}
+
+# Caller GIT_* vars would override git -C. Repo hooks must not run on a pre-seeded tree.
+git() {
+    env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE \
+        git -c core.hooksPath=/dev/null "$@"
+}
 
 # ----------------------------------------------------------------------------------
 # ARGUMENT PARSING
 # ----------------------------------------------------------------------------------
-TARGET_SCRIPT_ARGS=()
 parse_arguments() {
     while [[ $# -gt 0 ]]; do
-        case "$1" in
+        case $1 in
             --branch:*)
-                TARGET_BRANCH="${1#--branch:}"
-                shift
+                TARGET_BRANCH=${1#--branch:}
+                [[ -n $TARGET_BRANCH && $TARGET_BRANCH != -* ]] || die "Invalid branch name"
                 ;;
-            -n|--no-exec)
-                NO_EXEC=1
+            -n|--no-exec) NO_EXEC=1 ;;
+            --)
                 shift
+                TARGET_SCRIPT_ARGS+=("$@")
+                return 0
                 ;;
-            *)
-                # Store unknown arguments to pass to target script
-                TARGET_SCRIPT_ARGS+=("$1")
-                shift
-                ;;
+            *) TARGET_SCRIPT_ARGS+=("$1") ;;
         esac
+        shift
     done
 }
 
 # ----------------------------------------------------------------------------------
 # BRANCH VALIDATION
 # ----------------------------------------------------------------------------------
-TARGET_BRANCH=""  # Empty by default, will be set by args or defaults
-check_remote_branch() {
-    local branch="$1"
-    if git ls-remote --heads --exit-code "$REPO_URL" "refs/heads/$branch" &>/dev/null; then
-        return 0
-    else
-        return 1
-    fi
+load_remote_heads() {
+    REMOTE_HEADS=${ git ls-remote --heads -- "$REPO_URL"; } || die \
+        "Repository is unreachable" \
+        "Repository: ${REPO_URL}"
 }
 
-branch_error() {
-    local branch="$1"
-    qs_fail "Branch '$branch' does not exist in repository"
-    console "  -> Repository: $REPO_URL"
-    console "  -> Please specify a valid branch using --branch:name"
-    exit 1
+has_remote_branch() {
+    [[ $'\n'"$REMOTE_HEADS"$'\n' == *$'\trefs/heads/'"$1"$'\n'* ]]
 }
 
 select_branch() {
-    # If TARGET_BRANCH is set (via arguments), validate it
-    if [[ -n "$TARGET_BRANCH" ]]; then
-        if check_remote_branch "$TARGET_BRANCH"; then
-            qs_info "Using branch: $TARGET_BRANCH"
-            return 0
-        else
-            branch_error "$TARGET_BRANCH"
-        fi
+    local branch
+
+    if [[ -n $TARGET_BRANCH ]]; then
+        has_remote_branch "$TARGET_BRANCH" || die \
+            "Branch '${TARGET_BRANCH}' does not exist in repository" \
+            "Repository: ${REPO_URL}" \
+            "Please specify a valid branch using --branch:name"
+        log INFO "Using branch: ${TARGET_BRANCH}"
+        return 0
     fi
 
-    # No branch specified, try defaults
     for branch in "${DEFAULT_BRANCHES[@]}"; do
-        if check_remote_branch "$branch"; then
-            TARGET_BRANCH="$branch"
-            qs_info "Using default branch: $TARGET_BRANCH"
+        if has_remote_branch "$branch"; then
+            TARGET_BRANCH=$branch
+            log INFO "Using default branch: ${TARGET_BRANCH}"
             return 0
         fi
     done
 
-    # None of the default branches exist
-    qs_warn "None of the default branches exist"
-    console "  -> Tried: ${DEFAULT_BRANCHES[*]}"
-    console "  -> Repository: $REPO_URL"
+    log WARN "None of the default branches exist"
+    printf '  -> %s\n' "Tried: ${DEFAULT_BRANCHES[*]}" "Repository: ${REPO_URL}" >&2
     exit 1
 }
 
 # ----------------------------------------------------------------------------------
 # SETUP REPOSITORY
 # ----------------------------------------------------------------------------------
-cloneRepo() {
-    if git clone --quiet --branch "$TARGET_BRANCH" "$REPO_URL" "$REPO_PATH" 2>/dev/null; then
-        qs_ok "Successfully cloned repository"
-    else
-        qs_fail "Failed to clone repository"
-        console "  -> Please check your internet connection and try again"
-        exit 1
+clone_repo() {
+    mkdir -m 700 -- "$REPO_DIR" || die "Could not create destination" "Path: ${REPO_DIR}"
+    if git clone --quiet --branch "$TARGET_BRANCH" -- "$REPO_URL" "$REPO_DIR"; then
+        log OK "Successfully cloned repository"
+        return 0
     fi
+    rm -rf -- "$REPO_DIR"
+    die "Failed to clone repository"
 }
 
-resetRepo() {
-    # Check if we need to switch branches
-    local current_branch
-    current_branch=$(git -C "$REPO_PATH" rev-parse --abbrev-ref HEAD)
-    
-    if [[ "$current_branch" != "$TARGET_BRANCH" ]]; then
-        qs_info "Switching from $current_branch to $TARGET_BRANCH"
-        if ! git -C "$REPO_PATH" fetch origin --quiet; then
-            qs_fail "Failed to fetch repository"
-            exit 1
-        fi
-        if ! git -C "$REPO_PATH" checkout "$TARGET_BRANCH" --quiet 2>/dev/null; then
-            qs_fail "Failed to checkout branch $TARGET_BRANCH"
-            exit 1
-        fi
+update_repo() {
+    local origin current
+    [[ -d ${REPO_DIR}/.git ]] || die \
+        "Destination exists and is not a git repository" \
+        "Path: ${REPO_DIR}"
+
+    origin=${ git -C "$REPO_DIR" config --get remote.origin.url 2>/dev/null || true; }
+    [[ $origin == "$REPO_URL" ]] || die \
+        "Destination is a different repository" \
+        "Path: ${REPO_DIR}" \
+        "Origin: ${origin:-<none>}" \
+        "Expected: ${REPO_URL}"
+
+    current=${ git -C "$REPO_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || true; }
+    [[ $current == "$TARGET_BRANCH" ]] || log INFO "Switching from ${current:-unknown} to ${TARGET_BRANCH}"
+
+    git -C "$REPO_DIR" fetch --quiet origin "$TARGET_BRANCH" || die "Failed to fetch repository"
+    git -C "$REPO_DIR" checkout --quiet -f -B "$TARGET_BRANCH" "origin/${TARGET_BRANCH}" || die \
+        "Failed to update branch ${TARGET_BRANCH}"
+    log OK "Successfully reset repository"
+}
+
+place_repo() {
+    if [[ -L $REPO_DIR ]]; then
+        die "Destination is a symlink" "Path: ${REPO_DIR}"
     fi
-    
-    # We use fetch and reset instead of pull to avoid any potential conflicts
-    if git -C "$REPO_PATH" fetch origin --quiet \
-    && git -C "$REPO_PATH" reset --hard origin/"$TARGET_BRANCH" --quiet
-    then
-        qs_ok "Successfully reset repository"
-    else
-        qs_fail "Failed to reset repository"
-        exit 1
+    if [[ ! -e $REPO_DIR ]]; then
+        clone_repo
+        return 0
     fi
+    [[ -d $REPO_DIR ]] || die "Destination exists and is not a directory" "Path: ${REPO_DIR}"
+    [[ -O $REPO_DIR ]] || die "Destination is owned by another user" "Path: ${REPO_DIR}"
+    update_repo
 }
 
 # ----------------------------------------------------------------------------------
 # SECURITY CHECKS
 # ----------------------------------------------------------------------------------
-checkUntrackedFiles() {
-    local untracked
-    untracked=$(git -C "$REPO_PATH" ls-files --others --exclude-standard)
-    if [[ -n "$untracked" ]]; then
-        qs_warn "Untracked files detected (potential security risk)"
-        # List all untracked files:
-        for f in $(git -C "$REPO_PATH" ls-files --others --exclude-standard); do
-            console " - (untracked) ${REPO_PATH}/${f}"
-        done
+check_untracked_files() {
+    local list answer line
+    list=${ git -C "$REPO_DIR" clean -ffdx -n; } || die "Failed to list untracked files"
+    [[ -n $list ]] || return 0
 
-        # Prompt user to delete untracked files
-        read -rp " Delete untracked files to ensure repo purity? [Y/N]: " answer < /dev/tty
-        case "${answer^^}" in
-            Y)
-                git -C "$REPO_PATH" clean -fdx --quiet
-                qs_ok "Untracked files removed"
-                ;;
-            *)
-                qs_info "Proceeding with untracked files present"
-                ;;
-        esac
+    log WARN "Untracked or ignored files detected (potential security risk)"
+    while IFS= read -r line; do
+        printf ' - %s/%s\n' "$REPO_DIR" "${line#Would remove }" >&2
+    done <<<"$list"
+
+    # Probe in a subshell: a failed exec would otherwise abort this non-interactive shell.
+    if ! (exec 3</dev/tty) 2>/dev/null || ! read -rp " Delete these files to ensure repo purity? [Y/N]: " answer </dev/tty; then
+        log WARN "Could not read answer; leaving untracked files in place"
+        return 0
     fi
+    if [[ ${answer^^} == "Y" ]]; then
+        git -C "$REPO_DIR" clean -ffdx --quiet || die "Failed to remove untracked files"
+        log OK "Untracked files removed"
+        return 0
+    fi
+    log INFO "Proceeding with untracked files present"
 }
 
 # ----------------------------------------------------------------------------------
 # MAIN
 # ----------------------------------------------------------------------------------
-# Parse arguments
 parse_arguments "$@"
-
-# Select and validate branch
+load_remote_heads
 select_branch
+place_repo
+check_untracked_files
 
-# Clone or reset repository
-if [[ -d "$REPO_PATH" ]]; then resetRepo; else cloneRepo; fi
-
-# Check for untracked files
-checkUntrackedFiles
-
-# If NO_EXEC is set, exit here
-if [[ "$NO_EXEC" -eq 1 ]]; then
-    qs_info "No execution requested, exiting"
+if [[ $NO_EXEC -eq 1 ]]; then
+    log INFO "No execution requested, exiting"
+    exit 0
+fi
+if [[ -z $ENTRY ]]; then
+    log INFO "No entry script configured, exiting"
     exit 0
 fi
 
-# Execute target script with remaining arguments
-qs_info "Starting ${REPO_TARGET_SCRIPT}"
-exec bash -euo pipefail "${REPO_PATH_BOOTSTRAPPER}/${REPO_TARGET_SCRIPT}" "${TARGET_SCRIPT_ARGS[@]}"
+entry_path=${REPO_DIR}/${ENTRY}
+[[ -f $entry_path ]] || die "Entry script not found" "${entry_path}"
+
+log INFO "Starting ${ENTRY}"
+# Failed exec aborts a non-interactive shell. execfail lets noexec /tmp fall through to bash.
+shopt -s execfail
+[[ -x $entry_path ]] && exec "$entry_path" "${TARGET_SCRIPT_ARGS[@]}" || true
+exec bash -euo pipefail -- "$entry_path" "${TARGET_SCRIPT_ARGS[@]}"
