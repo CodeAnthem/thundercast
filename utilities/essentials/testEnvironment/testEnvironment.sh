@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Test environment (dummy config + load)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-18 | Modified: 2026-09-23
+# Date:          Created: 2026-09-18 | Modified: 2026-09-24
 # ==================================================================================================
 
 _ESSENTIALS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
@@ -77,6 +77,12 @@ _essentials_test_loadOne() {
             # shellcheck source=./logger/logger.sh
             source "${_ESSENTIALS_ROOT}/logger/logger.sh"
             logger_scopeCreate "Essentials Test" "essentials_test" >/dev/null
+            ;;
+        importer)
+            _essentials_test_loadOne logger
+            declare -f import_file >/dev/null && return 0
+            # shellcheck source=./importer/importer.sh
+            source "${_ESSENTIALS_ROOT}/importer/importer.sh"
             ;;
         ttyHandler)
             _essentials_test_loadOne eventBus

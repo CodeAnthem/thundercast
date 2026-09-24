@@ -53,6 +53,10 @@ essentials_init() {
     # shellcheck source=./rootReexec/rootReexec.sh
     _loadEssential "rootReexec/rootReexec.sh"
 
+    # Sources *.sh trees into this shell. Needs the logger. No hooks, so the bus can follow.
+    # shellcheck source=./importer/importer.sh
+    _loadEssential "importer/importer.sh"
+
     # Bus before anything that registers a hook. Traps do not survive the exec above.
     # shellcheck source=./eventBus/eventBus.sh
     _loadEssential "eventBus/eventBus.sh"

@@ -10,6 +10,7 @@ Shared runtime for a Bash program: events, logging, script identity, and a termi
 - **Event system** ([eventBus](eventBus/README.md), [trapBridge](trapBridge/README.md)) — named events with priority hooks. Signal and exit traps are events on the same bus.
 - **Script information** ([scriptInfo](scriptInfo/README.md)) — directory, name, and version of the running script.
 - **Logger** ([logger](logger/README.md)) — leveled console output, one log file per scope, and a compose file that merges scopes.
+- **Importer** ([importer](importer/README.md)) — source `*.sh` files from a directory into the current shell.
 - **UI format utilities** ([ui](ui/README.md)) — headings, indented text, key/value rows, numbered choices, banners, and sections.
 - **Chrome** ([chrome](chrome/README.md)) — a TUI frame with a pinned header, a pinned footer, and a scrollable body.
 - **Prompts** ([prompt](prompt/README.md)) — text, multiline, select, multi-select, confirm, a single key, or a pause.
@@ -34,7 +35,7 @@ declare -A essentials_config=(
 )
 
 source /path/to/essentials.sh
-essentials_loadEssentials
+essentials_init
 ```
 
 Feature init shares `__ESSENTIALS_INIT`. A feature starts with `_essentials_init_isDone <name> && return 0` and calls `_essentials_init_mark <name>` after init succeeds. `rootReexec` marks before its early returns, so a second source does not walk the sudo path again. `bashVersion_check` stays callable after its init is marked.
@@ -52,6 +53,7 @@ Feature init shares `__ESSENTIALS_INIT`. A feature starts with `_essentials_init
 | `UI_NO_PAUSE` | [prompt](prompt/README.md) |
 | `TRAP_PRESETS` | [trapBridge](trapBridge/README.md) |
 | `ROOTREEXEC_*` | [rootReexec](rootReexec/README.md) |
+| `IMPORTER_INCLUDE_TESTS` | [importer](importer/README.md) |
 
 `eventBus` and `task` do not read the map.
 
