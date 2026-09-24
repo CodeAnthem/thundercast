@@ -2,13 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Chrome
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-21 | Modified: 2026-09-21
-# ==================================================================================================
-#
-# Optional header/footer frame on the alt screen. Off until chrome_begin. Does not prompt.
-# While on, fd 2 (and a terminal fd 1) is a tee (chrome_hist.sh); every direct paint syncs first.
-# Bars: chrome_bars.sh. Size / region / primitives: chrome_layout.sh.
-#
+# Date:          Created: 2026-09-21 | Modified: 2026-09-24
+# Description:   Optional header and footer frame on the alternate screen, off until chrome_begin.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
@@ -76,11 +71,11 @@ _essentials_chrome_init() {
     fi
 
     # shellcheck source=./chrome_layout.sh
-    loadModule "chrome/chrome_layout.sh"
+    _loadEssential "chrome/chrome_layout.sh"
     # shellcheck source=./chrome_bars.sh
-    loadModule "chrome/chrome_bars.sh"
+    _loadEssential "chrome/chrome_bars.sh"
     # shellcheck source=./chrome_hist.sh
-    loadModule "chrome/chrome_hist.sh"
+    _loadEssential "chrome/chrome_hist.sh"
     _chrome_barsInit
 
     if declare -f eventRegister &>/dev/null; then

@@ -7,7 +7,7 @@ Per-session scratch directory with named subdirs. Purge is explicit.
 
 ## Use
 
-Call after essentials has loaded (after logger). Bootstrap lives in the [parent README](../README.md).
+Call after essentials has loaded. Bootstrap lives in the [parent README](../README.md).
 
 Init creates `${RUNTIME_BASE}/${RUNTIME_PREFIX}_${timestamp}_$$` (mode `RUNTIME_MODE`) and any `RUNTIME_SUBDIRS`. Later calls can add more. Capture paths with `${ runtime_getDir; }`.
 
@@ -54,7 +54,7 @@ One directory per process. A later process does not see this session’s `secret
 
 ## Develop
 
-Init runs after logger (`info` / `warn` / `fatal`). Tracks `__RUNTIME_DIR`, `__RUNTIME_SUBDIRS`, `__RUNTIME_MODE`.
+Init uses `info` / `warn` / `fatal`. Tracks `__RUNTIME_DIR`, `__RUNTIME_SUBDIRS`, `__RUNTIME_MODE`.
 
 No subshells. The nullglob save/restore is `${ shopt -p nullglob; }`.
 

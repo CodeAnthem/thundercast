@@ -2,11 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Script Info
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-12 | Modified: 2026-09-17
-# ==================================================================================================
-#
-# Script directory, name, and version. Loads before logger.
-#
+# Date:          Created: 2025-10-12 | Modified: 2026-09-24
+# Description:   Directory, name, and version of the running script.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi

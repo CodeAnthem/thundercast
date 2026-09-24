@@ -53,7 +53,7 @@ _demo_load() {
         echo "Failed to source essentials.sh" >&2
         exit 1
     }
-    _essentials_loadModules || {
+    essentials_loadEssentials || {
         echo "Failed to load essentials modules" >&2
         exit 1
     }

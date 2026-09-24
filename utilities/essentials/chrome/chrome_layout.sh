@@ -2,11 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Chrome - Layout
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-21 | Modified: 2026-09-21
-# ==================================================================================================
-#
-# Terminal size, header/footer row counts → body region, colours, cursor/erase primitives.
-#
+# Date:          Created: 2026-09-21 | Modified: 2026-09-24
+# Description:   Terminal size, body region, colours, and cursor and erase primitives.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi

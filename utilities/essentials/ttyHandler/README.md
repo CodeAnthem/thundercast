@@ -8,7 +8,7 @@ Session TTY policy: what the keyboard can do, and restore it on EXIT. Does not p
 
 ## Use
 
-Call after essentials has loaded (after eventBus and logger). Bootstrap lives in the [parent README](../README.md). Guard is **off** until `tty_guardEnable`. UI/`prompt` choose *when* to change policy; this feature only applies it.
+Call after essentials has loaded. Bootstrap lives in the [parent README](../README.md). Guard is **off** until `tty_guardEnable`. UI/`prompt` choose *when* to change policy; this feature only applies it.
 
 One current **policy**:
 

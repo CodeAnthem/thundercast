@@ -2,11 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Root Reexec
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-12 | Modified: 2026-09-17
-# ==================================================================================================
-#
-# Re-exec as root via sudo when ROOTREEXEC_ROOT is true. Needs logger.
-#
+# Date:          Created: 2025-10-12 | Modified: 2026-09-24
+# Description:   Re-executes the process as root via sudo when ROOTREEXEC_ROOT is true.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi

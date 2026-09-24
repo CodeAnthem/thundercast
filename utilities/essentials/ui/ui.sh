@@ -2,12 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - UI
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-17 | Modified: 2026-09-20
-# ==================================================================================================
-#
-# Format toolkit: indent, color, rows, banner/section. Owns screen events
-# ui.line.take and ui.section.begin. Step and prompt are siblings.
-#
+# Date:          Created: 2026-09-17 | Modified: 2026-09-24
+# Description:   Headings, rows, and banners; owns the events ui.line.take and ui.section.begin.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
@@ -35,12 +31,12 @@ _essentials_ui_init() {
     declare -g __UI_BANNER_SUBTITLE=""
 
     # shellcheck source=./ui_base.sh
-    loadModule "ui/ui_base.sh"
+    _loadEssential "ui/ui_base.sh"
     _ui_baseDetect
     unset -f _ui_baseDetect
 
     # shellcheck source=./ui_section.sh
-    loadModule "ui/ui_section.sh"
+    _loadEssential "ui/ui_section.sh"
 
     if declare -f eventCreate &>/dev/null; then
         eventCreate ui.line.take || return 1

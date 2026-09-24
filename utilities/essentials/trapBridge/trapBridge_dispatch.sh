@@ -2,13 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Trap Bridge - Dispatch
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-17 | Modified: 2026-09-17
-# ==================================================================================================
-#
-# Maps a signal to event `trap.<SIGNAL>` and installs one dispatcher for that
-# signal. Does not wrap the trap builtin. A later raw `trap` still last-wins.
-# On install, a pre-existing handler is remembered and run after eventRun.
-#
+# Date:          Created: 2026-09-17 | Modified: 2026-09-24
+# Description:   Installs one dispatcher per signal for trap.<SIGNAL>, and runs any previous handler after the event.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi

@@ -2,7 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Prompt - Menu (select / multi-select)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-21 | Modified: 2026-09-21
+# Date:          Created: 2026-09-21 | Modified: 2026-09-24
+# Description:   Draws a select menu and handles its keys.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi

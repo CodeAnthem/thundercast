@@ -2,16 +2,15 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Chrome - Body history
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-21 | Modified: 2026-09-21
-# ==================================================================================================
-#
-# fd 2 → tee → tty + history file. The parent never sees the bytes, so it talks to the tee with
-# marker lines on fd 2 (\001chrome:…\001) and waits for an ack on a FIFO. That is what orders a
-# direct tty paint (clear, bars, cursor) after everything the app already wrote.
-#
+# Date:          Created: 2026-09-21 | Modified: 2026-09-24
+# Description:   Tees stderr into a history file so the frame can redraw the body.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
+
+# fd 2 → tee → tty + history file. The parent never sees the bytes, so it talks to the tee with
+# marker lines on fd 2 (\001chrome:…\001) and waits for an ack on a FIFO. That is what orders a
+# direct tty paint (clear, bars, cursor) after everything the app already wrote.
 
 declare -g __CHROME_MARK_SYNC=$'\001chrome:sync\001'
 declare -g __CHROME_MARK_CLEAR=$'\001chrome:clear\001'

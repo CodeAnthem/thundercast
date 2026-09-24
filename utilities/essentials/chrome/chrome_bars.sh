@@ -2,12 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Chrome - Bars
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-21 | Modified: 2026-09-21
-# ==================================================================================================
-#
-# Header and footer are lists of rows. Each row has a type and props, stored in one associative
-# array per bar with "<i>.<prop>" keys. Row types: title text sep spacer progress hint.
-#
+# Date:          Created: 2026-09-21 | Modified: 2026-09-24
+# Description:   Header and footer rows: title, text, separator, spacer, progress, and hint.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi

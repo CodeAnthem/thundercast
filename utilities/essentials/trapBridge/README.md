@@ -8,7 +8,7 @@ Turns bash traps into events. Does not alias `trap`.
 
 ## Use
 
-Call after essentials has loaded (after eventBus and logger). Bootstrap lives in the [parent README](../README.md).
+Call after essentials has loaded. Bootstrap lives in the [parent README](../README.md).
 
 `trapRegister INT fn` creates event `trap.INT`, registers `fn`, and installs one dispatcher for INT. The hook’s `$1` is `$?` from when the trap fired. The last `trapUnregister` restores the previous trap (or the default). A later raw `trap` still last-wins.
 
@@ -69,7 +69,6 @@ Do not:
 - Pre-install INT or TERM
 - Uninstall EXIT while presets are on (`__TH_KEEP_EXIT`)
 - Put log counters in this feature
-- Source this before rootReexec (`exec` drops traps installed in the first process)
 
 Files: `trapBridge.sh` init; `trapBridge_dispatch.sh` register/dispatch; `trapBridge_presets.sh` EXIT events.
 

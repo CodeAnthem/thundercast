@@ -2,12 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Task
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-17 | Modified: 2026-09-20
-# ==================================================================================================
-#
-# Progress chrome: in-progress line, spinner, OK/FAIL. Vacates the CR line on
-# ui.line.take. Open task is a bug on ui.section.begin.
-#
+# Date:          Created: 2026-09-17 | Modified: 2026-09-24
+# Description:   One in-progress line with a spinner and an OK or FAIL result; it yields on ui.line.take.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi

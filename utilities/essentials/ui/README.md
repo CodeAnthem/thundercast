@@ -8,7 +8,7 @@ Format toolkit: indent, color, rows, banner/section. Owns the screen events. Doe
 
 ## Use
 
-Call after essentials has loaded (after eventBus). Bootstrap lives in the [parent README](../README.md).
+Call after essentials has loaded. Bootstrap lives in the [parent README](../README.md).
 
 Printers write stderr. Before a block that needs the current line, fire `ui.line.take`. `ui_section` fires `ui.section.begin` before it clears. Step hooks those; other features may too.
 

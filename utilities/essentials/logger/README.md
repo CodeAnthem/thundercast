@@ -73,9 +73,9 @@ Console lines are labeled. File lines get a timestamp. `log` writes the message 
 
 ## Develop
 
-Init in `logger.sh`: counts → output (maps, bind writers) → formatter (uses `__LOGGER_LEVELS`) → scopes (`all`) → compose (`internal_compose`, which `logger_scopeCreate` leaves current). Each `*_init` is unset after it runs. `essentials.sh` then creates `internal_essentials`, so a normal load’s current scope is that, not `internal_compose`. `logger_setMinLevel` re-`eval`s `verbose`/`debug`/…; `fatal` is never a nop.
+Init in `logger.sh`: counts → output (maps, bind writers) → formatter (uses `__LOGGER_LEVELS`) → scopes (`all`) → compose (`internal_compose`, which `logger_scopeCreate` leaves current). Each `*_init` is unset after it runs. `logger_setMinLevel` re-`eval`s `verbose`/`debug`/…; `fatal` is never a nop.
 
-No calls to scriptInfo, eventBus, or bashVersion. Syntax here is nameref and `${var,,}` (Bash 4.3) plus `printf` time stamps (4.2). Nothing is 5.3-only. The loader still sources bashVersion first so a configured minimum fails before this file is parsed.
+No calls to scriptInfo, eventBus, or bashVersion. Syntax here is nameref and `${var,,}` (Bash 4.3) plus `printf` time stamps (4.2). Nothing is 5.3-only.
 
 Globals that must stay: `__LOGGER_LEVELS` / `__LOGGER_LEVEL_SET`, quiet + stderr maps, `__LOGGER_SCOPE_{CURRENT,TITLES,PATHS,ROOT,ALL_PATH}`, `__LOGGER_ERROR_COUNT` / `__LOGGER_WARN_COUNT`, `LOG_COLOR`. File writes use `ALL_PATH`.
 

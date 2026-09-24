@@ -2,12 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - TTY
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-18 | Modified: 2026-09-18
-# ==================================================================================================
-#
-# TTY policy: idle discard, cooked/hidden/cbreak, key allowlists, restore on EXIT.
-# Does not prompt. A thin read wrapper only forces /dev/tty.
-#
+# Date:          Created: 2026-09-18 | Modified: 2026-09-24
+# Description:   Keyboard mode for the session: cooked, hidden, a single key, or discarded input.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
@@ -34,9 +30,9 @@ _essentials_tty_init() {
     declare -gA __TTY_ALLOW_SET=()
 
     # shellcheck source=./tty_controller.sh
-    loadModule "ttyHandler/tty_controller.sh"
+    _loadEssential "ttyHandler/tty_controller.sh"
     # shellcheck source=./tty_presets.sh
-    loadModule "ttyHandler/tty_presets.sh"
+    _loadEssential "ttyHandler/tty_presets.sh"
 
     if declare -f eventRegister &>/dev/null; then
         eventRegister exit tty_restore "${__TTY_EXIT_PRIORITY}" || return 1

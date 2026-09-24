@@ -7,7 +7,7 @@ Check this Bash against a major and minor, and stop essentials when it is too ol
 
 ## Use
 
-Bootstrap lives in the [parent README](../README.md). This feature loads first. Init passes `BASHVERSION_MAJOR` and `BASHVERSION_MINOR` to `bashVersion_check` and returns that result. A failure fails the source. Major `0` returns 0 before that call, so the check does not run.
+Bootstrap lives in the [parent README](../README.md). Init passes `BASHVERSION_MAJOR` and `BASHVERSION_MINOR` to `bashVersion_check` and returns that result. A failure fails the source. Major `0` returns 0 before that call, so the check does not run.
 
 Patch is ignored: `5.3.0` satisfies major `5`, minor `3`.
 
@@ -38,14 +38,13 @@ bashVersion_check 5 3 || exit 1
 
 ## Develop
 
-`_essentials_bashVersion_init` runs at source, before every other feature. It namerefs `essentials_config`. Major defaults to `0`; `0` marks init and returns before `bashVersion_check`. Any other major is passed through with `BASHVERSION_MINOR` (or `3`), and init is marked only when that check returns 0. `bashVersion_check` stays callable. The file ends with `_essentials_bashVersion_init || return 1`.
+`_essentials_bashVersion_init` runs at source. It namerefs `essentials_config`. Major defaults to `0`; `0` marks init and returns before `bashVersion_check`. Any other major is passed through with `BASHVERSION_MINOR` (or `3`), and init is marked only when that check returns 0. `bashVersion_check` stays callable. The file ends with `_essentials_bashVersion_init || return 1`.
 
-Layout: `bashVersion.sh` — `bashVersion_check`, then init. The loader sources this file first.
+Layout: `bashVersion.sh` — `bashVersion_check`, then init.
 
 Do not:
 
-- Move this feature later in the loader
-- Call logger from this feature (it is not loaded yet)
+- Call logger from this file
 - Capture `bashVersion_check` with `$(fn)` — use `${ fn; }`
 - Treat major `0` as "Bash 0.something"; init returns before `bashVersion_check`
 

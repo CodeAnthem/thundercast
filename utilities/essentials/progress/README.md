@@ -8,7 +8,7 @@ Progress bar. `progress_render` builds the string (chrome rows use it); `progres
 
 ## Use
 
-Call after essentials has loaded (after ui). Bootstrap lives in the [parent README](../README.md). Close every `progress_begin` with `progress_end` or `progress_cancel` before `ui_section`. Do not run a task line and a progress line at the same time — both own the CR line.
+Call after essentials has loaded. Bootstrap lives in the [parent README](../README.md). Close every `progress_begin` with `progress_end` or `progress_cancel` before `ui_section`. Do not run a task line and a progress line at the same time — both own the CR line.
 
 Works the same inside a [chrome](../chrome/README.md) body or on a plain console. For a bar pinned in a chrome bar use `chrome_setFooter <i> -t progress`.
 

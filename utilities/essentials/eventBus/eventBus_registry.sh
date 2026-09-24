@@ -2,7 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Event Bus - Registry
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-17 | Modified: 2026-09-17
+# Date:          Created: 2026-09-17 | Modified: 2026-09-24
+# Description:   Creates events and stores their hooks.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi

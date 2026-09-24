@@ -13,7 +13,7 @@ Optional frame: pinned header rows, pinned footer rows, body in the middle that 
 
 ## Use
 
-Call after essentials has loaded (after ui, progress and tty). Bootstrap lives in the [parent README](../README.md). Do not call `chrome_begin` unless you want the frame. No TTY → begin is a no-op and chrome stays off.
+Call after essentials has loaded. Bootstrap lives in the [parent README](../README.md). Do not call `chrome_begin` unless you want the frame. No TTY → begin is a no-op and chrome stays off.
 
 While on: alt screen (`1049`) + DECSTBM keep the header and footer rows still. Logger, `ui_*`, task, progress and prompt keep writing stderr; chrome tees fd 2 (and fd 1 when it is the terminal) to the tty and into a body history. Wheel / PageUp / PageDown / Home / End at a prompt scroll that history in the body only (the terminal's own scrollbar does nothing on the alt screen); the title row shows `[history -n]` while scrolled and the view snaps back to live when the prompt ends. `ui_section` wipes the body and prints `ui_banner` at the body top; earlier sections stay reachable by scrolling up. A resize is a full redraw from history, prompt line included. Pair `chrome_end` with `tty_restore`.
 
@@ -115,7 +115,7 @@ tty_restore
 
 ## Develop
 
-Init in `chrome.sh`: config → layout → bars → hist → `eventRegister exit chrome_end`. After ui, progress and tty, before task. `error` for a bad priority / row count / `CHROME_HIST_MAX` / `CHROME_TEMP_ROWS`. `chrome_end` must not `error`/`fatal`.
+Init in `chrome.sh`: config → layout → bars → hist → `eventRegister exit chrome_end`. `error` for a bad priority / row count / `CHROME_HIST_MAX` / `CHROME_TEMP_ROWS`. `chrome_end` must not `error`/`fatal`.
 
 | File | Role |
 |------|------|

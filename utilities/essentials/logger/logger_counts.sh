@@ -2,11 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Logger - Counts
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-17 | Modified: 2026-09-17
-# ==================================================================================================
-#
-# Session error/warn counters. Independent of event dispatch.
-#
+# Date:          Created: 2026-09-17 | Modified: 2026-09-24
+# Description:   Session error and warn counters.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi

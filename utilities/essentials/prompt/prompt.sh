@@ -2,12 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Prompt
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-17 | Modified: 2026-09-23
-# ==================================================================================================
-#
-# One prompt command. Interaction only — caller validates and navigates.
-# Never capture this function. Result: UI_PROMPT_RESULT + UI_PROMPT_ACTION + rc.
-#
+# Date:          Created: 2026-09-17 | Modified: 2026-09-24
+# Description:   One prompt command that must not be captured; the result is UI_PROMPT_RESULT, UI_PROMPT_ACTION, and the return code.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
@@ -22,15 +18,15 @@ _essentials_prompt_init() {
     declare -gA __PROMPT=()
 
     # shellcheck source=./prompt_input.sh
-    loadModule "prompt/prompt_input.sh"
+    _loadEssential "prompt/prompt_input.sh"
     # shellcheck source=./prompt_types.sh
-    loadModule "prompt/prompt_types.sh"
+    _loadEssential "prompt/prompt_types.sh"
     # shellcheck source=./prompt_menu.sh
-    loadModule "prompt/prompt_menu.sh"
+    _loadEssential "prompt/prompt_menu.sh"
     # shellcheck source=./prompt_select.sh
-    loadModule "prompt/prompt_select.sh"
+    _loadEssential "prompt/prompt_select.sh"
     # shellcheck source=./prompt_multi.sh
-    loadModule "prompt/prompt_multi.sh"
+    _loadEssential "prompt/prompt_multi.sh"
 
     _essentials_init_mark prompt
 }

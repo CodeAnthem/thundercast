@@ -2,7 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Prompt - Types
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-18 | Modified: 2026-09-23
+# Date:          Created: 2026-09-18 | Modified: 2026-09-24
+# Description:   Confirm, text, multiline, single-key, and pause prompts.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi

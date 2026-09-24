@@ -2,12 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Progress
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-21 | Modified: 2026-09-21
-# ==================================================================================================
-#
-# Progress bar. progress_render is a pure string builder (chrome rows use it); progress_begin /
-# progress_set / progress_end draw one CR line on stderr like task does. Does not prompt.
-#
+# Date:          Created: 2026-09-21 | Modified: 2026-09-24
+# Description:   A progress bar as a string, or as one live line on stderr.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi

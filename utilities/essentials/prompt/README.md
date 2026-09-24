@@ -10,7 +10,7 @@ One `prompt` command. Interaction only: no regex, trim, or wizard steps. TTY pol
 
 ## Use
 
-Call after essentials has loaded (after ui and tty). Bootstrap lives in the [parent README](../README.md). Do not capture `prompt`. The caller validates and decides what Back means. Empty multi-select is success — the caller enforces “at least N”.
+Call after essentials has loaded. Bootstrap lives in the [parent README](../README.md). Do not capture `prompt`. The caller validates and decides what Back means. Empty multi-select is success — the caller enforces “at least N”.
 
 `prompt` fires `ui.line.take` first so a CR widget can vacate. It does not name task. When [chrome](../chrome/README.md) is on: `chrome_repin` runs after stty, mouse reporting is off for cooked/hidden sessions, and the session end jumps the body back to the live tail (`chrome_follow`).
 

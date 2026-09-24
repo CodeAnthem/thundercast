@@ -2,14 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Event Bus - Dispatch
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-17 | Modified: 2026-09-17
-# ==================================================================================================
-#
-# Hook results:
-#   return 0                 — continue
-#   return 0 after eventStop — skip remaining hooks (not an error)
-#   return non-zero          — abort remaining hooks; return that code
-#
+# Date:          Created: 2026-09-17 | Modified: 2026-09-24
+# Description:   Runs a name's hooks, and skips the rest after eventStop or a non-zero return.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi

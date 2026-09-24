@@ -46,9 +46,9 @@ _essentials_test_ensureInit() {
     source "${_ESSENTIALS_ROOT}/essentials.sh"
 }
 
-_essentials_test_ensureLoadModule() {
-    declare -F loadModule >/dev/null && return 0
-    loadModule() {
+_essentials_test_ensure_loadEssential() {
+    declare -F _loadEssential >/dev/null && return 0
+    _loadEssential() {
         # shellcheck disable=SC1090
         source "${_ESSENTIALS_ROOT}/$1"
     }
@@ -150,7 +150,7 @@ essentials_test_load() {
     local name
     _essentials_test_ensureConfig
     _essentials_test_ensureInit || return 1
-    _essentials_test_ensureLoadModule
+    _essentials_test_ensure_loadEssential
     for name in "$@"; do
         _essentials_test_loadOne "$name" || return 1
     done

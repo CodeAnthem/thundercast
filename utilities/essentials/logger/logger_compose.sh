@@ -2,7 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Logger Compose
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-06 | Modified: 2026-09-17
+# Date:          Created: 2026-08-06 | Modified: 2026-09-24
+# Description:   Merges selected scope files into one compose file as titled sections.
 # ==================================================================================================
 
 # Block Script Execution

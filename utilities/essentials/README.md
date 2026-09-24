@@ -34,7 +34,7 @@ declare -A essentials_config=(
 )
 
 source /path/to/essentials.sh
-_essentials_loadModules
+essentials_loadEssentials
 ```
 
 Feature init shares `__ESSENTIALS_INIT`. A feature starts with `_essentials_init_isDone <name> && return 0` and calls `_essentials_init_mark <name>` after init succeeds. `rootReexec` marks before its early returns, so a second source does not walk the sudo path again. `bashVersion_check` stays callable after its init is marked.

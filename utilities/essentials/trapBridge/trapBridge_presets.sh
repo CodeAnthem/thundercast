@@ -2,16 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Trap Bridge - Presets
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-17 | Modified: 2026-09-17
-# ==================================================================================================
-#
-# Common EXIT events, enabled with essentials_config[TRAP_PRESETS]=true.
-# Owns the EXIT trap via the bridge. Does not install INT/TERM.
-#
-#   exit       — always
-#   exitError  — logger_hasError or exit code ≠ 0
-#   exitClean  — no logger errors and exit code = 0
-#
+# Date:          Created: 2026-09-17 | Modified: 2026-09-24
+# Description:   EXIT presets when TRAP_PRESETS is true: exit always, exitError on a logger error or non-zero status, exitClean otherwise.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi

@@ -2,11 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Session Dir
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-17 | Modified: 2026-09-17
-# ==================================================================================================
-#
-# Session scratch directory. No event hooks — caller purges.
-#
+# Date:          Created: 2026-09-17 | Modified: 2026-09-24
+# Description:   A scratch directory for this run, with named subdirectories the caller purges.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi

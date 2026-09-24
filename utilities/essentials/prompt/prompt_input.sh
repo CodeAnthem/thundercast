@@ -2,7 +2,8 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Prompt - Input
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-18 | Modified: 2026-09-21
+# Date:          Created: 2026-09-18 | Modified: 2026-09-24
+# Description:   Line, hidden-line, and single-key reads for a prompt.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
