@@ -40,8 +40,8 @@ _cat_schema() {
     nds_schema_group zzcat "Catalog note"
     nds_schema_field zzcat CAT_NOTE string
 }
-eventRegister realize.pre_install _cat_pre
-eventRegister cook.schema _cat_schema
+eventRegister cook.pre_install _cat_pre
+eventRegister recipe.schema _cat_schema
 action_groups() { printf '%s\n' zzcat; }
 action_preview() { :; }
 EOF
@@ -57,15 +57,15 @@ suite_remoteAction() {
     export NDS_CURRENT_ACTION=remoteAction
     export NDS_CATALOG_URL=https://example.com/catalog.git
     export NDS_CATALOG_ACTION=good
-    before=${ eventHookCount realize.pre_install; }
+    before=${ eventHookCount cook.pre_install; }
     if [[ "$before" == 0 && -z ${_NDS_SCHEMA_GROUP_TITLE[zzcat]:-} ]]; then
         bts_pass "hook and group are absent before the pick"
     else
         bts_fail "before the pick hook=${before} group='${_NDS_SCHEMA_GROUP_TITLE[zzcat]:-}'"
     fi
-    declare -gA _NDS_COOK=()
-    nds_pipeline_cook _NDS_COOK local remoteAction || { bts_fail "unattended cook failed"; return; }
-    after=${ eventHookCount realize.pre_install; }
+    declare -gA _NDS_RECIPE=()
+    nds_pipeline_recipe _NDS_RECIPE local remoteAction || { bts_fail "unattended cook failed"; return; }
+    after=${ eventHookCount cook.pre_install; }
     if [[ "$after" == 1 && -n ${_NDS_SCHEMA_GROUP_TITLE[zzcat]:-} ]]; then
         bts_pass "hook and group exist after the pick"
     else
@@ -79,9 +79,10 @@ suite_remoteAction() {
     joined=$(printf '%s\n' "${_warns[@]}")
     assert_contains "$joined" "Skipping invalid action: bad" "invalid catalog action warns"
     sealed="${ nds_session_dir recipe; }/sealed.recipe"
-    nds_recipe_seal _NDS_COOK "$sealed" || { bts_fail "seal failed"; return; }
+    nds_recipe_seal _NDS_RECIPE "$sealed" || { bts_fail "seal failed"; return; }
     text=$(<"$sealed")
     assert_contains "$text" 'INSTALL_KIND="flake"' "sealed file pins INSTALL_KIND"
-    assert_contains "$text" 'INSTALL_ACTION="good"' "sealed file names the catalog action"
+    assert_contains "$text" 'INSTALL_ACTION="remoteAction"' "sealed file keeps remoteAction"
+    assert_contains "$text" 'CATALOG_ACTION="good"' "sealed file keeps the catalog action"
     rm -rf "$_cat_fix"
 }

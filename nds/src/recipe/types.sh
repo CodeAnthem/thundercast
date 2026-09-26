@@ -213,7 +213,7 @@ _nds_type_ok() {
         path) _nds_type_path "$_nds_type_value" ;;
         file) _nds_type_path "$_nds_type_value" && [[ -f "$_nds_type_value" ]] ;;
         dir) _nds_type_path "$_nds_type_value" && [[ -d "$_nds_type_value" ]] ;;
-        disk) [[ -b "$_nds_type_value" ]] ;;
+        disk) [[ "$_nds_type_value" =~ ^/dev/[a-zA-Z0-9/_-]+$ ]] ;;
         ip) _nds_type_ip "$_nds_type_value" ;;
         hostname) _nds_type_hostname "$_nds_type_value" ;;
         username) _nds_type_username "$_nds_type_value" ;;

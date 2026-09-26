@@ -70,16 +70,15 @@ _nixcfg_retire_legacy_host_modules() {
 
 # Description: Write nds_generated.nix = boot (settings) + mounts (target) + guest (settings).
 # Arguments:
-# - host_dir:   <String> Host directory (…/hosts/…/hostname)
-# - hostname:   <String> Host name
-# - disk:       <String> Target disk
-# - encryption: <String> true | false
-# - flake_root: <String> Flake root (for legacy module retirement via git)
+# - recipe:   <String> Recipe array name
+# - host_dir: <String> Host directory (…/hosts/…/hostname)
 # Returns:
 # - <Bool> 0 on success
 nixcfg_writeGeneratedHost() {
-    local _nixcfg_name=$1 host_dir=$2 hostname=$3 disk=$4
-    local encryption="${5:-false}" flake_root="${6:-}"
+    local _nixcfg_name=$1 host_dir=$2
+    local -n _nixcfg_R=$1
+    local hostname=${_nixcfg_R[FLAKE_HOST]:-} disk=${_nixcfg_R[DISK_TARGET]:-}
+    local encryption=${_nixcfg_R[ENCRYPTION]:-false} flake_root=${_nixcfg_R[FLAKE_INSTALL_PATH]:-}
     local tmpd gen today
 
     mkdir -p "$host_dir" || return 1

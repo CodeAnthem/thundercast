@@ -1,33 +1,11 @@
 # addFleetHost
 
-First-class NDS action: scaffold `nixosConfigurations.<host>` from the leaf’s `.roles/` (or `profiles/`), write a recipe, **confirm disk wipe**, git-push, then Part A flake-install.
+Scaffold a flake host from `.roles/<role>` and push the leaf.
 
-Not a catalog script. Fleet birth wizard — auto-loaded with NDS (`fleet/nds-actions/`). Do not use `remoteAction` for this.
+Groups: `install flake git scaffold network boot disk encryption`. Pin: `INSTALL_KIND=flake`.
+
+`action_recipe` copies the role, writes `.nds/hosts/<host>.recipe`, and sets `LEAF_PUSH_DIR`. The machine age public key is `.toolkit/machines/<host>/keys/age.pub`. `SCAFFOLD_MODE=existing` reuses a host folder instead of scaffolding.
 
 ```bash
-export NDS_ACTION=addFleetHost
-sudo -E bash nds/src/app/main.sh
+bash nds/src/app/main.sh --unattended --action addFleetHost
 ```
-
-## You need
-
-- A **private leaf** with `.roles/<role>/` (copy [exampleRepo](../../exampleRepo/README.md))
-- **Write** Git access on the ISO (account key or write-enabled deploy key)
-- A new hostname (or `SCAFFOLD_MODE=existing` to reuse a folder already in git)
-
-## Flow
-
-1. Clone install flake (write probe)
-2. Pick role + host
-3. Settings menu (boot / disk / encryption)
-4. **Disk confirm** — abort here leaves origin unchanged
-5. Compose: scaffold, `.nds/hosts/<host>.recipe`, push
-6. Part A: partition + `the NixOS installer --flake`
-
-Cook scaffolds the host, writes `.nds/hosts/<host>.recipe`, and sets the leaf push keys. Realize commits and pushes.
-
-Secrets stay as `*_FILE` paths in the recipe. Disk device is not stored in the portable recipe.
-
-## After install
-
-Same as [installFlake](../installFlake/README.md): reboot, `findmnt /boot`, `tc-switch` / `tc-status`.

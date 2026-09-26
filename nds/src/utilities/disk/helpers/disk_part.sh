@@ -13,7 +13,7 @@
 # - <String> path on stdout
 disk_part() {
     local disk="$1" index="$2"
-    if [[ "$disk" == *nvme* || "$disk" == *mmcblk* ]]; then
+    if [[ "$disk" == *nvme* || "$disk" == *mmcblk* || "$disk" == *loop* ]]; then
         printf '%s\n' "${disk}p${index}"
     else
         printf '%s\n' "${disk}${index}"

@@ -3,13 +3,13 @@
 # NDS - Pipeline
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Date:          Created: 2026-09-26 | Modified: 2026-09-26
-# Description:   Discover, cook, seal, realize, bundle. Unattended never opens a screen.
+# Description:   Discover, cook, seal, cook, bundle. Unattended never opens a screen.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
-eventCreate cook.schema
-eventCreate cook.done
+eventCreate recipe.schema
+eventCreate recipe.done
 
 _nds_pipeline_apply_lines() {
     local _pipe_name=$1 _pipe_lock=${2:-} _pipe_line _pipe_key _pipe_value
@@ -17,7 +17,10 @@ _nds_pipeline_apply_lines() {
         [[ "$_pipe_line" == *=* ]] || continue
         _pipe_key=${_pipe_line%%=*}
         _pipe_value=${_pipe_line#*=}
-        nds_recipe_set "$_pipe_name" "$_pipe_key" "$_pipe_value"
+        if [[ "$_pipe_lock" == lock ]]; then
+            unset "_NDS_SCHEMA_ATTR[${_pipe_key}|locked]"
+        fi
+        nds_recipe_set "$_pipe_name" "$_pipe_key" "$_pipe_value" || return 1
         if [[ "$_pipe_lock" == lock ]]; then
             nds_schema_lock "$_pipe_key" || return 1
         fi
@@ -36,18 +39,18 @@ _nds_pipeline_loadRecipeAction() {
             _pipe_setup=${ _nds_action_store_path remote "$_pipe_action"; }
         fi
         import_file "$_pipe_setup" || return 1
-        unset -f action_cook
+        unset -f action_recipe
         return 0
     fi
     error "${_pipe_action}: unknown action"
     return 1
 }
 
-nds_pipeline_cook() {
+nds_pipeline_recipe() {
     local _pipe_name=$1 _pipe_store=$2 _pipe_action=$3
     local -a _pipe_groups=()
     local _pipe_top=0
-    eventRun cook.schema "$_pipe_name" || return 1
+    eventRun recipe.schema "$_pipe_name" || return 1
     mapfile -t _pipe_groups < <(action_groups)
     if ((${#_pipe_groups[@]})); then
         nds_schema_enable "${_pipe_groups[@]}" || return 1
@@ -64,8 +67,13 @@ nds_pipeline_cook() {
         fi
     fi
     nds_recipe_loadEnv "$_pipe_name" || return 1
-    nds_recipe_set "$_pipe_name" INSTALL_ACTION "$_pipe_action"
-    nds_schema_lock INSTALL_ACTION
+    if [[ "$(nds_recipe_get "$_pipe_name" INSTALL_ACTION)" == remoteAction && "$_pipe_action" != remoteAction ]]; then
+        :
+    else
+        unset "_NDS_SCHEMA_ATTR[INSTALL_ACTION|locked]"
+        nds_recipe_set "$_pipe_name" INSTALL_ACTION "$_pipe_action" || return 1
+        nds_schema_lock INSTALL_ACTION
+    fi
     if declare -f action_pins >/dev/null; then
         _nds_pipeline_apply_lines "$_pipe_name" lock < <(action_pins) || return 1
     fi
@@ -74,10 +82,10 @@ nds_pipeline_cook() {
     else
         nds_recipe_validate "$_pipe_name" || return 1
     fi
-    if declare -f action_cook >/dev/null; then
-        action_cook "$_pipe_name" || return 1
+    if declare -f action_recipe >/dev/null; then
+        action_recipe "$_pipe_name" || return 1
     fi
-    eventRun cook.done "$_pipe_name" || return 1
+    eventRun recipe.done "$_pipe_name" || return 1
     nds_recipe_validate "$_pipe_name" || return 1
 }
 
@@ -113,15 +121,15 @@ nds_pipeline_run() {
         return 1
     fi
     nds_action_select || return 1
-    declare -gA _NDS_COOK=()
-    nds_pipeline_cook _NDS_COOK local "$NDS_CURRENT_ACTION" || return 1
-    nds_recipe_materialize _NDS_COOK || return 1
+    declare -gA _NDS_RECIPE=()
+    nds_pipeline_recipe _NDS_RECIPE local "$NDS_CURRENT_ACTION" || return 1
+    nds_recipe_materialize _NDS_RECIPE || return 1
     _pipe_sealed="${ nds_session_dir recipe; }/sealed.recipe"
-    nds_recipe_seal _NDS_COOK "$_pipe_sealed" || return 1
+    nds_recipe_seal _NDS_RECIPE "$_pipe_sealed" || return 1
     if ! nds_skip install.confirm; then
         nds_confirm "$_pipe_sealed" || return 1
     fi
-    nds_realize "$_pipe_sealed" || return 1
+    nds_cook "$_pipe_sealed" || return 1
     _pipe_zip=${ nds_bundle "$_pipe_sealed"; } || return 1
     if nds_mode_is_unattended; then
         _nds_pipeline_unattended_finish "$_pipe_sealed" "$_pipe_zip"

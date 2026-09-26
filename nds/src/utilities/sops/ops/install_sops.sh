@@ -17,9 +17,39 @@ Machine age public key:
 
     ${pubkey}
 
-Add the public key to .sops.yaml, re-encrypt the host secrets, and commit.
-The private key is at /etc/sops/age/keys.txt on the machine.
+To grant this machine access to its secrets:
+
+1. Add the public key to .sops.yaml under the relevant creation_rules
+   (host-specific: secrets/hosts/${hostname}/*.yaml; shared: secrets/*.yaml).
+2. Re-encrypt affected secrets so the new recipient can decrypt them:
+
+    sops updatekeys secrets/hosts/${hostname}/*.yaml
+
+3. Commit .sops.yaml and the updated secrets, then deploy.
+
+The matching private key is installed on the machine at
+/etc/sops/age/keys.txt and is backed up in this bundle as
+secrets/age.key — keep it safe and offline.
 EOF
+}
+
+sops_writeLeafPub() {
+    local _sops_name=$1 _sops_leaf=$2
+    local -n _sops_R=$1
+    local _sops_host=${_sops_R[FLAKE_HOST]:-} _sops_key=${_sops_R[SOPS_AGE_KEY_FILE]:-}
+    local _sops_pub _sops_dest
+    [[ -n "$_sops_leaf" && -n "$_sops_host" ]] || return 0
+    if [[ -z "$_sops_key" && ${_sops_R[SOPS_AGE_REUSE]:-generate} == generate ]]; then
+        _sops_key="${ nds_session_dir secrets; }/SOPS_AGE_KEY"
+        nds_generate_ageKey "$_sops_name" SOPS_AGE_KEY_FILE "$_sops_key" || return 1
+        nds_recipe_set "$_sops_name" SOPS_AGE_KEY_FILE "$_sops_key" || return 1
+    fi
+    [[ -f "$_sops_key" ]] || return 0
+    _sops_pub=$(awk -F': ' '/^# public key: / { print $2; exit }' "$_sops_key")
+    [[ -n "$_sops_pub" ]] || return 0
+    _sops_dest="${_sops_leaf}/.toolkit/machines/${_sops_host}/keys/age.pub"
+    mkdir -p "${_sops_dest%/*}" || return 1
+    printf '%s\n' "$_sops_pub" > "$_sops_dest"
 }
 
 sops_installKey() {
@@ -31,6 +61,8 @@ sops_installKey() {
     }
     mkdir -p "${_sops_mnt}/etc/sops/age" "$_sops_secrets" || return 1
     cp "$_sops_key" "${_sops_mnt}/etc/sops/age/keys.txt" || return 1
+    cp "$_sops_key" "${_sops_secrets}/age.key" || return 1
+    chmod 600 "${_sops_secrets}/age.key" || return 1
     chmod 600 "${_sops_mnt}/etc/sops/age/keys.txt" || return 1
     _sops_pub=$(awk -F': ' '/^# public key: / { print $2; exit }' "$_sops_key")
     [[ -n "$_sops_pub" ]] || {

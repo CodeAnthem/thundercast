@@ -27,4 +27,21 @@ EOF
         bts_fail "sops_installKey did not write the key and note"
     fi
     rm -rf "$key" "$mnt" "$secrets"
+
+    declare -gA R=()
+    R[FLAKE_HOST]=host
+    R[SOPS_AGE_REUSE]=file
+    R[SOPS_AGE_KEY_FILE]=$key
+    local leaf
+    leaf=$(mktemp -d)
+    # key was removed above; write it again
+    key=$(mktemp)
+    printf '%s\n' '# public key: age1leaf' 'AGE-SECRET-KEY-1TEST' > "$key"
+    R[SOPS_AGE_KEY_FILE]=$key
+    if sops_writeLeafPub R "$leaf" && [[ $(<"${leaf}/.toolkit/machines/host/keys/age.pub") == age1leaf ]]; then
+        bts_pass "sops_writeLeafPub records the machine age.pub"
+    else
+        bts_fail "leaf pub missing"
+    fi
+    rm -rf "$key" "$leaf"
 }

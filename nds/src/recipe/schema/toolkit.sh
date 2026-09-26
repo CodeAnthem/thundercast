@@ -7,7 +7,7 @@
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
-nds_schema_group toolkit "Toolkit"
+nds_schema_group toolkit "Toolkit" --when 'INSTALL_ACTION=toolkit'
 nds_schema_field toolkit TOOLKIT_MODE choice --default new \
     --choices 'new|restore' --labels 'new=New toolkit|restore=Restore toolkit' --label 'Toolkit mode'
 nds_schema_field toolkit TOOLKIT_BUNDLE file --required --when 'TOOLKIT_MODE=restore' --label 'Toolkit bundle'

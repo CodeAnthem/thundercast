@@ -88,7 +88,11 @@ nds_schema_field flake FLAKE_SOURCE choice --default remote \
     --choices 'remote|local' --labels 'remote=Git URL|local=Local path' --label 'Flake source'
 nds_schema_field flake FLAKE_REPO_URL url --when 'FLAKE_SOURCE=remote' --label 'Flake repository URL'
 nds_schema_field flake FLAKE_LOCAL_PATH path --when 'FLAKE_SOURCE=local' --label 'Flake local path'
-nds_schema_field flake FLAKE_INSTALL_PATH path --default '/mnt/etc/nixos' --label 'Flake path on installed disk'
+nds_detect_flakeInstallPath() {
+    printf '%s\n' "${_NDS_TARGET_ROOT:-/mnt}/etc/nixos"
+}
+
+nds_schema_field flake FLAKE_INSTALL_PATH path --detect nds_detect_flakeInstallPath --label 'Flake path on installed disk'
 nds_schema_field flake FLAKE_HOST hostname --required --ask nds_ask_flakeHost --label 'Flake host'
 nds_schema_field flake FLAKE_HOST_DIR string --default 'hosts/x86_64-linux' --label 'Host directory'
 nds_schema_field flake FLAKE_HARDWARE_PLACEMENT choice --default 'host-dir' \

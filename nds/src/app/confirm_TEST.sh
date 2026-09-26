@@ -14,7 +14,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/session/mode.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/session/skip.sh"
 import_dir "$(dirname "${BASH_SOURCE[0]}")/../recipe" --depth 0
 import_dir "$(dirname "${BASH_SOURCE[0]}")/../recipe/schema" --depth 0
-import_dir "$(dirname "${BASH_SOURCE[0]}")/../realize" --depth 0
+import_dir "$(dirname "${BASH_SOURCE[0]}")/../cook" --depth 0
 # shellcheck source=confirm.sh
 source "$(dirname "${BASH_SOURCE[0]}")/confirm.sh"
 

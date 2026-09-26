@@ -21,7 +21,10 @@ _nds_finish_copy_hint() {
     _fin_name=nds_bundle.zip
     [[ "$_fin_zip" == *.tar.gz ]] && _fin_name=nds_bundle.tar.gz
     ui_b "Copy it from your local machine:"
-    ui_i "scp ${_fin_user}@${_fin_host}:${_fin_zip} ./${_fin_name}"
+    ui_i "SCP:"
+    ui_i "  scp ${_fin_user}@${_fin_host}:${_fin_zip} ./${_fin_name}"
+    ui_i "SSH:"
+    ui_i "  ssh ${_fin_user}@${_fin_host} \"cat ${_fin_zip}\" > ${_fin_name}"
 }
 
 _nds_finish_usb() {
@@ -75,6 +78,8 @@ nds_finish() {
     fi
     _nds_finish_copy_hint "$_fin_zip"
     ui_i "QUICK_START.md is at the root of the zip."
+    ui_b "Online guide:"
+    ui_i "https://github.com/CodeAnthem/thundercast/blob/main/nds/src/actions/classicInstall/README.md"
     if ! nds_skip finish.backup; then
         prompt --type confirm "I have copied the package (or do not need it)" || _fin_rc=$?
         [[ "$_fin_rc" -eq 0 && "$UI_PROMPT_RESULT" == y ]] || return 1
@@ -83,6 +88,7 @@ nds_finish() {
         ui_h "Remote install complete"
         ui_b "The remote installer reboots the target when it finishes."
         ui_b "Commit the generated hardware facts in your flake host directory."
+        ui_b "Enroll the machine age key in .sops.yaml, then run sops updatekeys on the split secret files."
     fi
     _nds_finish_reboot
 }

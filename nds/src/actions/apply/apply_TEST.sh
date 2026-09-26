@@ -34,15 +34,22 @@ suite_apply() {
     export NDS_CURRENT_ACTION=apply
     export NDS_INSTALL_KIND=classic
     export NDS_NETWORK_HOSTNAME=host
-    export NDS_DISK_STRATEGY=flake
-    export NDS_CATALOG_URL=https://example.com/catalog.git
-    export NDS_CATALOG_ACTION=none
-    export NDS_SCAFFOLD_MODE=existing
-    declare -gA _NDS_COOK=()
-    nds_pipeline_cook _NDS_COOK local apply || { bts_fail "unattended cook failed"; return; }
+    export NDS_DISK_TARGET=/dev/sda
+    export NDS_BOOT_UEFI_MODE=false
+    export NDS_BOOT_LOADER=grub
+    nds_test_stubBins systemd-detect-virt
+    declare -gA _NDS_RECIPE=()
+    nds_pipeline_recipe _NDS_RECIPE local apply || { bts_fail "unattended cook failed"; return; }
+    nds_recipe_materialize _NDS_RECIPE || { bts_fail "materialize failed"; return; }
     sealed="${ nds_session_dir recipe; }/sealed.recipe"
-    nds_recipe_seal _NDS_COOK "$sealed" || { bts_fail "seal failed"; return; }
+    nds_recipe_seal _NDS_RECIPE "$sealed" || { bts_fail "seal failed"; return; }
     text=$(<"$sealed")
-    assert_contains "$text" 'INSTALL_KIND="classic"' "sealed file keeps INSTALL_KIND"
-    assert_contains "$text" 'INSTALL_ACTION="apply"' "sealed file names the action"
+    text=${text//${_NDS_TEST_SESSION}/@SESSION@}
+    want=$(<"$(dirname "${BASH_SOURCE[0]}")/apply.sealed")
+    if [[ "$text" == "$want" ]]; then
+        bts_pass "sealed file is the full apply recipe"
+    else
+        bts_fail "sealed file differed"
+    fi
+    nds_test_stubBins_drop
 }

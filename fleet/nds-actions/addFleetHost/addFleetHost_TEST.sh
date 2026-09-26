@@ -17,6 +17,8 @@ import_dir "${_src}/recipe" --depth 0
 import_dir "${_src}/recipe/schema" --depth 0
 # shellcheck source=../../../nds/src/app/pipeline.sh
 source "${_src}/app/pipeline.sh"
+# shellcheck source=../../../nds/src/utilities/sops/ops/install_sops.sh
+source "${_src}/utilities/sops/ops/install_sops.sh"
 # shellcheck source=setup.sh
 source "$(dirname "${BASH_SOURCE[0]}")/setup.sh"
 
@@ -30,11 +32,12 @@ suite_addFleetHost() {
     local flake sealed text leaf portable
     nds_test_session
     mkdir -p "${ nds_session_dir secrets; }/git"
-    flake=$(mktemp -d)
+    flake="${_NDS_TEST_SESSION}/flake"
     mkdir -p "${flake}/.roles/web"
     printf '%s\n' role > "${flake}/.roles/web/marker"
     export NDS_MODE=unattended
     nds_mode_resolve
+    nds_test_stubBins age-keygen systemd-detect-virt
     export NDS_CURRENT_ACTION=addFleetHost
     export NDS_FLAKE_LOCATION=lab
     export NDS_FLAKE_SOURCE=local
@@ -42,12 +45,15 @@ suite_addFleetHost() {
     export NDS_FLAKE_HOST=webhost
     export NDS_SCAFFOLD_ROLE=web
     export NDS_NETWORK_HOSTNAME=webhost
-    export NDS_DISK_STRATEGY=flake
-    declare -gA _NDS_COOK=()
-    nds_pipeline_cook _NDS_COOK local addFleetHost || { bts_fail "unattended cook failed"; return; }
+    export NDS_DISK_TARGET=/dev/sda
+    export NDS_BOOT_UEFI_MODE=false
+    export NDS_BOOT_LOADER=grub
+    declare -gA _NDS_RECIPE=()
+    nds_pipeline_recipe _NDS_RECIPE local addFleetHost || { bts_fail "unattended cook failed"; return; }
     leaf="${ nds_session_dir work; }/leaf"
     portable="${leaf}/.nds/hosts/webhost.recipe"
-    if [[ -f "${leaf}/hosts/x86_64-linux/webhost/marker" && -f "$portable" ]]; then
+    if [[ -f "${leaf}/hosts/x86_64-linux/webhost/marker" && -f "$portable" \
+        && -s "${leaf}/.toolkit/machines/webhost/keys/age.pub" ]]; then
         bts_pass "role template and portable recipe are on the leaf"
     else
         bts_fail "leaf scaffold missing"
@@ -59,12 +65,16 @@ suite_addFleetHost() {
     else
         bts_fail "portable recipe was unexpected"
     fi
+    nds_recipe_materialize _NDS_RECIPE || { bts_fail "materialize failed"; return; }
     sealed="${ nds_session_dir recipe; }/sealed.recipe"
-    nds_recipe_seal _NDS_COOK "$sealed" || { bts_fail "seal failed"; return; }
+    nds_recipe_seal _NDS_RECIPE "$sealed" || { bts_fail "seal failed"; return; }
     text=$(<"$sealed")
-    assert_contains "$text" 'INSTALL_KIND="flake"' "sealed file pins INSTALL_KIND"
-    assert_contains "$text" 'INSTALL_ACTION="addFleetHost"' "sealed file names the action"
-    assert_contains "$text" "LEAF_PUSH_DIR=\"${leaf}\"" "sealed file sets LEAF_PUSH_DIR"
-    assert_contains "$text" "role web" "commit message names the role"
+    text=${text//${_NDS_TEST_SESSION}/@SESSION@}
+    want=$(<"$(dirname "${BASH_SOURCE[0]}")/addFleetHost.sealed")
+    if [[ "$text" == "$want" ]]; then
+        bts_pass "sealed file is the full addFleetHost recipe"
+    else
+        bts_fail "sealed file differed"
+    fi
     rm -rf "$flake"
 }

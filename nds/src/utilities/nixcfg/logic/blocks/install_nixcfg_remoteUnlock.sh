@@ -66,7 +66,7 @@ EOF
     fi
 
     # Quoted heredoc: bash expands nothing, so Nix ${pkgs...} stays literal.
-    # Only @@TOKEN@@ placeholders are filled in.
+    # Only @@TOKEN@@ markers are filled in.
     #
     # Console hint (ENCRYPTION_REMOTE_HINT, default on): ExecStart must be a
     # real store binary (busybox). Busybox ip has no iproute2 -o oneline mode,

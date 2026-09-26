@@ -49,7 +49,7 @@ disk_biosGrubPopulated() {
 disk_grubBiosBootOk() {
     local disk="$1"
 
-    [[ -n "$disk" && -b "$disk" ]] || return 1
+    disk_canUse "$disk" || return 1
     dd if="$disk" bs=512 count=1 status=none 2>/dev/null | grep -aq GRUB && return 0
     disk_hasBiosGrub "$disk" && disk_biosGrubPopulated "${ disk_part "$disk" 1; }"
 }

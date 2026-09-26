@@ -1,25 +1,3 @@
-# UI smoke action
+# uiSmoke
 
-Interactive screen walk — no partition, no `the NixOS installer`, no flake clone, no GitHub API.
-
-Shown in the action menu only when:
-
-```bash
-export NDS_TEST=true
-sudo -E bash nds/src/app/main.sh
-```
-
-## What it does
-
-Cycles through shared prompts, settingsManager field asks, install confirms
-(with fake disk/IP), git collision/hints, and failure display so you can verify
-menu wiring after a UI change.
-
-## Related
-
-| Action | Flag | Purpose |
-|--------|------|---------|
-| `test` | `NDS_TEST=true` | Parked NDS selftest stub (automated, read-only) |
-| `uiSmoke` | `NDS_TEST=true` | This interactive screen walk |
-
-Automated selftests: parked at `bash nds/dev/selftest.sh`. Use essentials / bashTestSuite runners instead.
+Interactive walk of every field type. Hidden unless `NDS_TEST` is set. Unattended `action_recipe` returns immediately. Nothing is installed.

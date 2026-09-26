@@ -26,7 +26,7 @@ disk_partition() {
         fi
     fi
 
-    if [[ ! -b "$disk" ]]; then
+    if ! disk_canUse "$disk"; then
         err "Target disk does not exist: $disk"
         return 1
     fi

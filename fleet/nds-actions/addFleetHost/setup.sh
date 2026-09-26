@@ -23,7 +23,7 @@ action_pins() {
     printf '%s\n' INSTALL_KIND=flake
 }
 
-action_cook() {
+action_recipe() {
     local -n _R=$1
     local _fh_leaf _fh_host _fh_role _fh_msg
     _fh_leaf="${ nds_session_dir work; }/leaf"
@@ -31,7 +31,7 @@ action_cook() {
     _fh_role=${_R[SCAFFOLD_ROLE]:-}
     [[ -n "$_fh_host" ]] || { error "FLAKE_HOST: required"; return 1; }
     if [[ ${_R[SCAFFOLD_MODE]:-new} == new ]]; then
-        nds_fleet_scaffold_host "${_R[FLAKE_LOCAL_PATH]:-}" "$_fh_role" "$_fh_host" "$_fh_leaf" || return 1
+        nds_fleet_scaffold_host "$1" "$_fh_leaf" || return 1
     else
         mkdir -p "${_fh_leaf}/.nds/hosts" || return 1
     fi
@@ -40,4 +40,6 @@ action_cook() {
     [[ -n "$_fh_role" ]] && _fh_msg="${_fh_msg} (role ${_fh_role})"
     nds_recipe_set "$1" LEAF_PUSH_DIR "$_fh_leaf"
     nds_recipe_set "$1" LEAF_PUSH_MESSAGE "$_fh_msg"
+    declare -f nds_requireUtility >/dev/null && { nds_requireUtility sops || return 1; }
+    sops_writeLeafPub "$1" "$_fh_leaf" || return 1
 }

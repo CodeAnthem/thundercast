@@ -55,19 +55,27 @@ suite_disk_utility() {
     out=${ disk_probeState "" || true; }
     _disk_util_assert_eq "probe empty → wiped" "$out" "wiped"
 
-    local _disk_log=()
-    cryptsetup() { _disk_log+=("$*"); }
-    mkfs.ext4() { _disk_log+=("mkfs $*"); return 0; }
-    wipefs() { return 0; }
-    if disk_luksFormat /dev/vda2 /tmp/pass.txt /tmp/key.bin; then
-        if [[ "${_disk_log[*]}" == *'--key-file /tmp/pass.txt'* && "${_disk_log[*]}" == *'/tmp/key.bin'* ]]; then
-            _disk_util_ok "luksFormat passes the secret files through"
-        else
-            _disk_util_fail "luksFormat args were '${_disk_log[*]}'"
-        fi
+    nds_test_stubBins cryptsetup mkfs.ext4 wipefs parted partprobe mkfs.fat mount umount lsblk
+    if disk_luksFormat /dev/vda2 /tmp/pass.txt /tmp/key.bin >/dev/null 2>/dev/null \
+        && grep -q 'cryptsetup luksFormat --type luks2 /dev/vda2 --key-file /tmp/pass.txt' "$NDS_TEST_BIN_LOG" \
+        && grep -q 'cryptsetup luksAddKey /dev/vda2 /tmp/key.bin --key-file /tmp/pass.txt' "$NDS_TEST_BIN_LOG"; then
+        _disk_util_ok "luksFormat passes the secret files through"
     else
-        _disk_util_fail "luksFormat returned failure"
+        _disk_util_fail "luksFormat log was '$(<"$NDS_TEST_BIN_LOG")'"
     fi
+    : >"$NDS_TEST_BIN_LOG"
+    local root
+    root=$(mktemp -d)
+    if disk_partition /dev/sda false false >/dev/null 2>/dev/null \
+        && grep -q 'parted /dev/sda --script -- mklabel gpt' "$NDS_TEST_BIN_LOG" \
+        && disk_mountRoot false "$root" >/dev/null 2>/dev/null \
+        && grep -q "mount /dev/disk/by-label/nixos ${root}" "$NDS_TEST_BIN_LOG"; then
+        _disk_util_ok "partition then mountRoot use the disk and the mount root"
+    else
+        _disk_util_fail "partition log was '$(<"$NDS_TEST_BIN_LOG")'"
+    fi
+    nds_test_stubBins_drop
+    rm -rf "$root"
 
     out=${ _disk_diskoTemplate; }
     if [[ -f "$out" ]]; then

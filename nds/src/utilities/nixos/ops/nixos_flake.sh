@@ -144,6 +144,7 @@ nixos_buildFlakeSystem() {
 # - target_ip:   <String> Target host IP or hostname
 # - facter_dest: <String> Where nixos-anywhere writes facter.json
 # - luks_key:    <String|optional> LUKS keyfile to pass as /tmp/luks.key
+# - extra:       <String|optional> --extra-files <dir>
 # Returns:
 # - <Bool> 0 on success
 nixos_anywhere() {
@@ -158,6 +159,15 @@ nixos_anywhere() {
         --generate-hardware-config nixos-facter "$facter_dest"
         --target-host "root@${target_ip}"
     )
+    shift 5 || true
+    while [[ $# -gt 0 ]]; do
+        if [[ "$1" == --extra-files && -n ${2:-} ]]; then
+            cmd+=(--extra-files "$2")
+            shift 2
+        else
+            shift
+        fi
+    done
 
     if [[ -n "$luks_key" ]]; then
         [[ -f "$luks_key" ]] || { err "LUKS keyfile not found at ${luks_key}"; return 1; }
@@ -168,4 +178,54 @@ nixos_anywhere() {
     "${cmd[@]}" || { err "nixos-anywhere installation failed"; return 1; }
     log "Remote install completed — commit ${facter_dest} to your flake repo"
     return 0
+}
+
+# Description: Prefetch every git input in flake.lock using the recipe key directory.
+# Arguments:
+# - flake_root: <String> Flake directory containing flake.lock
+# - keys_dir:   <String> GIT_KEYS_DIR
+nixos_prefetchFlake() {
+    local _nixos_root=$1 _nixos_keys=${2:-} _nixos_lock _nixos_url _nixos_rev _nixos_nar
+    local _nixos_fetch _nixos_ssh _nixos_expr _nixos_log
+    _nixos_lock="${_nixos_root}/flake.lock"
+    [[ -f "$_nixos_lock" ]] || return 0
+    declare -f flake_listLockGitEntries >/dev/null || return 1
+    if declare -f nds_session_dir >/dev/null; then
+        _nixos_log="${ nds_session_dir logs; }/nixos-prefetch.log"
+    else
+        _nixos_log=/tmp/nds-nixos-prefetch.log
+    fi
+    mkdir -p "$(dirname "$_nixos_log")" 2>/dev/null || true
+    while IFS=$'\t' read -r _nixos_url _nixos_rev _nixos_nar; do
+        [[ -n "$_nixos_url" && -n "$_nixos_rev" && -n "$_nixos_nar" ]] || continue
+        _nixos_fetch=${ flake_fetchTreeUrl "$_nixos_url"; }
+        _nixos_ssh=${ git_sshCommand "$_nixos_keys" "$_nixos_url"; } || return 1
+        _nixos_expr="builtins.fetchTree { type = \"git\"; url = \"${_nixos_fetch}\"; rev = \"${_nixos_rev}\"; narHash = \"${_nixos_nar}\"; }"
+        if ! GIT_SSH_COMMAND="$_nixos_ssh" nix build --no-link --print-out-paths --impure \
+            --extra-experimental-features 'nix-command flakes' --expr "$_nixos_expr" >>"$_nixos_log" 2>&1; then
+            error "FLAKE_LOCATION: could not prefetch ${_nixos_url}"
+            return 1
+        fi
+    done < <(flake_listLockGitEntries "$_nixos_lock")
+}
+
+# Description: Build the flake system, unstage host facts, activate, and repair boot files.
+# Arguments:
+# - flake_root:   <String> Flake checkout
+# - host:         <String> nixosConfigurations key
+# - host_dir:     <String> Host directory
+# - hw_placement: <String> host-dir | etc-nixos | skip
+nixos_installFlake() {
+    local _nixos_root=$1 _nixos_host=$2 _nixos_host_dir=$3 _nixos_place=${4:-host-dir}
+    local _nixos_system
+    local -a _nixos_flags=()
+    local _nixos_target
+    _nixos_target=$(nixos_targetRoot)
+    if [[ "$_nixos_place" == etc-nixos && -f "${_nixos_target}/etc/nixos/hardware-configuration.nix" ]]; then
+        _nixos_flags+=(--override-input hardware path:/etc/nixos/hardware-configuration.nix)
+    fi
+    _nixos_system=${ nixos_buildFlakeSystem "$_nixos_root" "$_nixos_host" ${_nixos_flags[@]+"${_nixos_flags[@]}"}; } || return 1
+    flake_gitUnstageHostFacts "$_nixos_root" "$_nixos_host_dir" || true
+    nixos_activateSystem "$_nixos_target" "$_nixos_system" || return 1
+    nixos_ensureInstallArtifacts || return 1
 }

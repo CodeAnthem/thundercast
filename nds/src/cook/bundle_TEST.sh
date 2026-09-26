@@ -27,6 +27,7 @@ _bundle_collect() {
 
 suite_bundle() {
     local secret seed leaf keys sealed out listing recipe
+    nds_test_stubBins parted
     nds_test_session
     secret="${ nds_session_dir secrets; }/admin"
     printf '%s\n' secret > "$secret"
@@ -70,5 +71,6 @@ suite_bundle() {
         bts_fail "bundle listing was '${listing}'"
     fi
     rm -rf "$seed" "$leaf" "$keys" "$sealed" "$recipe" "$out"
+    nds_test_stubBins_drop
     nds_test_session_drop
 }

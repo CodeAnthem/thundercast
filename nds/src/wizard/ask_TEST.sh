@@ -62,7 +62,7 @@ _ask_types() {
 
 suite_ask() {
     local _msgs _i _text _got _rc
-    unset NDS_YES NDS_SKIP NDS_SKIP_COOK_SUMMARY
+    unset NDS_YES NDS_SKIP NDS_SKIP_RECIPE_SUMMARY
     export NDS_MODE=interactive
     nds_mode_resolve
     nds_test_session
@@ -120,9 +120,9 @@ suite_ask() {
     _i=0
     _msgs=()
     _answers=(beta)
-    export NDS_SKIP_COOK_SUMMARY=true
+    export NDS_SKIP_RECIPE_SUMMARY=true
     nds_wizard_fill R 2>/dev/null || { bts_fail "skip fill failed"; return; }
-    unset NDS_SKIP_COOK_SUMMARY
+    unset NDS_SKIP_RECIPE_SUMMARY
     _text=$(printf '%s\n' "${_msgs[@]}")
     if [[ "$_text" == Beta ]]; then
         bts_pass "skip summary asks only the failing field"
@@ -157,5 +157,39 @@ suite_ask() {
         bts_pass "a loaded value is offered as the default"
     else
         bts_fail "loaded value was not the default"
+    fi
+
+    bts_section "Edit group"
+    declare -gA R=()
+    nds_recipe_set R ALPHA alpha
+    nds_recipe_set R BETA beta
+    nds_recipe_set R LOADED fromfile
+    _review=0
+    _i=0
+    _msgs=()
+    _answers=(alpha beta fromfile edited beta fromfile)
+    prompt() {
+        local _msg="${*: -1}"
+        _msgs+=("$_msg")
+        if [[ "$_msg" == "Review the recipe" ]]; then
+            if [[ "$_review" -eq 0 ]]; then
+                _review=1
+                UI_PROMPT_RESULT='edit:zz'
+            else
+                UI_PROMPT_RESULT=accept
+            fi
+            return 0
+        fi
+        UI_PROMPT_RESULT=${_answers[_i]}
+        _i=$((_i + 1))
+    }
+    nds_wizard_fill R 2>/dev/null || { bts_fail "edit fill failed"; return; }
+    _text=$(printf '%s\n' "${_msgs[@]}")
+    _got=$(nds_recipe_get R ALPHA)
+    if [[ "$_text" == $'Alpha\nBeta\nLoaded\nReview the recipe\nAlpha\nBeta\nLoaded\nReview the recipe' \
+        && "$_got" == edited ]]; then
+        bts_pass "Edit group re-asks that group"
+    else
+        bts_fail "edit prompts were '${_text}' value '${_got}'"
     fi
 }

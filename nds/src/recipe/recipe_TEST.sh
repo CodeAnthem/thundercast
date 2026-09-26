@@ -366,7 +366,12 @@ suite_recipe() {
     fi
     printf '%s\n' 'PROBE_LOCK="other"' > "$tmp"
     _recipe_clear
-    nds_recipe_set R PROBE_LOCK kept
+    R[PROBE_LOCK]=kept
+    if nds_recipe_set R PROBE_LOCK other 2>/dev/null; then
+        bts_fail "set wrote a locked key"
+        return
+    fi
+    bts_pass "set rejects a locked key"
     _recipe_watch
     nds_recipe_loadFile R "$tmp"
     _recipe_unwatch

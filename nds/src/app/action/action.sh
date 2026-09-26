@@ -46,7 +46,7 @@ _nds_action_preview_skipped() {
 }
 
 _nds_action_clear_sourced() {
-    unset -f action_groups action_preview action_defaults action_pins action_cook
+    unset -f action_groups action_preview action_defaults action_pins action_recipe
 }
 
 # Add setup.sh folders from one directory. Does not clear the store.

@@ -51,4 +51,20 @@ suite_nixos_store() {
     eval "$_restore_ready"
     unset NDS_NIX_TARGET_ROOT NDS_NIX_INSTALL_STORE_FORCE
     rm -rf "$root"
+
+    nds_test_stubBins nixos-install
+    root=$(mktemp -d)
+    local src
+    src=$(mktemp -d)
+    mkdir -p "${root}/etc/nixos" "$src"
+    printf '%s\n' '{ }' > "${src}/configuration.nix"
+    if nixos_copyConfigs "$src" "$root" >/dev/null 2>/dev/null \
+        && nixos_installClassic "$root" >/dev/null 2>/dev/null \
+        && grep -q "nixos-install --root ${root} --no-root-passwd" "$NDS_TEST_BIN_LOG"; then
+        _ns_ok "nixos_installClassic passes the mount root"
+    else
+        _ns_fail "nixos-install log was '$(<"$NDS_TEST_BIN_LOG")'"
+    fi
+    nds_test_stubBins_drop
+    rm -rf "$root" "$src"
 }

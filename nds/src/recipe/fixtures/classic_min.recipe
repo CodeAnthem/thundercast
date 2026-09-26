@@ -11,7 +11,5 @@ NETWORK_METHOD="dhcp"
 [access]
 ACCESS_ADMIN_USER="admin"
 [disk]
-DISK_STRATEGY="flake"
-[catalog]
-CATALOG_URL="https://example.com/catalog.git"
-CATALOG_ACTION="none"
+DISK_STRATEGY="nds"
+DISK_TARGET="/dev/stubdisk"

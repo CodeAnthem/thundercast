@@ -9,7 +9,7 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 action_groups() {
-    printf '%s\n' install flake git boot disk encryption
+    printf '%s\n' install flake git network access boot disk encryption
 }
 
 action_preview() {

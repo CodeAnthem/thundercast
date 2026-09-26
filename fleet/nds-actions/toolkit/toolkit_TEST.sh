@@ -17,6 +17,8 @@ import_dir "${_src}/recipe" --depth 0
 import_dir "${_src}/recipe/schema" --depth 0
 # shellcheck source=../../../nds/src/app/pipeline.sh
 source "${_src}/app/pipeline.sh"
+# shellcheck source=../../../nds/src/utilities/sops/ops/install_sops.sh
+source "${_src}/utilities/sops/ops/install_sops.sh"
 
 nds_detect_firstDisk() { :; }
 flake_listHosts() { printf '%s\n' control-toolkit; }
@@ -30,23 +32,32 @@ suite_toolkit() {
     mkdir -p "${ nds_session_dir secrets; }/git"
     # shellcheck source=setup.sh
     source "$(dirname "${BASH_SOURCE[0]}")/setup.sh"
-    hooks=${ eventHookCount realize.post_install; }
+    hooks=${ eventHookCount cook.post_install; }
     if [[ "$hooks" == 1 ]]; then
-        bts_pass "realize.post_install is registered"
+        bts_pass "cook.post_install is registered"
     else
-        bts_fail "realize.post_install count was ${hooks}"
+        bts_fail "cook.post_install count was ${hooks}"
     fi
     export NDS_MODE=unattended
     nds_mode_resolve
+    nds_test_stubBins age-keygen ssh-keygen systemd-detect-virt
     export NDS_CURRENT_ACTION=toolkit
     export NDS_FLAKE_LOCATION=lab
-    export NDS_DISK_STRATEGY=flake
-    declare -gA _NDS_COOK=()
-    nds_pipeline_cook _NDS_COOK local toolkit || { bts_fail "unattended cook failed"; return; }
+    export NDS_DISK_TARGET=/dev/sda
+    export NDS_BOOT_UEFI_MODE=false
+    export NDS_BOOT_LOADER=grub
+    export NDS_NETWORK_HOSTNAME=control-toolkit
+    declare -gA _NDS_RECIPE=()
+    nds_pipeline_recipe _NDS_RECIPE local toolkit || { bts_fail "unattended cook failed"; return; }
+    nds_recipe_materialize _NDS_RECIPE || { bts_fail "materialize failed"; return; }
+    sealed="${ nds_session_dir recipe; }/sealed.recipe"
+    nds_recipe_seal _NDS_RECIPE "$sealed" || { bts_fail "seal failed"; return; }
     leaf="${ nds_session_dir work; }/leaf"
     seed="${ nds_session_dir seed; }"
-    if [[ -f "${leaf}/.toolkit/operator/keys/operator_age.pub" && -f "${leaf}/.sops.yaml" \
-        && -f "${leaf}/.nds/hosts/control-toolkit.recipe" ]]; then
+    if [[ -s "${leaf}/.toolkit/operator/keys/age.pub" \
+        && -s "${leaf}/.toolkit/operator/keys/ssh.pub" && -f "${leaf}/.sops.yaml" \
+        && -f "${leaf}/.nds/hosts/control-toolkit.recipe" \
+        && -s "${leaf}/.toolkit/machines/control-toolkit/keys/age.pub" ]]; then
         bts_pass "operator pubs, sops file, and portable recipe are on the leaf"
     else
         bts_fail "leaf toolkit files missing"
@@ -65,11 +76,13 @@ suite_toolkit() {
         bts_fail "seed tree was '${files}'"
     fi
     sealed="${ nds_session_dir recipe; }/sealed.recipe"
-    nds_recipe_seal _NDS_COOK "$sealed" || { bts_fail "seal failed"; return; }
+    nds_recipe_seal _NDS_RECIPE "$sealed" || { bts_fail "seal failed"; return; }
     text=$(<"$sealed")
-    assert_contains "$text" 'INSTALL_KIND="flake"' "sealed file pins INSTALL_KIND"
-    assert_contains "$text" 'INSTALL_MODE="local"' "sealed file pins INSTALL_MODE"
-    assert_contains "$text" 'INSTALL_ACTION="toolkit"' "sealed file names the action"
-    assert_contains "$text" "LEAF_PUSH_DIR=\"${leaf}\"" "sealed file sets LEAF_PUSH_DIR"
-    assert_contains "$text" "TARGET_SEED_DIR=\"${seed}\"" "sealed file sets TARGET_SEED_DIR"
+    text=${text//${_NDS_TEST_SESSION}/@SESSION@}
+    want=$(<"$(dirname "${BASH_SOURCE[0]}")/toolkit.sealed")
+    if [[ "$text" == "$want" ]]; then
+        bts_pass "sealed file is the full toolkit recipe"
+    else
+        bts_fail "sealed file differed"
+    fi
 }

@@ -48,11 +48,11 @@ _git_gh_restore_bin_cache() {
     return 1
 }
 
-# Description: Realize gh in the Nix store. Prefer ISO/channel <nixpkgs> (already
+# Description: Build gh in the Nix store. Prefer ISO/channel <nixpkgs> (already
 # unpacked) so the live ISO does not fetch a second nixpkgs flake from the registry.
 # Returns:
 # - stdout: nix-build / nix build output (last /nix/store line is the gh path)
-_git_gh_realize() {
+_git_gh_nixBuild() {
     if command -v nix-build >/dev/null 2>&1 && [[ "${NIX_PATH:-}" == *nixpkgs* ]]; then
         if nix-build --no-out-link '<nixpkgs>' -A gh; then
             return 0
@@ -176,7 +176,7 @@ git_gh_prefetch() {
     GIT_GH_PREFETCH_IN_PROGRESS=true
 
     mkdir -p "$(dirname "$prefetch_log")" 2>/dev/null || true
-    build_out=${ _git_gh_realize 2>&1; } || rc=$?
+    build_out=${ _git_gh_nixBuild 2>&1; } || rc=$?
     printf '%s\n' "$build_out" >"$prefetch_log" 2>/dev/null || true
     if [[ -n "$logfile" ]]; then
         {

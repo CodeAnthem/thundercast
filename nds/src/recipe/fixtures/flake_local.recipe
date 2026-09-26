@@ -8,9 +8,6 @@ NETWORK_HOSTNAME="host"
 ACCESS_ADMIN_USER="admin"
 [disk]
 DISK_STRATEGY="flake"
-[catalog]
-CATALOG_URL="https://example.com/catalog.git"
-CATALOG_ACTION="none"
 [flake]
 FLAKE_LOCATION="/var/flake"
 FLAKE_SOURCE="local"

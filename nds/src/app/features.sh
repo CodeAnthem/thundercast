@@ -3,7 +3,7 @@
 # NDS - Feature load
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Date:          Created: 2026-09-24 | Modified: 2026-09-26
-# Description:   Session, actions, recipe, realize, then wizard when that tree exists.
+# Description:   Session, actions, recipe, cook, then wizard when that tree exists.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
@@ -20,6 +20,11 @@ _nds_load_features() {
 
     import_dir "${app_dir}/session" --depth 0 || return 1
     import_dir "${app_dir}/utility" --depth 0 || return 1
+    local _nds_util
+    for _nds_util in pkg age disk flake git hwconfig facter nixcfg nixos qr sops targetSeed; do
+        nds_requireUtility "$_nds_util" || return 1
+    done
+    eventRun utility.load || return 1
     import_dir "${app_dir}/action" --depth 0 || return 1
     # shellcheck source=confirm.sh
     source "${app_dir}/confirm.sh" || return 1
@@ -29,7 +34,7 @@ _nds_load_features() {
     source "${app_dir}/pipeline.sh" || return 1
     import_dir "${src_dir}/recipe" --depth 0 || return 1
     import_dir "${src_dir}/recipe/schema" --depth 0 || return 1
-    import_dir "${src_dir}/realize" --depth 0 || return 1
+    import_dir "${src_dir}/cook" --depth 0 || return 1
     if [[ -d "$wizard" ]]; then
         import_dir "$wizard" --depth 0 || return 1
         [[ -d "${wizard}/askers" ]] && import_dir "${wizard}/askers" --depth 0

@@ -1,5 +1,7 @@
 # NDS refactor — architecture and port order
 
+> **Superseded for execution by `nds/src/HANDOFF.md`.** Read that file. Open this one only for a section it cites. §0 below is frozen at the state of the review; the live status is in `HANDOFF.md` §2.
+
 This file is the implementer's spec. It supersedes the "Next edit" in `nds/.wip/OPEN.md` (which pointed at `app/settings/prompt.md`; that edit is cancelled by this plan). `REFACTOR-BRIEF.md` was context for writing this file and is deleted.
 
 Vocabulary: a **group** is what the old tree called a preset — settings that belong together (network, disk, …). The settingsManager idea (per-action required settings, validation, missing-input detection, env preconfiguration) is kept; only its implementation changes from five hand-written hooks per preset to one declaration per field. Where this file is silent, do the smallest thing that keeps the rules in §2 and §4 true. Do not add options, hooks, flags, or formats that this file does not name.
@@ -23,17 +25,20 @@ This block is the only part of this file the implementer edits. §1–§8 are th
 
 - [x] 0 gate
 - [x] 1 recipe contract
-- [x] 2 tools
-- [x] 3 realize and bundle
+- [x] 2 tools (structure; behaviour gaps in §9.1)
+- [ ] 3 realize and bundle — **reopened by review**, see §9.1
 - [x] 4 pipeline (unattended)
-- [x] 5 actions (builtin + fleet)
-- [x] 6 wizard (interactive)
+- [ ] 5 actions (builtin + fleet) — **reopened by review**, see §9.2
+- [ ] 6 wizard (interactive) — **reopened by review**, see §9.3
 - [x] 7 delete legacy
-- [x] 8 ship
+- [ ] 8 ship — **reopened**: `6.0.0` is committed as `b89045e` but the tree cannot install; do not tag or push before §9 is closed
+- [ ] 9 repair pass — **the current step**; work §9.1 → §9.4 in order, gate with §9.5
 
-**Whole-refactor done when** every box is ticked, `bash nds/dev/selftest.sh` exits 0, `bash nds/dev/shellcheck.sh` is clean, `nds/src.old` does not exist, and the banned-name grep in step 7 returns nothing.
+**Whole-refactor done when** every box is ticked, `bash nds/dev/selftest.sh` exits 0, `bash nds/dev/shellcheck.sh` is clean, `nds/src.old` does not exist, the banned-name grep in step 7 returns nothing, and every §9.5 gate passes.
 
 **Log**
+
+- 2026-09-26 review of `b89045e`: layout, contracts, skip store, recipe module, pipeline shape match the plan. Behaviour was not ported: realize calls four functions that do not exist and passes wrong arguments to five disk tools; toolkit cook writes hard-coded fake keys; scaffold, quickstart, verify, diag, preflight, git wizard are stubs; fixtures were edited to satisfy a schema bug instead of fixing the schema. Steps 3, 5, 6, 8 reopened; §9 added. Legacy source for the port is commit `d60000a` at `nds/src/realize/…`, `nds/src/wizard/…`, `nds/src/app/bundleManager/…`, `nds/src/app/settingsManager/…`, `nds/src/utilities/…`, `nds/src/actions/*/logic/…`, `fleet/nds-actions/*/logic/…` — read with `git show d60000a:<path>`. `nds/src.old` was never tracked and is gone from disk; do not look for it.
 
 - 2026-09-26 step 0: gate green, three tests under `nds/src`. `setup_TEST.sh` was untracked, so it was moved with `mv`. `.wip/` was not updated.
 - 2026-09-26 step 1: recipe contract green. A `.zip` load uses `unzip` when it exists, otherwise a stored-entry reader. `.wip/` was not updated.
@@ -44,6 +49,7 @@ This block is the only part of this file the implementer edits. §1–§8 are th
 - 2026-09-26 step 6: interactive fill, askers, confirm, and finish are in. Git access is the probe loop (existing key or new key); map/bridge screens were not carried. `nds/src.old/wizard`, `app.old`, and `lib` are gone. `nds_realize_preflight --warnings` feeds the confirm screen. `.wip/` was not updated.
 - 2026-09-26 step 7: `nds/src.old`, `nds/docs/src-conventions.md`, and `nds/src/app/workflow.md` are gone. ShellCheck no longer walks a legacy tree. Layout in `.cursor/project.md` and `nds/README.md` matches §3. The step 7 name search still matches this spec, because the catalogue lives in §1–§8. `.wip/` was not updated.
 - 2026-09-26 step 8: `nds/src/VERSION` is 6.0.0. CLI and recipe format are breaking. `.wip/` was not updated.
+- 2026-09-26 step 9 in progress: disk arguments, EFI, `nixos_setBootContext`, prefetch/install/verify/hardware, preflight errors, diag log, quickstart sections, catalog/toolkit/scaffold `--when`, locked `nds_recipe_set`, `INSTALL_ACTION` stays `remoteAction`, toolkit calls `age-keygen`/`ssh-keygen`, scaffold uses `FLAKE_HOST_DIR` and the host templates. Git screens now choose deploy or account, retry a title collision (rc 41), show the QR card, and retry one failed probe. Confirm prints every active group (choice labels, secrets as `(file)`). Finish includes the SSH `cat` hint, the online guide, and the sops enroll line. Toolkit restore unpacks a zip or directory into `secrets/toolkit/`. Cook writes `${LEAF_PUSH_DIR}/.toolkit/machines/<host>/keys/age.pub`. `git.map` is `owner/repo<TAB>/root/.ssh/nds/<safeurl>` and the target gets `tcast-git-ssh` plus its two libs. dropped `_nds_git_install_nds_helpers_to_target` full tcast tree copy because the installed system only needs the ssh wrapper, `tcast_common.sh`, `tcast_git_ssh.sh`, and `git.map`. Still open: §9.4 docs and commits, G1, G7. `realize_TEST.sh` still stubs tool functions, which G3 does not allow. `.wip/` waits for §9.4.
 
 **Banned names** (must not appear in `nds/src` or `fleet/nds-actions` outside `.wip/`; step 7 greps for them): `nds_app_`, `SCRIPT_DIR`, `APP_DIR`, `nds_import_file`, `nds_ui_`, `nds_ask_user_to_proceed`, `nds_cfg_`, `nds_sm_`, `nds_preset_`, `nds_feat_cfg_`, `CONFIG_DATA`, `CONFIG_DEFAULTS`, `PRESET_REGISTRY`, `PRESET_META`, `PRESET_HOOKS`, `nds_step_`, `nds_install_log`, `NDS_UI_QUIET`, `NDS_RUNTIME_DIR`, `NDS_INSTALL_CONFIRMED`, `NDS_AUTO_CONFIRM`, `NDS_UNATTENDED`, `NDS_SKIP_MENU`, `NDS_<X>_SKIP` (old per-screen suffix form), `nds_realize_run`, `nds_realize_confirm`, `nds_hook_`, `nds_bundle_register_`, `remote_action_`, `NDS_REMOTE_ACTION_DID_INSTALL`, `NDS_PRESET_EXTRA`, `NDS_CFG_AA_NAME`, `git_store_`, `GIT_ENV_PREFIX`, `NDS_GIT_METHOD`, `NDS_GIT_KEY_`, `NDS_GIT_AUTH_SKIP`, `NDS_GIT_IMPORT`, `NDS_GIT_GH_`, `NDS_FLAKE_PROBE`, `NDS_CAST_`, `src.old`.
 
@@ -719,3 +725,74 @@ rg -n 'nds_app_|SCRIPT_DIR|APP_DIR|nds_import_file|nds_ui_|nds_ask_user_to_proce
 - Errors: `error "<KEY>: <problem>"` then a non-zero return. No `exit` outside `main.sh`. No return codes other than 0/1/2 (2 = back) unless a prompt defines it.
 - Logging: `session` scope for NDS events, `nixos` scope for installer output. `info` for steps, `debug` for skipped/ignored, `warn` for degraded, `error` for problems.
 - Tests never touch `/dev/sd*`, `/mnt`, or the network; tools are stubbed by name.
+
+## 9. Repair pass (added by review of `b89045e`)
+
+What went wrong in the first pass, so it is not repeated: every test stubbed the NDS tool *functions*, so a plan that called a function that does not exist, or called it with the wrong arguments, still passed. Fixtures were edited until validation passed instead of fixing the schema. Legacy files were read for their shape, not their behaviour. This section adds the missing gates and lists every defect found. Read the legacy file named in each item from `d60000a` before touching the new one.
+
+### 9.1 Realize and tools (reopens step 3, touches step 2)
+
+Legacy: `git show d60000a:nds/src/realize/{main,plan_classic,plan_flake,steps_disk,steps_boot,steps_flake,steps_hardware,preflight,verify,diag}.sh`.
+
+| # | Defect | Fix |
+|---|---|---|
+| R1 | `nixos_prefetchFlake`, `nixos_installFlake`, `nixos_verify`, `hwconfig_write` are called from `realize/` and defined nowhere | Port the legacy bodies: `nds_git_prefetch_flake_closure` → `nixos_prefetchFlake <flake_root> <keys_dir>` (iterates `flake_listLockGitEntries`, `nix build`/`fetchTree` with `git_sshCommand`); `_nds_realize_nixos_flake` → `nixos_installFlake <flake_root> <host> <host_dir> <hw_placement>` (build via `nixos_buildFlakeSystem`, `flake_gitUnstageHostFacts`, `nixos_activateSystem`, `nixos_ensureInstallArtifacts`, `--override-input hardware` when placement is `etc-nixos`); legacy `verify.sh` (152 lines) → `nds_realize_verify <aa> <kind>` in `realize/verify.sh` (not a tool wrapper); legacy `steps_hardware.sh` → `step_hardware <aa> <host_dir>`: `facter_write` + sanitize for flake, `hwconfig_generate` for classic, placement `host-dir` / `etc-nixos` / `skip`, always overwrite |
+| R2 | `step_disk`: `disk_luksFormat` is called on the whole disk *before* partitioning; `disk_partition disk` drops the encryption and UEFI arguments; `disk_mountRoot /mnt` passes the mount point as the encryption flag; `disk_diskoApply disk` drops 9 arguments; `nixos_ensureLiveStoreSpace` is gone | Port legacy `steps_disk.sh` exactly: `disk_unmountTarget /mnt`; `nixos_ensureLiveStoreSpace 64`; `disk_partition <disk> <ENCRYPTION> <BOOT_UEFI_MODE> [_step_luksFormat]` where the callback runs `disk_luksFormat <root_partition> <ENCRYPTION_PASSPHRASE_FILE> <ENCRYPTION_KEY_FILE>`; `disk_mountRoot <ENCRYPTION> /mnt`; disko: `disk_diskoApply <disk> <DISK_FS_TYPE> <DISK_SWAP_SIZE_MIB> "" "" <ENCRYPTION> <unlock> <DISK_DISKO_CONFIG> <BOOT_LOADER> "${work_dir}/disko"` with `unlock=keyfile` when key without password else `manual`; then initrd host key copy. The step reads `_R` and passes scalars; the tool signatures are the source of truth |
+| R3 | `step_efi` calls `disk_efiRegister <disk>`; the tool wants `<disk> <loader_path> [label]`; legacy `_nds_realize_register_efi` decided by UEFI mode and loader | Port `_nds_realize_register_efi <aa>`: no-op when `BOOT_UEFI_MODE != true`; loader path from `BOOT_LOADER` (`systemd-boot` → `\EFI\systemd\systemd-bootx64.efi`, `grub` → `\EFI\NixOS-boot\grubx64.efi` — take the exact strings from the legacy file) |
+| R4 | `nixos_setBootContext` is never called; bootloader repair and remount in `nixos_ensureInstallArtifacts` run with defaults | Call `nixos_setBootContext <BOOT_LOADER> <BOOT_UEFI_MODE> <DISK_TARGET> <ENCRYPTION>` at the top of every plan |
+| R5 | Flake local plan lacks `flake_hostStructureOk`, `flake_gitStageHostFiles` (stage host files so `nix flake` sees them), and passes `nixcfg_writeGeneratedHost` a made-up argument list | Restore the legacy step order from `plan_flake.sh` lines 56–91: disk → stage → hardware → generated host → structure check → git stage → prefetch → eval → install → git keys → sops → EFI → verify. `nixcfg_writeGeneratedHost <aa> <host_dir>` reads what it needs from `_R` |
+| R6 | `preflight.sh` only prints erase lines; legacy checked disk exists and is not mounted, systemd-boot/rEFInd on BIOS, remote reachability | Port `nds_realize_preflight_local` / `_remote` bodies as errors; keep the `--warnings` mode for the confirm screen and add the legacy warnings (small disk, existing partitions) |
+| R7 | `diag.sh` is a `debug` line; legacy wrote disk/mount/profile snapshots and a failure dump into the diagnostics log that `session/failure.sh` tails | Port `nds_realize_diag_snapshot`, `nds_realize_diag_after_partition`, `nds_realize_diag_step_failure` writing to `${ nds_session_dir logs; }/diag.log`; `_realize_step` calls the failure dump on a failing step; `install_logs.sh` publishes that file |
+| R8 | `bundle_quickstart.sh` is 27 lines; legacy was 373 lines of per-recipe first-login, LUKS, remote-unlock, sops, and toolkit instructions | Port the legacy generator reading `_R`; every section that existed must exist, keyed on the same recipe values |
+| R9 | `sops/ops/install_sops.sh` lost the `.toolkit/machines/<host>/keys/age.pub` write and the enroll note text | `sops_installKey` keeps: copy to `/mnt/etc/sops/age/keys.txt`, pub + private copy into `secrets/`, enroll note (legacy text), and — when `LEAF_PUSH_DIR` is set — the machine pub into `${LEAF_PUSH_DIR}/.toolkit/machines/<host>/keys/age.pub` (the pub is known at cook now, so write it in the leaf before the push step; move that write into the toolkit/addFleetHost cook, not into realize) |
+| R10 | `targetSeed_gitKeys` dropped `tcast-git-ssh` + `git.map` under `/mnt/var/lib/tcast/` | Port from legacy `install_git_keys_target.sh`: for each key in `GIT_KEYS_DIR` write `/mnt/root/.ssh/nds/<safeurl>`, plus the ssh config include and the `git.map` the tcast toolkit reads |
+| R11 | `utilities/git`: verify what remains of the provider internals actually runs (`git_github_gh.sh`, `git_github_api.sh`, `git_github_session.sh` are 700 lines that nothing in the new wizard calls) | Either wire them from `wizard/git` (§9.3) or delete them. Dead code is not allowed to stay because it "might be useful" |
+
+### 9.2 Actions (reopens step 5)
+
+Legacy: `git show d60000a:fleet/nds-actions/toolkit/logic/install_flake_toolkit.sh`, `…/toolkit/hooks/write_operator_pubs.sh`, `nds/src/wizard/install/ui/install_flake_scaffold.sh`, `nds/src/actions/installFlake/logic/install_flake_leaf.sh`, `nds/src/actions/remoteAction/logic/install_flake_cast.sh`.
+
+| # | Defect | Fix |
+|---|---|---|
+| A1 | `toolkit/setup.sh` writes literal `AGE-SECRET-KEY-1TOOLKIT` and `toolkit-ssh-private` as the operator keys | `action_cook` calls `age_keygen -o` and `ssh-keygen -t ed25519 -N ""` through the tools (legacy `nds_toolkit_generate_operator`), derives the pubs with `age_keygen -y` / `ssh-keygen -y`, and writes those. Tests stub the *binaries* (§9.5 G3), not the cook |
+| A2 | Toolkit restore (`TOOLKIT_MODE=restore`, `TOOLKIT_BUNDLE`) is not implemented | Port `nds_toolkit_restore_from_bundle` (zip or dir → `secrets/toolkit/`) and branch on `TOOLKIT_MODE` |
+| A3 | `nds_toolkit_seed_scripts_to_target` ignores its first argument, clones to `src` and links `current → src`; legacy linked `current → src/fleet/toolkit`, set the origin remote, and `chmod +x` the scripts | Port the legacy body; signature `<mnt> <thundercast_url>`; the hook is registered with those arguments bound |
+| A4 | `addFleetHost/logic/scaffold.sh` copies `.roles/<role>` verbatim; legacy rendered the `*.tmpl` files in `actions/installFlake/templates/` (still present, unused) with hostname, disk, encryption, network values | Port the template rendering from legacy `install_flake_scaffold.sh` (the apply half) into `nds_fleet_scaffold_host <aa> <leaf> <system> <host> <role>`; delete the templates only if the port does not use them |
+| A5 | `addFleetHost` and `toolkit` cook hard-code `hosts/x86_64-linux` | Use `FLAKE_HOST_DIR` |
+| A6 | `remoteAction/setup.sh` "second accept" only prints `action_preview`; nothing asks | After `import_file` of the catalog action, call `_nds_action_ui_preview` (the same confirm the first accept uses) unless `nds_skip action.preview`; decline returns 1 |
+| A7 | `remoteAction/setup.sh` clones only when unattended, relying on the asker having cloned; a `--recipe` interactive run has no clone | Clone when `work/catalog/.git` is absent, regardless of mode |
+| A8 | `apply` enables all groups, but `catalog`, `toolkit`, `scaffold` have no `--when`, so a restored classic or installFlake recipe fails validation on `CATALOG_URL`. Fixtures were given a fake `CATALOG_URL` to hide this | `nds_schema_group catalog … --when 'INSTALL_ACTION=remoteAction'`, `toolkit … --when 'INSTALL_ACTION=toolkit'`, `scaffold … --when 'INSTALL_ACTION=addFleetHost'`. Remove `CATALOG_*` from `classic_min.recipe` and `flake_local.recipe`. `classic_min.recipe` gets `DISK_STRATEGY=nds` and a `DISK_TARGET`; tests that need the `disk` type check to pass stub `disk_canUse`/`-b` via the §9.5 G3 helper, not by changing the fixture's meaning |
+| A9 | `INSTALL_ACTION` ends up as the catalog action name after a remote cook, so `apply` cannot find `remoteAction` to re-clone | Keep `INSTALL_ACTION=remoteAction`; record the inner action in `CATALOG_ACTION` (already a key). `_nds_pipeline_loadRecipeAction` handles `remoteAction` per §4.3 |
+| A10 | `nds_recipe_set` ignores locks | Locked keys are rejected by `nds_recipe_set` with `error` and return 1, except through `_nds_pipeline_apply_lines … lock` and the pipeline's own `INSTALL_ACTION` set. Add the test |
+| A11 | `test` and `uiSmoke` are 18-line stubs | Acceptable only if `NDS_TEST` still shows them and `uiSmoke` walks every type asker once (so a TTY pass can eyeball the widgets). Port that walk |
+
+### 9.3 Wizard (reopens step 6)
+
+Legacy: `git show d60000a:nds/src/wizard/git/…` (access, keys, wizard, lib), `nds/src/wizard/install/ui/install_confirm.sh`, `nds/src/app/bundleManager/ui/bundle_finish.sh`.
+
+| # | Defect | Fix |
+|---|---|---|
+| W1 | `wizard/git/` is 232 lines; the gh device-login flow, key title collision handling, account-vs-deploy key choice, QR card, per-owner session key, and closure walk with per-URL retry are gone. `gh_deviceLogin` / `gh_addDeployKey` are one-line calls into 700 lines of provider code that may not match | Port the legacy screens per §4.7 boundary rule: keep their internals, change reads/writes to `nds_recipe_*`, key paths to `${GIT_KEYS_DIR}/<safeurl>`, probes to `git_probe`. The closure walk is `nds_ask_gitAccess`'s loop. Every `gh_*` function the wizard calls must exist and have a test that stubs the `gh` binary |
+| W2 | `confirm.sh` shows two lines; legacy showed the full settings summary per group, the wipe target, remote target, and preflight warnings | `nds_confirm` renders every active group with `ui_kv` (schema labels, choice labels, secrets as `(file)`), then the preflight warnings, then the confirm. Port the legacy wording |
+| W3 | `finish.sh` dropped the tar.gz name in the copy hint's SSH variant, the online-guide link, and the remote-install next-steps (sops enroll note) | Port from legacy `bundle_finish.sh` and `nds_install_remote_finish` |
+| W4 | `ask.sh`: verify the summary loop offers `Edit <group>` and re-asks only failing fields on Accept-with-problems (§4.6). If it does, add the test; if not, implement | — |
+
+### 9.4 Housekeeping
+
+- `nds/.wip/OPEN.md` was not updated in any step. Update it now: step boxes mirror §0, "Ops gates" entry about the parked selftest is done, legacy references removed.
+- `nds/.wip/TESTING.md`: env names per §4.3 / §4.9 (`NDS_MODE`, `NDS_SKIP_*`, `NDS_REBOOT`, `GIT_KEYS_DIR`, `TOOLKIT_*`, `CATALOG_*`).
+- `nds/src/actions/README.md` still describes the preset lifecycle; rewrite to §4.4.
+- `nds/src/logs/*.log` are committed runtime output; `git rm --cached` them and add `nds/src/logs/` to `.gitignore`.
+- Commit the pending essentials fixes (`eventBus_dispatch.sh`, `prompt.sh`, `sessionDir.sh`, their tests and READMEs) as their own commit before the repair commit; NDS tests run against them.
+
+### 9.5 New gates (apply to §9 and to every later step)
+
+- **G1 Resolution.** `nds/src/realize/realize_TEST.sh` and `nds/src/app/pipeline_TEST.sh` load the real `utilities/`, `recipe/`, `realize/`, `app/` trees (no function stubs), then for every identifier matching `^(disk|nixos|nixcfg|flake|git|gh|facter|hwconfig|sops|targetSeed|pkg|age|qr|step|nds)_[A-Za-z_]+` that appears as a command in `nds/src/realize/*.sh`, `nds/src/app/*.sh`, `nds/src/actions/*/setup.sh`, `fleet/nds-actions/*/setup.sh`, `fleet/nds-actions/*/logic/*.sh` (extract with `rg -o`), assert `declare -F` succeeds. One `bts_fail` per unresolved name.
+- **G2 Arity.** Every tool function in `utilities/` that realize or a cook calls has a `# Arguments:` header block, and a test in that tool's `*_TEST.sh` that calls it with those arguments and a stubbed binary. Realize tests do not stub tool functions.
+- **G3 Stub binaries, not functions.** `nds/src/setup_TEST.sh` gains `nds_test_stubBins <name>…`: creates a temp dir of executable shims that append `name args` to `$NDS_TEST_BIN_LOG` (and honour `NDS_TEST_BIN_RC_<NAME>` for a forced exit code), prepends it to `PATH`; `nds_test_stubBins_drop` restores. Stub set for realize tests: `git nix nix-build nixos-install nixos-enter cryptsetup sgdisk parted partprobe wipefs mkfs.ext4 mkfs.vfat mkswap swapon mount umount mountpoint lsblk blkid findmnt efibootmgr age-keygen ssh-keygen ssh nixos-facter nixos-generate-config disko zip unzip reboot gh`. Function stubs are allowed only for `prompt`, `reboot`, and the three `realize.*`/`bundle.collect` test hooks.
+- **G4 No fake material.** `rg -n 'AGE-SECRET-KEY-1TOOLKIT|toolkit-ssh-private|example\.com|placeholder' nds/src fleet/nds-actions --glob '!*_TEST.sh' --glob '!*.md'` prints nothing.
+- **G5 Fixture honesty.** No fixture carries a key its group's `--when` would not activate for that recipe's `INSTALL_ACTION`/`INSTALL_KIND`. `classic_min.recipe` has no `CATALOG_*`, no `FLAKE_*`, `DISK_STRATEGY=nds`.
+- **G6 Parity ledger.** Before deleting or shrinking any legacy function during a port, write one line in §0 Log: `dropped <legacy fn> because <reason>`. A behaviour that has no such line and is missing is a defect. Reviewers grep the legacy file's function list against the new tree.
+- **G7 Real invocation.** After §9.1–§9.3: `NDS_MODE=unattended NDS_ACTION=classicInstall NDS_DISK_TARGET=/dev/null … bash nds/src/app/main.sh` under `nds_test_stubBins` from a test (`app/main_TEST.sh`) reaches `nds_realize` and the stub log shows `sgdisk`/`parted`, `cryptsetup` (when encrypted), `nixos-install`, in that order. This is the first time `main.sh` runs; it runs only inside the test harness with stubbed binaries and `ROOTREEXEC_ROOT` unset.
+
+Order of work: 9.5 G3 helper first (everything else depends on it), then 9.1 top to bottom, then 9.2, then 9.3, then 9.4, then G1/G7. Each of 9.1, 9.2, 9.3 ends with G (§7) plus G1–G6. Tick step 9, then re-tick 3, 5, 6, then 8 (bump to `6.0.1`; the format did not change).

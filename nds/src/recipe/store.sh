@@ -20,6 +20,11 @@ nds_recipe_get() {
 
 nds_recipe_set() {
     local -n _nds_recipe_set_aa=$1
+    if [[ ${_NDS_SCHEMA_ATTR[$2|locked]:-} == 1 ]]; then
+        [[ ${_nds_recipe_set_aa[$2]:-} == "$3" ]] && return 0
+        error "$2: locked"
+        return 1
+    fi
     _nds_recipe_set_aa[$2]=$3
 }
 

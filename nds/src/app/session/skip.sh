@@ -100,7 +100,7 @@ nds_skip_list() {
 }
 
 nds_skip_register action.preview "accept the action preview"
-nds_skip_register cook.summary "ask only fields that fail validation"
+nds_skip_register recipe.summary "ask only fields that fail validation"
 nds_skip_register install.confirm "proceed without the wipe confirm"
 nds_skip_register finish.backup "do not wait for the bundle copy"
 nds_skip_register finish.reboot "reboot only when NDS_REBOOT=true" keep-on-yes

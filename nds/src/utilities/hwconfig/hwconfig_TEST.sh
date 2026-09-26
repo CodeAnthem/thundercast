@@ -33,4 +33,17 @@ suite_hwconfig() {
     _hw_eq "flake default → facter.json" "$out" "facter.json"
     out=${ hwconfig_artifactName flake legacy; }
     _hw_eq "flake legacy → hardware-configuration.nix" "$out" "hardware-configuration.nix"
+
+    nds_test_stubBins nixos-generate-config
+    local dest
+    dest=$(mktemp)
+    if hwconfig_generate "$dest" /tmp/hwroot >/dev/null 2>/dev/null \
+        && grep -q 'nixos-generate-config --root /tmp/hwroot --show-hardware-config' "$NDS_TEST_BIN_LOG" \
+        && [[ -s "$dest" ]]; then
+        _hw_ok "hwconfig_generate asks nixos-generate-config for that root"
+    else
+        _hw_fail "hwconfig_generate log was '$(<"$NDS_TEST_BIN_LOG")'"
+    fi
+    nds_test_stubBins_drop
+    rm -f "$dest"
 }

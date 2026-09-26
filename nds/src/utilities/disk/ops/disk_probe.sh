@@ -76,5 +76,7 @@ disk_probeState() {
 # Description: True when disk exists as a block device.
 disk_canUse() {
     local disk="$1"
-    [[ -n "$disk" && -b "$disk" ]]
+    [[ -n "$disk" ]] || return 1
+    [[ -b "$disk" ]] && return 0
+    lsblk -dn -o NAME "$disk" 2>/dev/null | grep -q .
 }

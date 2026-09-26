@@ -107,7 +107,7 @@ _nixcfg_section_note() {
     esac
 }
 
-# Description: Replace @@TOKEN@@ placeholders in a Nix block (literal, no eval).
+# Description: Replace @@TOKEN@@ markers in a Nix block (literal, no eval).
 # Arguments:
 # - content: <String> Block text
 # - pairs:   <String...> @@TOKEN@@ value …

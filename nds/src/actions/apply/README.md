@@ -1,25 +1,10 @@
 # apply
 
-Part A only: install from a complete settings recipe. No composer wizard.
+Load a sealed recipe or a bundle zip, review the active fields, then birth the machine. Every schema group is enabled. There are no pins and no `action_recipe`.
+
+The pipeline reloads the recipe's `INSTALL_ACTION` `setup.sh` so that action's hooks run. Its `action_recipe` does not run again.
 
 ```bash
-sudo bash nds/src/app/main.sh apply /path/to/host.recipe
-# same:
-sudo bash nds/src/app/main.sh --action apply --recipe /path/to/host.recipe
+bash nds/src/app/main.sh apply /path/to/host.recipe
+bash nds/src/app/main.sh apply /path/nds_bundle.zip --unattended
 ```
-
-`NDS_RECIPE_FILE` is equivalent to `--recipe`.
-
-## Recipe
-
-Sectioned `tc-recipe v1` or `export NDS_*=` lines. Leaf files: `.nds/hosts/<host>.recipe`.
-
-Registered secrets (`ACCESS_ADMIN_PASSWORD`, `ENCRYPTION_PASSPHRASE`, `TOOLKIT_AGE_KEY`, `TOOLKIT_SSH_KEY`) must be **file paths** (`*_FILE`). Values in the recipe are ignored.
-
-Kind is inferred: flake keys (`FLAKE_HOST` / `FLAKE_REPO_URL` / `FLAKE_LOCAL_PATH`) → flake Part A; otherwise classic (local only).
-
-## Validate first
-
-Apply loads the recipe, then the wizard reviews every active field. Incomplete recipes fail before disk wipe.
-
-To **write** a recipe, run a composer (classicInstall / installFlake / addFleetHost / toolkit) and save the export, or copy the leaf `.recipe` after a successful compose.

@@ -10,6 +10,43 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, 
 
 nds_skip_register install.confirm "proceed without the wipe confirm"
 
+_nds_confirm_display() {
+    local _con_key=$1 _con_value=$2 _con_type _con_labels _con_pair
+    local -a _con_parts=()
+    _con_type=${_NDS_SCHEMA_FIELD_TYPE[$_con_key]:-}
+    if [[ "$_con_type" == secret && -n "$_con_value" ]]; then
+        printf '%s' '(file)'
+        return 0
+    fi
+    if [[ "$_con_type" == choice && -n "$_con_value" ]]; then
+        _con_labels=$(nds_schema_attr "$_con_key" labels)
+        IFS='|' read -ra _con_parts <<< "$_con_labels"
+        for _con_pair in "${_con_parts[@]}"; do
+            if [[ "${_con_pair%%=*}" == "$_con_value" ]]; then
+                printf '%s' "${_con_pair#*=}"
+                return 0
+            fi
+        done
+    fi
+    printf '%s' "$_con_value"
+}
+
+_nds_confirm_groups() {
+    local _con_name=$1 _con_group _con_key _con_value
+    local -n _con_R=$1
+    while IFS= read -r _con_group; do
+        [[ -n "$_con_group" ]] || continue
+        nds_schema_groupIsActive "$_con_name" "$_con_group" || continue
+        ui_h "${_NDS_SCHEMA_GROUP_TITLE[$_con_group]:-$_con_group}"
+        while IFS= read -r _con_key; do
+            [[ -n "$_con_key" ]] || continue
+            nds_schema_isActive "$_con_name" "$_con_key" || continue
+            _con_value=$(_nds_confirm_display "$_con_key" "${_con_R[$_con_key]:-}")
+            ui_kv "$(nds_schema_attr "$_con_key" label)" "$_con_value"
+        done < <(nds_schema_groupFields "$_con_group")
+    done < <(nds_schema_groups)
+}
+
 _nds_confirm_strategy() {
     local _con_strategy=$1 _con_uefi=$2
     case "$_con_strategy" in
@@ -43,6 +80,7 @@ nds_confirm() {
         ui_h "Ready to install"
     fi
     ui_b "Review the summary below. Installation does not start until you confirm at the end."
+    _nds_confirm_groups R
     if [[ -n "$_con_host" ]]; then
         ui_h "Flake target"
         ui_i "${_con_path}#${_con_host} (source: ${_con_source}, mode: ${_con_mode})"
@@ -74,7 +112,7 @@ nds_confirm() {
     fi
     while IFS= read -r _con_line; do
         [[ -n "$_con_line" ]] && ui_b "$_con_line"
-    done < <(nds_realize_preflight --warnings R)
+    done < <(nds_cook_preflight --warnings R)
     prompt --type confirm "Start installation now" || _con_rc=$?
     [[ "$_con_rc" -eq 0 && "$UI_PROMPT_RESULT" == y ]] || return 1
     info "Installation confirmed — starting now"

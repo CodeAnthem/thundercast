@@ -8,7 +8,7 @@
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
-nds_skip_register cook.summary "ask only fields that fail validation"
+nds_skip_register recipe.summary "ask only fields that fail validation"
 
 _nds_ask_current() {
     local _ask_cur
@@ -208,7 +208,7 @@ _nds_wizard_review() {
 
 nds_wizard_fill() {
     local _wiz_name=$1 _wiz_mode=all _wiz_group="" _wiz_problems=0
-    if nds_skip cook.summary; then
+    if nds_skip recipe.summary; then
         _wiz_mode=failing
     fi
     while true; do
@@ -220,7 +220,7 @@ nds_wizard_fill() {
         esac
         _wiz_problems=0
         nds_recipe_validate "$_wiz_name" || _wiz_problems=$?
-        if nds_skip cook.summary; then
+        if nds_skip recipe.summary; then
             (( _wiz_problems == 0 )) && return 0
             [[ "$_wiz_mode" == failing && "$_nds_wiz_asked" -eq 0 ]] && return 1
             _wiz_mode=failing

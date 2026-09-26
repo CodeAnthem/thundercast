@@ -24,7 +24,7 @@ suite_skip() {
     export NDS_MODE=unattended
     nds_mode_resolve
     rc=0
-    for name in action.preview cook.summary install.confirm finish.backup finish.reboot; do
+    for name in action.preview recipe.summary install.confirm finish.backup finish.reboot; do
         nds_skip "$name" || rc=1
     done
     if [[ "$rc" -eq 0 ]]; then

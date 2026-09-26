@@ -24,4 +24,32 @@ suite_targetSeed() {
         bts_fail "copied mode was ${mode}"
     fi
     rm -rf "$src" "$mnt"
+
+    local keys map line
+    keys=$(mktemp -d)
+    mnt=$(mktemp -d)
+    printf '%s\n' 'priv' > "${keys}/github.com_codeanthem_thundercast"
+    targetSeed_gitKeys "$keys" "$mnt" || { bts_fail "git keys install failed"; return; }
+    map=$(<"${mnt}/var/lib/tcast/git.map")
+    line=$'codeanthem/thundercast\t/root/.ssh/nds/github.com_codeanthem_thundercast'
+    if [[ "$map" == *"$line"* && -x "${mnt}/var/lib/tcast/bin/tcast-git-ssh" \
+        && -f "${mnt}/root/.ssh/nds/github.com_codeanthem_thundercast" ]]; then
+        bts_pass "git.map is owner/repo and tcast-git-ssh is installed"
+    else
+        bts_fail "git map was '${map}'"
+    fi
+    # shellcheck source=../../../../tcast/lib/tcast_common.sh
+    source "$(dirname "${BASH_SOURCE[0]}")/../../../../tcast/lib/tcast_common.sh"
+    # shellcheck source=../../../../tcast/lib/tcast_git_ssh.sh
+    source "$(dirname "${BASH_SOURCE[0]}")/../../../../tcast/lib/tcast_git_ssh.sh"
+    export TCAST_GIT_SSH_MAP="${mnt}/var/lib/tcast/git.map"
+    export TCAST_GIT_SSH_ROOT="$mnt"
+    local looked
+    looked=$(_tcast_git_ssh_lookup_key codeanthem/thundercast)
+    if [[ "$looked" == "${mnt}/root/.ssh/nds/github.com_codeanthem_thundercast" ]]; then
+        bts_pass "tcast reads the written git.map"
+    else
+        bts_fail "tcast lookup was '${looked}'"
+    fi
+    rm -rf "$keys" "$mnt"
 }

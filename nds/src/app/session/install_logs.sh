@@ -30,15 +30,15 @@ nds_session_logs_root_dir() {
 }
 
 nds_session_logs_home_diag() {
-    printf '%s/nds_install_diag.log\n' "${ _nds_session_logs_root_dir; }"
+    printf '%s/nds_install_diag.log\n' "${ nds_session_logs_root_dir; }"
 }
 
 nds_session_logs_home_nds() {
-    printf '%s/nds.log\n' "${ _nds_session_logs_root_dir; }"
+    printf '%s/nds.log\n' "${ nds_session_logs_root_dir; }"
 }
 
 nds_session_logs_home_nixos() {
-    printf '%s/nixosInstallation.log\n' "${ _nds_session_logs_root_dir; }"
+    printf '%s/nixosInstallation.log\n' "${ nds_session_logs_root_dir; }"
 }
 
 _nds_session_logs_chown_files() {

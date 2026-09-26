@@ -10,7 +10,7 @@
 # Returns:
 # - <String> path (stdout)
 nixos_targetRoot() {
-    printf '%s\n' "${NDS_NIX_TARGET_ROOT:-/mnt}"
+    printf '%s\n' "${_NDS_TARGET_ROOT:-${NDS_NIX_TARGET_ROOT:-/mnt}}"
 }
 
 # Description: Free space in MB on the active Nix store (/nix/store on live ISO).

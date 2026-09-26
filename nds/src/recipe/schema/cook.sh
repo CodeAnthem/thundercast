@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
 # ==================================================================================================
-# NDS - Realize hardware artefacts
+# NDS - Schema group cook
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Date:          Created: 2026-09-26 | Modified: 2026-09-26
-# Description:   Always overwrite the hardware file at the destination.
+# Description:   Keys set by action_recipe. Always enabled. Never asked.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
-step_hardware() {
-    local -n _R=$1
-    local _hw_dest=$2
-    local _hw_place=${_R[FLAKE_HARDWARE_PLACEMENT]:-host-dir}
-    [[ "$_hw_place" == skip ]] && return 0
-    hwconfig_write "$_hw_dest"
-}
+nds_schema_group cook "Cook"
+nds_schema_field cook LEAF_PUSH_DIR dir
+nds_schema_field cook LEAF_PUSH_MESSAGE string
+nds_schema_field cook TARGET_SEED_DIR dir
+nds_schema_enable cook

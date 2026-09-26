@@ -30,16 +30,16 @@ nds/src/
   setup_TEST.sh              shared test boot; provides nds_test_session
   lib/                       lib_bool.sh, lib_rand.sh
   app/                       framework, no install knowledge
-    features.sh              load order: session, utility, action, recipe, recipe/schema, realize, wizard, wizard/askers, wizard/git
+    features.sh              load order: session, utility, action, recipe, recipe/schema, cook, wizard, wizard/askers, wizard/git
     session/                 cli, mode, skip, dirs, exit, failure, install logs
     utility/utility.sh       nds_requireUtility, nds_utility_addRoot
     action/                  discover, store, check, UI
-    pipeline.sh              nds_pipeline_run, nds_pipeline_cook
+    pipeline.sh              nds_pipeline_run, nds_pipeline_recipe
     confirm.sh               summary, wipe warning, yes/no
     finish.sh                bundle hints, USB key hints, reboot question
   recipe/                    the contract. No UI. No tools.
   wizard/                    interactive driver. ask.sh, askers/, git/
-  realize/                   birth from one sealed file. No TTY.
+  cook/                      birth from one sealed file. No TTY.
   utilities/<name>/main.sh   tools
   actions/<name>/setup.sh    builtin recipe makers
 fleet/nds-actions/<name>/setup.sh
