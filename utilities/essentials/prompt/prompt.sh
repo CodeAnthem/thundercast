@@ -28,7 +28,21 @@ _essentials_prompt_init() {
     # shellcheck source=./prompt_multi.sh
     _loadEssential "prompt/prompt_multi.sh"
 
+    if declare -f eventCreate &>/dev/null; then
+        eventCreate prompt.pre || return 1
+        eventCreate prompt.post || return 1
+    fi
+
     _essentials_init_mark prompt
+}
+
+# prompt.pre / prompt.post. Skipped while another eventRun is on the stack.
+_prompt_emit() {
+    local name="$1"
+    declare -f eventHas &>/dev/null || return 0
+    eventHas "$name" || return 0
+    [[ "${__EVENT_DISPATCHING:-false}" == true ]] && return 0
+    eventRun "$name" || true
 }
 
 _prompt_err() {
@@ -471,21 +485,23 @@ prompt() {
     if declare -f eventRun &>/dev/null && eventHas ui.line.take; then
         eventRun ui.line.take || true
     fi
+    _prompt_emit prompt.pre
 
+    rc=0
     case "${__PROMPT[type]}" in
-        confirm) _ui_promptConfirm ;;
-        text) _ui_promptText ;;
-        multiline) _ui_promptMultiline ;;
-        select) _ui_promptSelect ;;
-        multi-select) _ui_promptMultiSelect ;;
-        key) _ui_promptKey ;;
-        pause) _ui_promptPause ;;
+        confirm) _ui_promptConfirm || rc=$? ;;
+        text) _ui_promptText || rc=$? ;;
+        multiline) _ui_promptMultiline || rc=$? ;;
+        select) _ui_promptSelect || rc=$? ;;
+        multi-select) _ui_promptMultiSelect || rc=$? ;;
+        key) _ui_promptKey || rc=$? ;;
+        pause) _ui_promptPause || rc=$? ;;
         *)
             _prompt_err "prompt: unknown type ${__PROMPT[type]}"
-            return 1
+            rc=1
             ;;
     esac
-    rc=$?
+    _prompt_emit prompt.post
     return "$rc"
 }
 

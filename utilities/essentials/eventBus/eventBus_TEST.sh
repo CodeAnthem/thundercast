@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Event Bus tests
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-17 | Modified: 2026-09-18
+# Date:          Created: 2026-09-17 | Modified: 2026-09-25
 # ==================================================================================================
 #
 # eventRegister requires the hook function to already exist.
@@ -25,6 +25,13 @@ _eh_hook_nested() {
     eventRun test.eh.other || _EH_INNER=$?
     return 0
 }
+_eh_hook_filler() { _EH_ORDER+=("filler"); }
+_eh_hook_drop() {
+    eventUnregister test.eh.filler _eh_hook_filler
+    _EH_ORDER+=("drop")
+}
+_eh_hook_keep() { _EH_ORDER+=("keep"); }
+_eh_hook_other() { _EH_ORDER+=("other"); }
 
 suite_eventBus() {
     local n rc
@@ -150,4 +157,21 @@ suite_eventBus() {
     fi
     eventUnregister test.eh.sete _eh_hook_fail
     eventUnregister test.eh.sete _eh_hook_after
+
+    # Unregister rebuilds the parallel arrays. Later hooks must stay the ones this run started with.
+    _EH_ORDER=()
+    eventRegister test.eh.filler _eh_hook_filler 50
+    eventRegister test.eh.shift _eh_hook_drop 10
+    eventRegister test.eh.shift _eh_hook_keep 50
+    eventRegister test.eh.other _eh_hook_other 50
+    rc=0
+    eventRun test.eh.shift || rc=$?
+    if [[ "$rc" -eq 0 && "${_EH_ORDER[*]}" == "drop keep" ]]; then
+        bts_pass "unregister during a run keeps the remaining hooks"
+    else
+        bts_fail "shift rc=$rc order='${_EH_ORDER[*]}'"
+    fi
+    eventUnregister test.eh.shift _eh_hook_drop
+    eventUnregister test.eh.shift _eh_hook_keep
+    eventUnregister test.eh.other _eh_hook_other
 }

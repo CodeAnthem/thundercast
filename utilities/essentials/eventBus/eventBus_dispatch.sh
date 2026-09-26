@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Event Bus - Dispatch
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-17 | Modified: 2026-09-24
+# Date:          Created: 2026-09-17 | Modified: 2026-09-25
 # Description:   Runs a name's hooks, and skips the rest after eventStop or a non-zero return.
 # ==================================================================================================
 
@@ -61,16 +61,21 @@ eventRun() {
         esac
     fi
 
-    local -a _eh_order=()
+    local -a _eh_order=() _eh_funcs=()
     local prev_dispatch="${__EVENT_DISPATCHING}"
     _essentials_eventBus_sortedIndices "$event" _eh_order
+
+    # Names, not indexes. A hook may eventUnregister and rebuild the arrays.
+    local _eh_i
+    for _eh_i in "${_eh_order[@]}"; do
+        _eh_funcs+=("${__EH_FUNC[_eh_i]}")
+    done
 
     __EVENT_DISPATCHING=true
     __EVENT_STOP=0
 
-    local _eh_i _eh_func rc=0
-    for _eh_i in "${_eh_order[@]}"; do
-        _eh_func="${__EH_FUNC[_eh_i]}"
+    local _eh_func rc=0
+    for _eh_func in "${_eh_funcs[@]}"; do
         rc=0
         "$_eh_func" "$@" || rc=$?
         ((rc != 0)) && break

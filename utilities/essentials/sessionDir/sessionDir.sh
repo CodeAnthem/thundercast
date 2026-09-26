@@ -48,7 +48,7 @@ _essentials_sessionDir_purgeStale() {
         rm -rf -- "$d" && removed=$((removed + 1)) || true
     done
     eval "${_rt_ng}"
-    (( removed > 0 )) && info "SessionDir: removed ${removed} stale dir(s) under ${base}"
+    (( removed > 0 )) && debug "SessionDir: removed ${removed} stale dir(s) under ${base}"
     return 0
 }
 

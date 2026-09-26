@@ -45,7 +45,7 @@ eventRun app.ready "ok"
 
 ## Design
 
-Hooks live in parallel arrays. Dispatch is `"$func" "$@" || rc=$?`, so `set -e` does not abort the run. Stop and dispatch flags reset once after the loop. This feature does not count errors or install traps.
+Hooks live in parallel arrays. Dispatch copies the function names, then calls `"$func" "$@" || rc=$?`, so `set -e` does not abort the run and a hook that `eventUnregister`s cannot retarget the rest of this run. Stop and dispatch flags reset once after the loop. This feature does not count errors or install traps.
 
 ## Develop
 
