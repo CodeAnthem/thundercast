@@ -16,7 +16,7 @@
 # - root:           <String|optional> Mounted target root (default /mnt)
 # Returns:
 # - <Bool> 0 on success
-nds_nixcfg_write_mounts_module() {
+nixcfg_write_mounts_module() {
     local dest="$1"
     local hostname="$2"
     local disk="$3"
@@ -90,6 +90,6 @@ nds_nixcfg_write_mounts_module() {
         printf '%s\n' '}'
     } >"$dest" || return 1
 
-    nds_install_log "mounts written for ${hostname} (root UUID ${root_uuid}, boot UUID ${boot_uuid})"
+    debug "mounts written for ${hostname} (root UUID ${root_uuid}, boot UUID ${boot_uuid})"
     return 0
 }

@@ -3,7 +3,7 @@
 # disk utility - partition / disko / LUKS / mount (no step UI)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Date:          Created: 2026-09-02 | Modified: 2026-09-02
-# Description:   Flexible disk prep API. Shot caller owns prompts and nds_step_*.
+# Description:   Flexible disk prep API. The caller owns prompts and task progress.
 # ==================================================================================================
 
 if (( BASH_VERSINFO[0] < 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] < 3) )); then
@@ -11,9 +11,6 @@ if (( BASH_VERSINFO[0] < 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] < 3) ))
     return 1 2>/dev/null || exit 1
 fi
 
-if ! declare -F error >/dev/null 2>&1; then
-    error() { printf 'DISK: %s\n' "$1" >&2; }
-fi
 if ! declare -F err >/dev/null 2>&1; then
     err() { error "${FUNCNAME[1]:-disk}: $1"; }
 fi

@@ -1,67 +1,22 @@
 #!/usr/bin/env bash
 # ==================================================================================================
-# NDS - Install from flake action
+# NDS - Install from a flake
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-06-28 | Modified: 2026-09-03
-# Description:   Install a NixOS host from an existing flake via nixos-install --flake
+# Date:          Created: 2026-07-01 | Modified: 2026-09-26
+# Description:   Install NixOS from a local or remote flake
 # ==================================================================================================
 
-# ----------------------------------------------------------------------------------
-# Presets
-# ----------------------------------------------------------------------------------
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
-action_presets() {
-    # platform (VM guest tools) is classicInstall-only — flake hosts use facter + flake modules
-    printf '%s\n' installFlake boot disk encryption
+action_groups() {
+    printf '%s\n' install flake git boot disk encryption
 }
-
-action_config() {
-    nds_cfg_preset_set_display installFlake "Your flake"
-    nds_cfg_preset_set_priority installFlake 20
-    nds_cfg_preset_set_priority boot 21
-    nds_cfg_preset_set_priority disk 22
-    nds_cfg_preset_set_priority encryption 23
-}
-
-# ----------------------------------------------------------------------------------
-# Preview
-# ----------------------------------------------------------------------------------
 
 action_preview() {
-    nds_ui_h "Install NixOS from your flake"
-    nds_ui_b ""
-    nds_ui_b "After confirmation, NDS will:"
-    nds_ui_i "ask for flake URL (or path) and prove git access (root + flake.lock inputs)"
-    nds_ui_i "list nixosConfigurations and let you pick a host"
-    nds_ui_i "ask install mode / target disk (or remote IP)"
-    nds_ui_i "open the settings manager for boot / disk / encryption"
-    nds_ui_i "local: partition, facter, flake install — or remote: nixos-anywhere"
-    nds_ui_b ""
+    ui_h "Install NixOS from a flake"
+    ui_b "Choose the flake, the host, git access, boot, disk, and encryption."
 }
 
-# ----------------------------------------------------------------------------------
-# Setup
-# ----------------------------------------------------------------------------------
-
-action_setup() {
-    nds_mode_resolve || true
-
-    # URL → git access → host pick → target, before the full settings menu.
-    nds_app_actionManager_logic_callFeature nds_flake_install_gate || exit 11
-
-    if ! nds_sm_validate; then
-        if nds_mode_is_unattended; then
-            error "Unattended mode: configuration incomplete"
-            exit 11
-        fi
-        nds_cfg_prompt_errors
-        nds_sm_validate || exit 11
-    fi
-
-    nds_sm_menu || exit 12
-
-    # Compose: settings → env mirror, closure access, disko detection. Then hand over.
-    nds_flake_install_prepare_and_verify || exit 11
-    nds_cfg_set INSTALL_KIND "flake"
-    nds_realize_run || exit $?
+action_pins() {
+    printf '%s\n' INSTALL_KIND=flake
 }

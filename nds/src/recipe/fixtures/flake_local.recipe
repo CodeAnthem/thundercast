@@ -1,0 +1,19 @@
+# nds-recipe 1
+[install]
+INSTALL_KIND="flake"
+INSTALL_MODE="local"
+[network]
+NETWORK_HOSTNAME="host"
+[access]
+ACCESS_ADMIN_USER="admin"
+[disk]
+DISK_STRATEGY="flake"
+[catalog]
+CATALOG_URL="https://example.com/catalog.git"
+CATALOG_ACTION="none"
+[flake]
+FLAKE_LOCATION="/var/flake"
+FLAKE_SOURCE="local"
+FLAKE_LOCAL_PATH="/var/flake"
+FLAKE_HOST="control"
+FLAKE_INSTALL_PATH="/mnt/etc/nixos"

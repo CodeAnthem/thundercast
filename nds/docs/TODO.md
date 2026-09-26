@@ -12,7 +12,7 @@ Write when the installer story is stable. Prefer short how-tos over essays.
 
 ## Committed
 
-- [src-conventions.md](src-conventions.md) — `nds/src/` naming and layering
+- [src-conventions.md](src-conventions.md) — `nds/src.old/` naming and layering
 
 ## Local (gitignored)
 

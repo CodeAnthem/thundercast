@@ -54,7 +54,7 @@ flake_gitStageHostFiles() {
     for rel in "${files[@]}"; do
         rel="${rel#"${flake_root}/"}"
         git -C "$flake_root" add -f "$rel" >>"$log" 2>&1 || return 1
-        nds_install_log "flake: git add -f ${rel}"
+        debug "flake: git add -f ${rel}"
     done
     return 0
 }
@@ -86,7 +86,7 @@ flake_gitUnstageHostFacts() {
     for line in "${needed[@]}"; do
         if ! grep -qxF "$line" "$gi" 2>/dev/null; then
             printf '%s\n' "$line" >>"$gi"
-            nds_install_log "flake: append .gitignore ${line}"
+            debug "flake: append .gitignore ${line}"
         fi
     done
 
@@ -95,9 +95,9 @@ flake_gitUnstageHostFacts() {
         rel="${rel#"${flake_root}/"}"
         git -C "$flake_root" reset HEAD -- "$rel" >>"$log" 2>&1 || true
         if git -C "$flake_root" ls-files --error-unmatch "$rel" &>/dev/null; then
-            nds_install_log "flake: ${rel} still tracked — leave (operator/repo owned)"
+            debug "flake: ${rel} still tracked — leave (operator/repo owned)"
         else
-            nds_install_log "flake: unstaged ${rel} (ignored / untracked)"
+            debug "flake: unstaged ${rel} (ignored / untracked)"
         fi
     done
     return 0

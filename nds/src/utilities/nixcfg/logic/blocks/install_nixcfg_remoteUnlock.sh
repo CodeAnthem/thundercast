@@ -14,7 +14,7 @@
 # into the initrd and unlock LUKS with `systemctl default`.
 #
 # 0 = off; 30-3600 = power-off after N seconds. Anything else is treated as off.
-_nds_nixcfg_remoteUnlock_shutdown_sec() {
+_nixcfg_remoteUnlock_shutdown_sec() {
     local sec="${1:-0}"
     [[ "$sec" =~ ^[0-9]+$ ]] || { printf '0\n'; return 0; }
     if [[ "$sec" -eq 0 ]]; then
@@ -26,7 +26,7 @@ _nds_nixcfg_remoteUnlock_shutdown_sec() {
     fi
 }
 
-_nds_nixcfg_remoteUnlock_generate() {
+_nixcfg_remoteUnlock_generate() {
     local remote_port="$1"
     local ssh_key="$2"
     local net_mode="$3"
@@ -35,12 +35,12 @@ _nds_nixcfg_remoteUnlock_generate() {
     local gateway="${6:-}"
     local show_hint="${7:-true}"
     local shutdown_sec
-    shutdown_sec=${ _nds_nixcfg_remoteUnlock_shutdown_sec "${8:-0}"; }
+    shutdown_sec=${ _nixcfg_remoteUnlock_shutdown_sec "${8:-0}"; }
 
     local net_block
     if [[ "$net_mode" == "static" ]]; then
         local ip_only="${ip%/*}"
-        net_block=$(nds_nixcfg_subst "$(cat <<'EOF'
+        net_block=$(nixcfg_subst "$(cat <<'EOF'
 boot.initrd.systemd.network.networks."10-remote-unlock" = {
   matchConfig.Type = "ether";
   address = [ "@@IP@@/@@PREFIX@@" ];
@@ -74,7 +74,7 @@ EOF
     # StandardOutput=tty + TTYPath=/dev/console: raw VT, magenta ANSI.
     # Hint text is concatenated, not subst'd as a value — bash would eat \033.
     #
-    # command="systemctl default" runs the unlock prompt directly on SSH login;
+    # command="systemctl default" runs the unlock command directly on SSH login;
     # 2>/dev/null hides the harmless "system scope bus" notice (no D-Bus in
     # initrd). boot.initrd.systemd.network.enable is required or networkd never
     # starts and SSH is unreachable.
@@ -83,12 +83,12 @@ EOF
     # N seconds if still in the initrd (0 = off). Never gate sshd. Type=simple
     # so initrd.target does not wait out the sleep; Conflicts=initrd-switch-root
     # kills the sleep on a successful unlock. Poweroff (not reboot): a remote
-    # attacker cannot get a fresh prompt without a physical or hypervisor
+    # attacker cannot get a fresh login without a physical or hypervisor
     # power-on.
     [[ "$show_hint" == "false" ]] || show_hint=true
 
     local ssh_block
-    ssh_block=$(nds_nixcfg_subst "$(cat <<'EOF'
+    ssh_block=$(nixcfg_subst "$(cat <<'EOF'
 boot.initrd.network.enable = true;
 boot.initrd.network.ssh = {
   enable = true;
@@ -104,7 +104,7 @@ EOF
 
     local hint_block=""
     if [[ "$show_hint" == "true" ]]; then
-        hint_block=$(nds_nixcfg_subst "$(cat <<'EOF'
+        hint_block=$(nixcfg_subst "$(cat <<'EOF'
 boot.initrd.systemd.services.nds-show-ip = {
   description = "Show remote LUKS unlock address";
   wantedBy = [ "initrd.target" ];
@@ -156,7 +156,7 @@ EOF
 
     local shutdown_block=""
     if [[ "$shutdown_sec" -ge 30 ]]; then
-        shutdown_block=$(nds_nixcfg_subst "$(cat <<'EOF'
+        shutdown_block=$(nixcfg_subst "$(cat <<'EOF'
 boot.initrd.systemd.services.nds-unlock-lockout = {
   description = "Power off if LUKS still locked after @@TIMEOUT@@ seconds";
   wantedBy = [ "initrd.target" ];
@@ -202,5 +202,5 @@ EOF
     [[ -n "$store_block" ]] && block+=$'\n'"$store_block"
     block+=$'\n'"$net_block"
 
-    nds_nixcfg_register "remoteUnlock" "$block" 13
+    nixcfg_register "remoteUnlock" "$block" 13
 }

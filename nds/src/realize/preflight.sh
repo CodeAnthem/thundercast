@@ -1,59 +1,35 @@
 #!/usr/bin/env bash
 # ==================================================================================================
-# NDS realize - pre-flight checks before destructive steps
+# NDS - Realize preflight
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-06-29 | Modified: 2026-09-03
-# Description:   Tooling, disk presence, boot-mode consistency. Git access is compose's job.
+# Date:          Created: 2026-09-26 | Modified: 2026-09-26
+# Description:   Errors fail the run. Warnings are recorded for the confirm screen.
 # ==================================================================================================
 
-# Description: Verify nix tooling, target disk, and boot mode for a local install.
-# Arguments:
-# - disk:   <String> Target block device (may be empty for flake-owned disks)
-# - uefi:   <String> BOOT_UEFI_MODE (true | false | "")
-# - loader: <String> BOOT_LOADER id
-nds_realize_preflight_local() {
-    local disk="${1:-}"
-    local uefi="${2:-}"
-    local loader="${3:-}"
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
-    command -v nix &>/dev/null || { error "nix not found — boot the NixOS live ISO"; return 1; }
-    command -v nixos-install &>/dev/null || { error "nixos-install not found — boot the NixOS live ISO"; return 1; }
-
-    if [[ -n "$disk" && ! -b "$disk" ]]; then
-        error "Target disk not found: $disk"
+nds_realize_preflight() {
+    local _pre_warn=0
+    if [[ ${1:-} == --warnings ]]; then
+        _pre_warn=1
+        shift
+    fi
+    local -n _R=$1
+    if (( _pre_warn )); then
+        if [[ ${_R[INSTALL_MODE]:-} == remote ]]; then
+            printf '%s\n' "The disk on ${_R[REMOTE_TARGET_IP]:-the remote host} will be erased"
+        elif [[ ${_R[DISK_STRATEGY]:-nds} != flake ]]; then
+            printf '%s\n' "${_R[DISK_TARGET]:-the target disk} — all data will be permanently erased"
+        fi
+        return 0
+    fi
+    [[ ${_R[INSTALL_KIND]:-} == classic || ${_R[INSTALL_KIND]:-} == flake ]] || {
+        error "INSTALL_KIND: unsupported"
         return 1
-    fi
-    if [[ "$uefi" != "true" && "$loader" == "systemd-boot" ]]; then
-        error "systemd-boot requires UEFI — pick GRUB in Boot settings or enable UEFI mode"
+    }
+    if [[ ${_R[INSTALL_MODE]:-} == remote && -z ${_R[REMOTE_TARGET_IP]:-} ]]; then
+        error "REMOTE_TARGET_IP: required"
         return 1
-    fi
-    if [[ "$uefi" != "true" && "$loader" == "refind" ]]; then
-        error "rEFInd requires UEFI — pick GRUB in Boot settings or enable UEFI mode"
-        return 1
-    fi
-    if [[ "$uefi" == "true" && ! -d /sys/firmware/efi/efivars ]]; then
-        warn "UEFI mode is on but the live ISO is BIOS-booted."
-        warn "Reboot the ISO in UEFI mode, or disable UEFI mode and use GRUB."
-        nds_install_ui_preflight_continue "Continue anyway?" || return 1
-    fi
-    return 0
-}
-
-# Description: Verify operator machine before a remote nixos-anywhere install.
-# Arguments:
-# - target_ip: <String> Target host IP or hostname
-nds_realize_preflight_remote() {
-    local target_ip="$1"
-
-    command -v nix &>/dev/null || { error "nix not found — install Nix on the operator machine"; return 1; }
-    [[ -n "$target_ip" ]] || { error "REMOTE_TARGET_IP is required for remote install"; return 1; }
-
-    if ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new \
-        "root@${target_ip}" true 2>/dev/null; then
-        debug "SSH reachable: root@${target_ip}"
-    else
-        warn "Cannot reach root@${target_ip} via SSH (passwordless root login required)"
-        nds_install_ui_preflight_continue "Continue without verified SSH access?" || return 1
     fi
     return 0
 }

@@ -15,7 +15,7 @@
 #   key only (file)-> systemd mount of USB + keyFile = file on mount, keyFileTimeout
 #   both (raw)     -> keyFile + fallbackToPassword + short keyFileTimeout
 #   both (file)    -> systemd mount + keyFile + fallbackToPassword
-_nds_nixcfg_luks_generate() {
+_nixcfg_luks_generate() {
     local use_password="$1"
     local use_key="$2"
     local key_device="$3"
@@ -36,7 +36,7 @@ _nds_nixcfg_luks_generate() {
 
     # File-on-filesystem: mount the USB in the initrd before reading the key.
     if [[ -n "$key_file" ]]; then
-        mount_block=$(nds_nixcfg_subst "$(cat <<'EOF'
+        mount_block=$(nixcfg_subst "$(cat <<'EOF'
 # Mount the USB stick holding the LUKS keyfile before unlock
 boot.initrd.systemd.mounts = [{
   what = "@@KEY_DEVICE@@";
@@ -55,7 +55,7 @@ EOF
 
     if [[ "$use_password" == "true" ]]; then
         if [[ -n "$key_file" ]]; then
-            block=$(nds_nixcfg_subst "$(cat <<'EOF'
+            block=$(nixcfg_subst "$(cat <<'EOF'
 @@MOUNT_BLOCK@@
 
 # LUKS unlock: keyfile on mounted USB, fall back to password prompt
@@ -67,7 +67,7 @@ boot.initrd.luks.devices."cryptroot" = {
 EOF
 )" @@KEY_PATH@@ "$key_path" @@TIMEOUT@@ "$timeout" @@MOUNT_BLOCK@@ "$mount_block")
         else
-            block=$(nds_nixcfg_subst "$(cat <<'EOF'
+            block=$(nixcfg_subst "$(cat <<'EOF'
 @@MOUNT_BLOCK@@
 
 # LUKS unlock: raw keyfile on USB device, fall back to password prompt
@@ -82,7 +82,7 @@ EOF
         fi
     else
         if [[ -n "$key_file" ]]; then
-            block=$(nds_nixcfg_subst "$(cat <<'EOF'
+            block=$(nixcfg_subst "$(cat <<'EOF'
 @@MOUNT_BLOCK@@
 
 # LUKS unlock: keyfile on mounted USB (no password fallback)
@@ -93,7 +93,7 @@ boot.initrd.luks.devices."cryptroot" = {
 EOF
 )" @@KEY_PATH@@ "$key_path" @@TIMEOUT@@ "$timeout" @@MOUNT_BLOCK@@ "$mount_block")
         else
-            block=$(nds_nixcfg_subst "$(cat <<'EOF'
+            block=$(nixcfg_subst "$(cat <<'EOF'
 @@MOUNT_BLOCK@@
 
 # LUKS unlock: raw keyfile on USB device (no password fallback)
@@ -107,5 +107,5 @@ EOF
         fi
     fi
 
-    nds_nixcfg_register "luks" "$block" 12
+    nixcfg_register "luks" "$block" 12
 }

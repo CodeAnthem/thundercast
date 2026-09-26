@@ -11,20 +11,14 @@ if (( BASH_VERSINFO[0] < 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] < 3) ))
     return 1 2>/dev/null || exit 1
 fi
 
-if ! declare -F error >/dev/null 2>&1; then
-    error() {
-        printf 'FLAKE: %s\n' "$1" >&2
-    }
-fi
-
 if ! declare -F err >/dev/null 2>&1; then
     err() {
         error "${FUNCNAME[1]:-flake}: $1"
     }
 fi
 
-if ! declare -F nds_install_log >/dev/null 2>&1; then
-    nds_install_log() { printf 'FLAKE: %s\n' "$1" >&2; }
+if ! declare -F debug >/dev/null 2>&1; then
+    debug() { printf 'FLAKE: %s\n' "$1" >&2; }
 fi
 
 _FLAKE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -47,6 +41,8 @@ _flake_source_dir "${_FLAKE_DIR}/helpers"
 source "${_FLAKE_DIR}/flake_list.sh"
 # shellcheck disable=SC1091
 source "${_FLAKE_DIR}/flake_host.sh"
+# shellcheck disable=SC1091
+source "${_FLAKE_DIR}/flake_probe.sh"
 
 # Description: No-op load (discovery is pure).
 # Returns:

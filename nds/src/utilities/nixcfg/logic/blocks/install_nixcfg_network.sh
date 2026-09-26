@@ -12,7 +12,7 @@
 # =============================================================================
 
 # Manual mode: explicit parameters
-nds_nixcfg_network() {
+nixcfg_network() {
     local hostname="$1"
     local method="${2:-dhcp}"
     local ip="${3:-}"
@@ -20,14 +20,14 @@ nds_nixcfg_network() {
     local dns1="${5:-1.1.1.1}"
     local dns2="${6:-1.0.0.1}"
     
-    _nds_nixcfg_network_generate "$hostname" "$method" "$ip" "$gateway" "$dns1" "$dns2"
+    _nixcfg_network_generate "$hostname" "$method" "$ip" "$gateway" "$dns1" "$dns2"
 }
 
 # =============================================================================
 # NIXOS CONFIG GENERATION - Implementation
 # =============================================================================
 
-_nds_nixcfg_network_generate() {
+_nixcfg_network_generate() {
     local hostname="$1"
     local method="$2"
     local ip="$3"
@@ -39,13 +39,13 @@ _nds_nixcfg_network_generate() {
         # Extract mask from IP (e.g., 192.168.1.10/24 -> 24)
         local mask="${ip##*/}"
         local ip_only="${ip%/*}"
-        _nds_nixcfg_network_static "$hostname" "$ip_only" "$gateway" "$mask" "$dns1" "$dns2"
+        _nixcfg_network_static "$hostname" "$ip_only" "$gateway" "$mask" "$dns1" "$dns2"
     else
-        _nds_nixcfg_network_dhcp "$hostname" "$dns1" "$dns2"
+        _nixcfg_network_dhcp "$hostname" "$dns1" "$dns2"
     fi
 }
 
-_nds_nixcfg_network_static() {
+_nixcfg_network_static() {
     local hostname="$1"
     local ip="$2"
     local gateway="$3"
@@ -62,7 +62,7 @@ _nds_nixcfg_network_static() {
     # does not exist on predictable-name systems (ens33, enp0s3, …), so the
     # static address would never be applied.
     local block
-    block=$(nds_nixcfg_subst "$(cat <<'EOF'
+    block=$(nixcfg_subst "$(cat <<'EOF'
 networking = {
   hostName = "@@HOSTNAME@@";
   useDHCP = false;@@NS_LINE@@
@@ -76,12 +76,12 @@ systemd.network.networks."10-wired" = {
 };
 EOF
 )" @@HOSTNAME@@ "$hostname" @@IP@@ "$ip" @@MASK@@ "$mask" @@GATEWAY@@ "$gateway" @@NS_LINE@@ "$ns_line")
-    block="${block}$(_nds_nixcfg_network_hints)"
+    block="${block}$(_nixcfg_network_hints)"
 
-    nds_nixcfg_register "network" "$block" 20
+    nixcfg_register "network" "$block" 20
 }
 
-_nds_nixcfg_network_dhcp() {
+_nixcfg_network_dhcp() {
     local hostname="$1"
     local dns_primary="$2"
     local dns_secondary="$3"
@@ -99,7 +99,7 @@ _nds_nixcfg_network_dhcp() {
         # same identity as the initrd (see remoteUnlock.sh) — the DHCP server
         # then hands out the SAME lease in the initrd and after boot, so the
         # initrd is reachable on the machine's normal address.
-        block=$(nds_nixcfg_subst "$(cat <<'EOF'
+        block=$(nixcfg_subst "$(cat <<'EOF'
 networking = {
   hostName = "@@HOSTNAME@@";
   useDHCP = false;@@NS_LINE@@
@@ -114,7 +114,7 @@ systemd.network.networks."10-wired" = {
 EOF
 )" @@HOSTNAME@@ "$hostname" @@NS_LINE@@ "$ns_line")
     else
-        block=$(nds_nixcfg_subst "$(cat <<'EOF'
+        block=$(nixcfg_subst "$(cat <<'EOF'
 networking = {
   hostName = "@@HOSTNAME@@";
   networkmanager.enable = true;@@NS_LINE@@
@@ -122,12 +122,12 @@ networking = {
 EOF
 )" @@HOSTNAME@@ "$hostname" @@NS_LINE@@ "$ns_line")
     fi
-    block="${block}$(_nds_nixcfg_network_hints)"
+    block="${block}$(_nixcfg_network_hints)"
 
-    nds_nixcfg_register "network" "$block" 20
+    nixcfg_register "network" "$block" 20
 }
 
-_nds_nixcfg_network_hints() {
+_nixcfg_network_hints() {
     cat <<'EOF'
 
 # networking.wireless.enable = true;  # wpa_supplicant - leave off when using NetworkManager
@@ -144,7 +144,7 @@ _nds_nixcfg_network_hints() {
 EOF
 }
 
-_nds_nixcfg_netmask_to_prefix() {
+_nixcfg_netmask_to_prefix() {
     local mask="$1"
     case "$mask" in
         255.255.255.0|255.255.255.0/24|/24|24) echo 24 ;;

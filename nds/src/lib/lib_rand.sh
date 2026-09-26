@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # ==================================================================================================
-# NDS - Shared /dev/urandom helpers
+# NDS - /dev/urandom helpers
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-16 | Modified: 2026-08-16
-# Description:   openssl-free random strings (no feature policy)
+# Date:          Created: 2026-08-16 | Modified: 2026-09-25
+# Description:   openssl-free random strings. Not an essentials feature.
 # ==================================================================================================
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 # Description: Generate N random alphanumeric characters from /dev/urandom.
 # Arguments:

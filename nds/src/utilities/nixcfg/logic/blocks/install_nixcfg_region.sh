@@ -12,14 +12,14 @@
 # =============================================================================
 
 # Manual mode: explicit parameters
-nds_nixcfg_region() {
+nixcfg_region() {
     local timezone="${1:-UTC}"
     local locale_main="${2:-en_US.UTF-8}"
     local locale_extra="${3:-}"
     local keyboard_layout="${4:-us}"
     local keyboard_variant="${5:-}"
     
-    _nds_nixcfg_region_generate "$timezone" "$locale_main" "$locale_extra" "$keyboard_layout" "$keyboard_variant"
+    _nixcfg_region_generate "$timezone" "$locale_main" "$locale_extra" "$keyboard_layout" "$keyboard_variant"
 }
 
 # =============================================================================
@@ -33,7 +33,7 @@ nds_nixcfg_region() {
 # - variant: <String> XKB variant (may be empty)
 # Returns:
 # - <String> console.keyMap value
-_nds_nixcfg_console_keymap() {
+_nixcfg_console_keymap() {
     local layout="$1"
     local variant="$2"
 
@@ -49,7 +49,7 @@ _nds_nixcfg_console_keymap() {
     esac
 }
 
-_nds_nixcfg_region_generate() {
+_nixcfg_region_generate() {
     local timezone="$1"
     local locale_main="$2"
     local locale_extra="$3"
@@ -70,7 +70,7 @@ _nds_nixcfg_region_generate() {
 
     local kb_block
     if [[ -n "$keyboard_variant" ]]; then
-        kb_block=$(nds_nixcfg_subst "$(cat <<'EOF'
+        kb_block=$(nixcfg_subst "$(cat <<'EOF'
 services.xserver.xkb = {
   layout = "@@LAYOUT@@";
   variant = "@@VARIANT@@";
@@ -78,14 +78,14 @@ services.xserver.xkb = {
 EOF
 )" @@LAYOUT@@ "$keyboard_layout" @@VARIANT@@ "$keyboard_variant")
     else
-        kb_block=${ nds_nixcfg_subst 'services.xserver.xkb.layout = "@@LAYOUT@@";' @@LAYOUT@@ "$keyboard_layout"; }
+        kb_block=${ nixcfg_subst 'services.xserver.xkb.layout = "@@LAYOUT@@";' @@LAYOUT@@ "$keyboard_layout"; }
     fi
 
     local console_map
-    console_map=${ _nds_nixcfg_console_keymap "$keyboard_layout" "$keyboard_variant"; }
+    console_map=${ _nixcfg_console_keymap "$keyboard_layout" "$keyboard_variant"; }
 
     local output
-    output=$(nds_nixcfg_subst "$(cat <<'EOF'
+    output=$(nixcfg_subst "$(cat <<'EOF'
 time.timeZone = "@@TIMEZONE@@";
 
 i18n.defaultLocale = "@@LOCALE_MAIN@@";@@EXTRA_BLOCK@@
@@ -96,5 +96,5 @@ console.keyMap = "@@CONSOLE_MAP@@";
 EOF
 )" @@TIMEZONE@@ "$timezone" @@LOCALE_MAIN@@ "$locale_main" @@EXTRA_BLOCK@@ "$extra_block" @@KB_BLOCK@@ "$kb_block" @@CONSOLE_MAP@@ "$console_map")
 
-    nds_nixcfg_register "region" "$output" 30
+    nixcfg_register "region" "$output" 30
 }

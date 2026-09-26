@@ -20,6 +20,6 @@ Kind is inferred: flake keys (`FLAKE_HOST` / `FLAKE_REPO_URL` / `FLAKE_LOCAL_PAT
 
 ## Validate first
 
-Apply calls `nds_sm_load` then `nds_sm_validate` (same hooks as the menus). Incomplete recipes fail before disk wipe.
+Apply loads the recipe, then the wizard reviews every active field. Incomplete recipes fail before disk wipe.
 
 To **write** a recipe, run a composer (classicInstall / installFlake / addFleetHost / toolkit) and save the export, or copy the leaf `.recipe` after a successful compose.

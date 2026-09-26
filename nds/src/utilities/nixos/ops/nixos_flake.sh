@@ -63,7 +63,7 @@ nixos_flakeEval() {
     )
     rc=$?
     [[ "$rc" -eq 0 ]] || { err "flake eval failed for ${host_name}"; return 1; }
-    nds_install_log "flake: eval ok path:${flake_root}#${host_name}"
+    debug "flake: eval ok path:${flake_root}#${host_name}"
     return 0
 }
 

@@ -1,11 +1,11 @@
 # Classic install (no flake)
 
 First NixOS install without a flake. NDS generates `/etc/nixos/configuration.nix` +
-`hardware-configuration.nix` and runs `nixos-install`. You own nothing beforehand —
+`hardware-configuration.nix` and runs `the NixOS installer`. You own nothing beforehand —
 NDS asks the menu and builds a complete, bootable system.
 
 **Architecture:** this action is compose-only (`setup.sh` → settings menu →
-`nds_realize_confirm` → `nds_realize_run`). Realize (partition, nixcfg, nixos-install,
+`confirm` → `realize`). Realize (partition, nixcfg, the NixOS installer,
 verify) is the engine under `nds/src/realize/` (`plan_classic.sh`); the actual work is done
 by `utilities/{disk,nixcfg,hwconfig,nixos}`.
 
@@ -19,7 +19,7 @@ optional **LUKS2 encryption** (passphrase, USB keyfile, or both — plus initrd 
 
 1. Partition the target disk (and set up LUKS2 if encryption is enabled)
 2. Generate `configuration.nix` + `hardware-configuration.nix`
-3. Run `nixos-install`
+3. Run `the NixOS installer`
 4. Build an install backup zip (with a personalized `QUICK_START.md`), then reboot
 
 The backup zip lands in `/home/nixos/` and contains everything below, personalized to

@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+# ==================================================================================================
+# NDS - Wizard fill
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Date:          Created: 2026-09-26 | Modified: 2026-09-26
+# ==================================================================================================
+
+# shellcheck source=../setup_TEST.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../setup_TEST.sh"
+logger_setMinLevel warn
+# shellcheck source=../app/session/mode.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../app/session/mode.sh"
+# shellcheck source=../app/session/skip.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../app/session/skip.sh"
+import_dir "$(dirname "${BASH_SOURCE[0]}")/../recipe" --depth 0
+# shellcheck source=ask.sh
+source "$(dirname "${BASH_SOURCE[0]}")/ask.sh"
+
+_ask_types() {
+    local _type _key _answer _got
+    nds_schema_group types "Types"
+    for _type in string bool int port choice path file dir disk ip hostname username url timezone locale keyboard country mask secret; do
+        _key="T_${_type^^}"
+        if [[ "$_type" == choice ]]; then
+            nds_schema_field types "$_key" choice --choices 'a|b' --label "$_type"
+        else
+            nds_schema_field types "$_key" "$_type" --label "$_type"
+        fi
+    done
+    declare -gA R=()
+    for _type in string bool int port choice path file dir disk ip hostname username url timezone locale keyboard country mask secret; do
+        _key="T_${_type^^}"
+        case "$_type" in
+            bool) _answer=true ;;
+            int) _answer=8 ;;
+            port) _answer=22 ;;
+            choice) _answer=a ;;
+            path|file|dir|secret) _answer=/tmp/nds ;;
+            disk) _answer=/dev/sda ;;
+            ip) _answer=1.2.3.4 ;;
+            hostname) _answer=host ;;
+            username) _answer=admin ;;
+            url) _answer=https://example.com/a.git ;;
+            timezone) _answer=UTC ;;
+            locale) _answer=en_US.UTF-8 ;;
+            keyboard) _answer=us ;;
+            country) _answer=us ;;
+            mask) _answer=255.255.255.0 ;;
+            *) _answer=hello ;;
+        esac
+        prompt() { UI_PROMPT_RESULT=$_answer; }
+        "_nds_ask_${_type}" R "$_key" || { bts_fail "${_type} asker failed"; return; }
+        _got=$(nds_recipe_get R "$_key")
+        if [[ "$_type" == bool ]]; then
+            [[ "$_got" == true ]] || { bts_fail "bool was '${_got}'"; return; }
+        else
+            [[ "$_got" == "$_answer" ]] || { bts_fail "${_type} was '${_got}'"; return; }
+        fi
+    done
+    bts_pass "each type asker sets its key"
+}
+
+suite_ask() {
+    local _msgs _i _text _got _rc
+    unset NDS_YES NDS_SKIP NDS_SKIP_COOK_SUMMARY
+    export NDS_MODE=interactive
+    nds_mode_resolve
+    nds_test_session
+    nds_schema_group zz "Stub"
+    nds_schema_field zz ALPHA string --required --label 'Alpha'
+    nds_schema_field zz BETA string --required --label 'Beta'
+    nds_schema_enable zz
+    _ask_types || return
+
+    bts_section "Back and cancel"
+    declare -gA R=()
+    nds_recipe_set R ALPHA kept
+    prompt() { return 2; }
+    _rc=0
+    _nds_ask_string R ALPHA || _rc=$?
+    _got=$(nds_recipe_get R ALPHA)
+    if [[ "$_rc" -eq 2 && "$_got" == kept ]]; then
+        bts_pass "back keeps the current value"
+    else
+        bts_fail "back rc=${_rc} value='${_got}'"
+    fi
+    prompt() { return 3; }
+    if nds_wizard_fill R 2>/dev/null; then
+        bts_fail "cancel returned success"
+    else
+        bts_pass "cancel aborts the fill"
+    fi
+
+    bts_section "Summary"
+    declare -gA R=()
+    _i=0
+    _msgs=()
+    local -a _answers=(alpha '' beta)
+    prompt() {
+        local _msg="${*: -1}"
+        _msgs+=("$_msg")
+        if [[ "$_msg" == "Review the recipe" ]]; then
+            UI_PROMPT_RESULT=accept
+            return 0
+        fi
+        UI_PROMPT_RESULT=${_answers[_i]}
+        _i=$((_i + 1))
+    }
+    nds_wizard_fill R 2>/dev/null || { bts_fail "summary fill failed"; return; } # validation errors while Beta is empty
+    _text=$(printf '%s\n' "${_msgs[@]}")
+    if [[ "$_text" == $'Alpha\nBeta\nReview the recipe\nBeta\nReview the recipe' ]]; then
+        bts_pass "summary re-asks only the failing field"
+    else
+        bts_fail "prompts were '${_text}'"
+    fi
+
+    bts_section "Skip summary"
+    declare -gA R=()
+    nds_recipe_set R ALPHA alpha
+    _i=0
+    _msgs=()
+    _answers=(beta)
+    export NDS_SKIP_COOK_SUMMARY=true
+    nds_wizard_fill R 2>/dev/null || { bts_fail "skip fill failed"; return; }
+    unset NDS_SKIP_COOK_SUMMARY
+    _text=$(printf '%s\n' "${_msgs[@]}")
+    if [[ "$_text" == Beta ]]; then
+        bts_pass "skip summary asks only the failing field"
+    else
+        bts_fail "skip prompts were '${_text}'"
+    fi
+
+    bts_section "Loaded default"
+    declare -gA R=()
+    nds_schema_field zz LOADED string --label 'Loaded'
+    local _file _saw=0 _arg _prev
+    _file="${ nds_session_dir recipe; }/loaded.recipe"
+    printf '%s\n' 'LOADED="fromfile"' > "$_file"
+    nds_recipe_loadFile R "$_file" || { bts_fail "load failed"; return; }
+    prompt() {
+        local _msg="${*: -1}"
+        if [[ "$_msg" == "Review the recipe" ]]; then
+            UI_PROMPT_RESULT=accept
+            return 0
+        fi
+        _prev=""
+        for _arg in "$@"; do
+            [[ "$_prev" == --default && "$_arg" == fromfile ]] && _saw=1
+            _prev=$_arg
+        done
+        UI_PROMPT_RESULT=fromfile
+    }
+    nds_recipe_set R ALPHA alpha
+    nds_recipe_set R BETA beta
+    nds_wizard_fill R 2>/dev/null || { bts_fail "default fill failed"; return; }
+    if [[ "$_saw" -eq 1 ]]; then
+        bts_pass "a loaded value is offered as the default"
+    else
+        bts_fail "loaded value was not the default"
+    fi
+}

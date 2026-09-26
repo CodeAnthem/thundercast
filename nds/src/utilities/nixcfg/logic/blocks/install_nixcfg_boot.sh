@@ -12,19 +12,19 @@
 # =============================================================================
 
 # Manual mode: explicit parameters
-nds_nixcfg_boot() {
+nixcfg_boot() {
     local bootloader="$1"
     local uefi="${2:-true}"
     local disk="${3:-}"
 
-    _nds_nixcfg_boot_generate "$bootloader" "$uefi" "$disk"
+    _nixcfg_boot_generate "$bootloader" "$uefi" "$disk"
 }
 
 # =============================================================================
 # NIXOS CONFIG GENERATION - Implementation
 # =============================================================================
 
-_nds_nixcfg_boot_generate() {
+_nixcfg_boot_generate() {
     local bootloader="$1"
     local uefi="$2"
     local disk="${3:-}"
@@ -39,13 +39,13 @@ _nds_nixcfg_boot_generate() {
 
     case "$bootloader" in
         systemd-boot)
-            _nds_nixcfg_boot_systemd "$uefi"
+            _nixcfg_boot_systemd "$uefi"
             ;;
         grub)
-            _nds_nixcfg_boot_grub "$uefi" false "$disk"
+            _nixcfg_boot_grub "$uefi" false "$disk"
             ;;
         refind)
-            _nds_nixcfg_boot_refind "$uefi"
+            _nixcfg_boot_refind "$uefi"
             ;;
         *)
             error "Unknown bootloader: $bootloader"
@@ -54,7 +54,7 @@ _nds_nixcfg_boot_generate() {
     esac
 }
 
-_nds_nixcfg_boot_generate_flake() {
+_nixcfg_boot_generate_flake() {
     local bootloader="$1"
     local uefi="$2"
     local disk="${3:-}"
@@ -69,13 +69,13 @@ _nds_nixcfg_boot_generate_flake() {
 
     case "$bootloader" in
         systemd-boot)
-            _nds_nixcfg_boot_systemd_flake "$uefi"
+            _nixcfg_boot_systemd_flake "$uefi"
             ;;
         grub)
-            _nds_nixcfg_boot_grub "$uefi" true "$disk"
+            _nixcfg_boot_grub "$uefi" true "$disk"
             ;;
         refind)
-            _nds_nixcfg_boot_refind_flake "$uefi"
+            _nixcfg_boot_refind_flake "$uefi"
             ;;
         *)
             error "Unknown bootloader: $bootloader"
@@ -87,7 +87,7 @@ _nds_nixcfg_boot_generate_flake() {
 # Description: ESP mount used by bootctl (vfat). Prefer /boot/efi when that is the ESP.
 # Returns:
 # - <String> /boot or /boot/efi
-_nds_nixcfg_efi_sys_mount_point() {
+_nixcfg_efi_sys_mount_point() {
     local root="${NDS_NIX_TARGET_ROOT:-/mnt}"
     local fstype=""
 
@@ -108,7 +108,7 @@ _nds_nixcfg_efi_sys_mount_point() {
     printf '%s\n' /boot
 }
 
-_nds_nixcfg_boot_systemd() {
+_nixcfg_boot_systemd() {
     local uefi="$1"
     local esp
 
@@ -117,9 +117,9 @@ _nds_nixcfg_boot_systemd() {
         return 1
     fi
 
-    esp=${ _nds_nixcfg_efi_sys_mount_point; }
+    esp=${ _nixcfg_efi_sys_mount_point; }
     local block
-    block=$(nds_nixcfg_subst "$(cat <<'EOF'
+    block=$(nixcfg_subst "$(cat <<'EOF'
 boot.loader = {
   systemd-boot.enable = true;
   efi.canTouchEfiVariables = true;
@@ -128,10 +128,10 @@ boot.loader = {
 EOF
 )" @@ESP@@ "$esp")
 
-    nds_nixcfg_register "boot" "$block" 10
+    nixcfg_register "boot" "$block" 10
 }
 
-_nds_nixcfg_boot_grub() {
+_nixcfg_boot_grub() {
     local uefi="$1"
     local use_force="${2:-false}"
     local disk="${3:-/dev/sda}"
@@ -167,7 +167,7 @@ EOF
         fi
     else
         if [[ "$use_force" == "true" ]]; then
-            block=$(nds_nixcfg_subst "$(cat <<'EOF'
+            block=$(nixcfg_subst "$(cat <<'EOF'
 boot.loader.grub = lib.mkForce {
   enable = true;
   device = "@@DISK@@";
@@ -175,7 +175,7 @@ boot.loader.grub = lib.mkForce {
 EOF
 )" @@DISK@@ "$disk")
         else
-            block=$(nds_nixcfg_subst "$(cat <<'EOF'
+            block=$(nixcfg_subst "$(cat <<'EOF'
 boot.loader.grub = {
   enable = true;
   device = "@@DISK@@";
@@ -185,10 +185,10 @@ EOF
         fi
     fi
 
-    nds_nixcfg_register "boot" "$block" 10
+    nixcfg_register "boot" "$block" 10
 }
 
-_nds_nixcfg_boot_systemd_flake() {
+_nixcfg_boot_systemd_flake() {
     local uefi="$1"
     local esp
 
@@ -197,9 +197,9 @@ _nds_nixcfg_boot_systemd_flake() {
         return 1
     fi
 
-    esp=${ _nds_nixcfg_efi_sys_mount_point; }
+    esp=${ _nixcfg_efi_sys_mount_point; }
     local block
-    block=$(nds_nixcfg_subst "$(cat <<'EOF'
+    block=$(nixcfg_subst "$(cat <<'EOF'
 boot.loader = lib.mkForce {
   systemd-boot.enable = true;
   efi.canTouchEfiVariables = true;
@@ -208,10 +208,10 @@ boot.loader = lib.mkForce {
 EOF
 )" @@ESP@@ "$esp")
 
-    nds_nixcfg_register "boot" "$block" 10
+    nixcfg_register "boot" "$block" 10
 }
 
-_nds_nixcfg_boot_refind_flake() {
+_nixcfg_boot_refind_flake() {
     local uefi="$1"
 
     if [[ "$uefi" != "true" ]]; then
@@ -228,10 +228,10 @@ boot.loader = lib.mkForce {
 EOF
 )
 
-    nds_nixcfg_register "boot" "$block" 10
+    nixcfg_register "boot" "$block" 10
 }
 
-_nds_nixcfg_boot_refind() {
+_nixcfg_boot_refind() {
     local uefi="$1"
 
     if [[ "$uefi" != "true" ]]; then
@@ -248,5 +248,5 @@ boot.loader = {
 EOF
 )
 
-    nds_nixcfg_register "boot" "$block" 10
+    nixcfg_register "boot" "$block" 10
 }

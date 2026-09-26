@@ -22,9 +22,9 @@ sudo -E bash nds/src/app/main.sh
 3. Settings menu (boot / disk / encryption)
 4. **Disk confirm** — abort here leaves origin unchanged
 5. Compose: scaffold, `.nds/hosts/<host>.recipe`, push
-6. Part A: partition + `nixos-install --flake`
+6. Part A: partition + `the NixOS installer --flake`
 
-ISO hooks: `.nds/hooks/addFleetHost/*.sh` (`nds_hook_register`). Functions: `.nds/hooks/lib/`.
+Cook scaffolds the host, writes `.nds/hosts/<host>.recipe`, and sets the leaf push keys. Realize commits and pushes.
 
 Secrets stay as `*_FILE` paths in the recipe. Disk device is not stored in the portable recipe.
 

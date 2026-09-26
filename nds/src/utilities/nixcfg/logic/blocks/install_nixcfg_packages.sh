@@ -8,7 +8,7 @@
 # ==================================================================================================
 
 # Description: Register the packages section (empty list + commented examples).
-_nds_nixcfg_packages_generate() {
+_nixcfg_packages_generate() {
     local block
     block=$(cat <<'EOF'
 environment.systemPackages = with pkgs; [
@@ -26,5 +26,5 @@ environment.systemPackages = with pkgs; [
 EOF
 )
 
-    nds_nixcfg_register "packages" "$block" 50
+    nixcfg_register "packages" "$block" 50
 }

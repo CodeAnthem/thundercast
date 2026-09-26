@@ -235,20 +235,20 @@ mount --make-rslave "$mountPoint"
 umount -R "$mountPoint" && (rmdir "$mountPoint" 2>/dev/null || true)
 EOF
 )" >>"$log" 2>&1; then
-        nds_install_log "bootloader: switch-to-configuration boot failed (see verbose log)"
+        debug "bootloader: switch-to-configuration boot failed (see verbose log)"
         return 1
     fi
 
-    nds_install_log "nix: bootloader installed"
+    debug "nix: bootloader installed"
     _nixos_remountTargetIfNeeded || true
 
     # switch-to-configuration boot usually installs GRUB already — only repair if missing.
     if [[ "$_NIXOS_BOOT_LOADER" == "grub" && "$_NIXOS_BOOT_UEFI" != "true" && -n "$_NIXOS_DISK" ]]; then
         nds_requireUtility disk || return 1
         if disk_grubBiosBootOk "$_NIXOS_DISK"; then
-            nds_install_log "grub: BIOS boot code already present on ${_NIXOS_DISK}"
+            debug "grub: BIOS boot code already present on ${_NIXOS_DISK}"
         elif disk_grubInstallBios "$_NIXOS_DISK" "$root" "$log"; then
-            nds_install_log "grub: installed BIOS boot code on ${_NIXOS_DISK}"
+            debug "grub: installed BIOS boot code on ${_NIXOS_DISK}"
         else
             warn "GRUB BIOS boot code install failed — see verbose log"
         fi
@@ -279,12 +279,12 @@ nixos_activateSystem() {
         if env NIX_CONFIG="$(nixos_installNixConfig)" \
             nix-env --store "$root" --extra-substituters "auto?trusted=1" \
             -p "$profile_dst" --set "$system_rel" >>"$log" 2>&1; then
-            nds_install_log "nix: system profile (nix-env) -> ${profile_dst}"
+            debug "nix: system profile (nix-env) -> ${profile_dst}"
         elif _nixos_linkSystemProfile "$root" "$system_rel"; then
-            nds_install_log "nix: system profile (manual) -> ${profile_dst}"
+            debug "nix: system profile (manual) -> ${profile_dst}"
         else
             err=$(tail -5 "$log" 2>/dev/null || true)
-            nds_install_log "activate: profile failed for ${system_rel}${err:+ — $err}"
+            debug "activate: profile failed for ${system_rel}${err:+ — $err}"
             return 1
         fi
     fi
@@ -349,14 +349,14 @@ _nixos_ensureSystemProfile() {
     nixos_systemProfileOk "$root" && return 0
 
     system_out=$(_nixos_findSystemClosure "$root") || {
-        nds_install_log "ensure_system_profile: no nixos-system closure found"
+        debug "ensure_system_profile: no nixos-system closure found"
         return 1
     }
     system_out="${system_out%/}"
     log="${NDS_NIXOS_INSTALL_LOG:-${NDS_INSTALL_DETAIL_LOG:-/tmp/nds_install.log}}"
 
     system_rel=$(_nixos_canonicalStorePath "$root" "$system_out") || {
-        nds_install_log "ensure_system_profile: cannot canonicalize ${system_out}"
+        debug "ensure_system_profile: cannot canonicalize ${system_out}"
         return 1
     }
 
@@ -370,16 +370,16 @@ _nixos_ensureSystemProfile() {
     if env NIX_CONFIG="$(nixos_installNixConfig)" \
         nix-env --store "$root" --extra-substituters "auto?trusted=1" \
         -p "$profile_dst" --set "$system_rel" >>"$log" 2>&1; then
-        nds_install_log "nix: system profile -> ${profile_dst}"
+        debug "nix: system profile -> ${profile_dst}"
         return 0
     fi
 
     err=$(tail -3 "$log" 2>/dev/null || true)
-    nds_install_log "nix-env failed: store=${root} profile=${profile_dst} system=${system_rel}${err:+ — $err}"
+    debug "nix-env failed: store=${root} profile=${profile_dst} system=${system_rel}${err:+ — $err}"
 
     warn "nix-env profile failed — linking system profile manually"
     if _nixos_linkSystemProfile "$root" "$system_rel"; then
-        nds_install_log "nix: system profile (manual link) -> ${profile_dst}"
+        debug "nix: system profile (manual link) -> ${profile_dst}"
         return 0
     fi
     return 1

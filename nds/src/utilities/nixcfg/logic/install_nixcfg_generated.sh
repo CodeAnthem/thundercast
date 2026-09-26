@@ -5,12 +5,12 @@
 # Date:          Created: 2026-07-09 | Modified: 2026-09-03
 # ==================================================================================================
 
-nds_nixcfg_generated_name() {
+nixcfg_generated_name() {
     printf 'nds_generated.nix\n'
 }
 
 # Description: Print inner attrs of a `{ ... }: { ... }` module (stdout).
-_nds_nixcfg_module_inner() {
+_nixcfg_module_inner() {
     local f="$1" line inner started=0
     [[ -f "$f" ]] || return 0
     while IFS= read -r line || [[ -n "$line" ]]; do
@@ -34,14 +34,13 @@ _nds_nixcfg_module_inner() {
 # Description: Guest-tools module body when PLATFORM_VM_GUEST_TOOLS is on (skip otherwise).
 # Arguments:
 # - dest: <String> Write path
-_nds_nixcfg_write_guest_module() {
-    local dest="$1"
+_nixcfg_write_guest_module() {
+    local -n _R=$1
+    local dest=$2
     local virt body=""
 
-    if ! declare -f nds_cfg_true >/dev/null || ! nds_cfg_true PLATFORM_VM_GUEST_TOOLS; then
-        return 0
-    fi
-    virt="$(nds_cfg_get PLATFORM_VM_TYPE 2>/dev/null || true)"
+    [[ ${_R[PLATFORM_VM_GUEST_TOOLS]:-} == true ]] || return 0
+    virt=${_R[PLATFORM_VM_TYPE]:-}
     case "$virt" in
         vmware) body='{ ... }: { virtualisation.vmware.guest.enable = true; }' ;;
         qemu|kvm) body='{ ... }: { services.qemuGuest.enable = true; }' ;;
@@ -50,12 +49,12 @@ _nds_nixcfg_write_guest_module() {
         *) return 0 ;;
     esac
     printf '%s\n' "$body" > "$dest" || return 1
-    nds_install_log "host: guest tools ${virt} → ${dest}"
+    debug "host: guest tools ${virt} → ${dest}"
     return 0
 }
 
 # Description: Remove leftover split host modules once nds_generated.nix exists.
-_nds_nixcfg_retire_legacy_host_modules() {
+_nixcfg_retire_legacy_host_modules() {
     local flake_root="$1" host_dir="$2"
     local f rel
     for f in boot.nix mounts.nix guest.nix; do
@@ -78,19 +77,19 @@ _nds_nixcfg_retire_legacy_host_modules() {
 # - flake_root: <String> Flake root (for legacy module retirement via git)
 # Returns:
 # - <Bool> 0 on success
-nds_nixcfg_write_generated_host() {
-    local host_dir="$1" hostname="$2" disk="$3"
-    local encryption="${4:-false}" flake_root="${5:-}"
+nixcfg_writeGeneratedHost() {
+    local _nixcfg_name=$1 host_dir=$2 hostname=$3 disk=$4
+    local encryption="${5:-false}" flake_root="${6:-}"
     local tmpd gen today
 
     mkdir -p "$host_dir" || return 1
-    tmpd="$(mktemp -d)" || return 1
-    nds_nixcfg_write_boot_module "${tmpd}/boot.nix" || { rm -rf "$tmpd"; return 1; }
-    nds_nixcfg_write_mounts_module "${tmpd}/mounts.nix" "$hostname" "$disk" "$encryption" \
+    tmpd=$(mktemp -d) || return 1
+    nixcfg_write_boot_module "$_nixcfg_name" "${tmpd}/boot.nix" || { rm -rf "$tmpd"; return 1; }
+    nixcfg_write_mounts_module "${tmpd}/mounts.nix" "$hostname" "$disk" "$encryption" \
         || { rm -rf "$tmpd"; return 1; }
-    _nds_nixcfg_write_guest_module "${tmpd}/guest.nix" || true
+    _nixcfg_write_guest_module "$_nixcfg_name" "${tmpd}/guest.nix" || true
 
-    gen="${host_dir}/$(nds_nixcfg_generated_name)"
+    gen="${host_dir}/$(nixcfg_generated_name)"
     today="$(date -u +%Y-%m-%d)"
     {
         printf '%s\n' \
@@ -102,13 +101,13 @@ nds_nixcfg_write_generated_host() {
             '# ==================================================================================================' \
             '' \
             '{ lib, ... }: {'
-        _nds_nixcfg_module_inner "${tmpd}/boot.nix"
-        _nds_nixcfg_module_inner "${tmpd}/mounts.nix"
-        _nds_nixcfg_module_inner "${tmpd}/guest.nix"
+        _nixcfg_module_inner "${tmpd}/boot.nix"
+        _nixcfg_module_inner "${tmpd}/mounts.nix"
+        _nixcfg_module_inner "${tmpd}/guest.nix"
         printf '%s\n' '}'
     } >"$gen" || { rm -rf "$tmpd"; return 1; }
     rm -rf "$tmpd"
-    _nds_nixcfg_retire_legacy_host_modules "$flake_root" "$host_dir"
-    nds_install_log "host: wrote ${gen#"${flake_root}/"}"
+    _nixcfg_retire_legacy_host_modules "$flake_root" "$host_dir"
+    debug "host: wrote ${gen#"${flake_root}/"}"
     return 0
 }

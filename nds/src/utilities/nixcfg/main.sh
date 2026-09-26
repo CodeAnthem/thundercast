@@ -12,12 +12,7 @@ fi
 
 _NIXCFG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if declare -f nds_import_tree >/dev/null 2>&1; then
-    nds_import_tree "${_NIXCFG_DIR}/logic" || return 1
-else
-    printf 'NIXCFG: nds_import_tree unavailable\n' >&2
-    return 1
-fi
+import_dir "${_NIXCFG_DIR}/logic" || return 1
 
 nixcfg_onLoad() { return 0; }
 nixcfg_onExit() { return 0; }

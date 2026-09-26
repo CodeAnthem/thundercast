@@ -1,0 +1,3 @@
+# nds-recipe 1
+[install]
+INSTALL_MODE="local"

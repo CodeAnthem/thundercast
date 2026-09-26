@@ -83,11 +83,11 @@ git_gh_host_logged_in() {
 
 # Description: True when this process already has an active gh login.
 git_gh_session_active() {
-    [[ "${NDS_GH_SESSION_ACTIVE:-${NDS_GIT_GH_SESSION_ACTIVE:-}}" == "true" ]] && return 0
+    [[ "${NDS_GH_SESSION_ACTIVE:-${GIT_GH_SESSION_ACTIVE:-}}" == "true" ]] && return 0
     if git_gh_host_logged_in; then
         NDS_GH_SESSION_ACTIVE=true
-        NDS_GIT_GH_SESSION_ACTIVE=true
-        export NDS_GH_SESSION_ACTIVE NDS_GIT_GH_SESSION_ACTIVE
+        GIT_GH_SESSION_ACTIVE=true
+        export NDS_GH_SESSION_ACTIVE GIT_GH_SESSION_ACTIVE
         git_gh_probe_registration_scopes && git_gh_session_mark_scopes_ok || true
         return 0
     fi
@@ -97,18 +97,18 @@ git_gh_session_active() {
 # Description: Mark gh as logged in for this NDS session (cleanup later).
 git_gh_session_mark_active() {
     NDS_GH_SESSION_ACTIVE=true
-    NDS_GIT_GH_SESSION_ACTIVE=true
-    export NDS_GH_SESSION_ACTIVE NDS_GIT_GH_SESSION_ACTIVE
+    GIT_GH_SESSION_ACTIVE=true
+    export NDS_GH_SESSION_ACTIVE GIT_GH_SESSION_ACTIVE
     NDS_GH_LEFTOVER=true
-    NDS_GIT_GH_LEFTOVER=true
-    export NDS_GH_LEFTOVER NDS_GIT_GH_LEFTOVER
+    GIT_GH_LEFTOVER=true
+    export NDS_GH_LEFTOVER GIT_GH_LEFTOVER
 }
 
 # Description: Record that gh has admin:public_key (or equivalent) scope.
 git_gh_session_mark_scopes_ok() {
     NDS_GH_HAS_KEY_SCOPE=true
-    NDS_GIT_GH_HAS_KEY_SCOPE=true
-    export NDS_GH_HAS_KEY_SCOPE NDS_GIT_GH_HAS_KEY_SCOPE
+    GIT_GH_HAS_KEY_SCOPE=true
+    export NDS_GH_HAS_KEY_SCOPE GIT_GH_HAS_KEY_SCOPE
     git_gh_session_mark_active
 }
 
@@ -128,7 +128,7 @@ git_gh_probe_registration_scopes() {
 
 # Description: True when gh can register SSH keys (cached or probed).
 git_gh_has_key_scope() {
-    [[ "${NDS_GH_HAS_KEY_SCOPE:-${NDS_GIT_GH_HAS_KEY_SCOPE:-}}" == "true" ]] && return 0
+    [[ "${NDS_GH_HAS_KEY_SCOPE:-${GIT_GH_HAS_KEY_SCOPE:-}}" == "true" ]] && return 0
     if git_gh_probe_registration_scopes; then
         git_gh_session_mark_scopes_ok
         return 0
@@ -142,16 +142,16 @@ git_gh_session_cleanup() {
     local home h
     local had_session=false
 
-    if git_gh_host_logged_in || [[ "${NDS_GH_LEFTOVER:-${NDS_GIT_GH_LEFTOVER:-}}" == "true" ]] \
-        || [[ "${NDS_GH_SESSION_ACTIVE:-${NDS_GIT_GH_SESSION_ACTIVE:-}}" == "true" ]]; then
+    if git_gh_host_logged_in || [[ "${NDS_GH_LEFTOVER:-${GIT_GH_LEFTOVER:-}}" == "true" ]] \
+        || [[ "${NDS_GH_SESSION_ACTIVE:-${GIT_GH_SESSION_ACTIVE:-}}" == "true" ]]; then
         had_session=true
     else
         return 0
     fi
 
-    unset NDS_GH_SESSION_ACTIVE NDS_GIT_GH_SESSION_ACTIVE 2>/dev/null || true
-    unset NDS_GH_HAS_KEY_SCOPE NDS_GIT_GH_HAS_KEY_SCOPE 2>/dev/null || true
-    unset NDS_GH_LEFTOVER NDS_GIT_GH_LEFTOVER 2>/dev/null || true
+    unset NDS_GH_SESSION_ACTIVE GIT_GH_SESSION_ACTIVE 2>/dev/null || true
+    unset NDS_GH_HAS_KEY_SCOPE GIT_GH_HAS_KEY_SCOPE 2>/dev/null || true
+    unset NDS_GH_LEFTOVER GIT_GH_LEFTOVER 2>/dev/null || true
 
     if ! git_gh_cmd gh_cmd; then
         if declare -f git_gh_ensure &>/dev/null && git_gh_ensure; then
@@ -186,8 +186,8 @@ git_gh_session_cleanup() {
 
     if [[ "$had_session" == "true" ]]; then
         success "Cleared gh session from this live ISO (SSH keys on GitHub were kept; do not revoke the GitHub CLI OAuth app)"
-        declare -f nds_install_log &>/dev/null \
-            && nds_install_log "gh: session cleared from live ISO (SSH key left on GitHub)"
+        declare -f debug &>/dev/null \
+            && debug "gh: session cleared from live ISO (SSH key left on GitHub)"
     fi
     return 0
 }

@@ -13,7 +13,7 @@
 # - secrets_dir:   <String> Runtime secrets directory
 # Returns:
 # - <Bool> 0 on success
-nds_nixcfg_write_admin_password() {
+nixcfg_write_admin_password() {
     local auto_generate="$1"
     local length="$2"
     local manual="$3"

@@ -11,9 +11,6 @@ if (( BASH_VERSINFO[0] < 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] < 3) ))
     return 1 2>/dev/null || exit 1
 fi
 
-if ! declare -F error >/dev/null 2>&1; then
-    error() { printf 'NIXOS: %s\n' "$1" >&2; }
-fi
 if ! declare -F err >/dev/null 2>&1; then
     err() { error "${FUNCNAME[1]:-nixos}: $1"; }
 fi
@@ -26,8 +23,8 @@ fi
 if ! declare -F info >/dev/null 2>&1; then
     info() { printf 'NIXOS: %s\n' "$1" >&2; }
 fi
-if ! declare -F nds_install_log >/dev/null 2>&1; then
-    nds_install_log() { printf 'NIXOS: %s\n' "$1" >&2; }
+if ! declare -F debug >/dev/null 2>&1; then
+    debug() { printf 'NIXOS: %s\n' "$1" >&2; }
 fi
 
 _NIXOS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

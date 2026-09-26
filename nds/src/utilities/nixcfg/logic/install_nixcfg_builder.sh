@@ -22,7 +22,7 @@ declare -g NDS_NIXCFG_HEADER=""
 # 40-49: Access (users, sudo, SSH)
 # 50-59: Packages / virtualisation
 # 70-79: Nix (flakes)
-# 90-99: stateVersion (written by nds_nixcfg_write)
+# 90-99: stateVersion (written by nixcfg_write)
 
 # =============================================================================
 # PUBLIC API
@@ -31,14 +31,14 @@ declare -g NDS_NIXCFG_HEADER=""
 # Description: NDS version for the generated configuration header.
 # Returns:
 # - <String> semver or "unknown"
-_nds_nixcfg_nds_version() {
-    local ver="${SCRIPT_VERSION:-}"
-
-    if [[ -z "$ver" && -n "${APP_DIR:-}" && -f "${APP_DIR}/VERSION" ]]; then
-        ver=$(<"${APP_DIR}/VERSION")
+_nixcfg_nds_version() {
+    local ver="" src
+    if declare -f scriptInfo_get_version >/dev/null; then
+        ver=$(scriptInfo_get_version)
     fi
-    if [[ -z "$ver" && -n "${SCRIPT_DIR:-}" && -f "${SCRIPT_DIR}/app/VERSION" ]]; then
-        ver=$(<"${SCRIPT_DIR}/app/VERSION")
+    if [[ -z "$ver" || "$ver" == unknown ]]; then
+        src="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)/VERSION"
+        [[ -f "$src" ]] && ver=$(<"$src")
     fi
     printf '%s\n' "${ver:-unknown}"
 }
@@ -48,7 +48,7 @@ _nds_nixcfg_nds_version() {
 # NixOS os-release). Never uses a foreign host's os-release (e.g. WSL).
 # Returns:
 # - <String> MAJOR.MINOR, or empty when undetectable
-_nds_nixcfg_state_version() {
+_nixcfg_state_version() {
     local ver="${NDS_NIXOS_STATE_VERSION:-}"
 
     if [[ "$ver" =~ ^[0-9]+\.[0-9]+$ ]]; then
@@ -74,9 +74,9 @@ _nds_nixcfg_state_version() {
 }
 
 # Description: File header for classic configuration.nix (vanilla intro + NDS).
-_nds_nixcfg_file_header() {
+_nixcfg_file_header() {
     local ver
-    ver=${ _nds_nixcfg_nds_version; }
+    ver=${ _nixcfg_nds_version; }
     cat <<EOF
 # Edit this configuration file to define what should be installed on
 # your system. Help is available in the configuration.nix(5) man page
@@ -92,7 +92,7 @@ EOF
 # - name: <String> Block name
 # Returns:
 # - <String> Note (may be empty)
-_nds_nixcfg_section_note() {
+_nixcfg_section_note() {
     case "$1" in
         boot) printf '%s\n' "Bootloader." ;;
         luks) printf '%s\n' "LUKS unlock (USB keyfile)." ;;
@@ -113,7 +113,7 @@ _nds_nixcfg_section_note() {
 # - pairs:   <String...> @@TOKEN@@ value …
 # Returns:
 # - <String> Substituted text (stdout)
-nds_nixcfg_subst() {
+nixcfg_subst() {
     local content="$1"; shift
     while [[ $# -gt 0 ]]; do
         content="${content//"$1"/$2}"; shift 2
@@ -126,7 +126,7 @@ nds_nixcfg_subst() {
 # - block_name: <String> Section name
 # - block_content: <String> Nix text
 # - priority: <Int|optional> 0–100 (default 50)
-nds_nixcfg_register() {
+nixcfg_register() {
     local block_name="$1"
     local block_content="$2"
     local priority="${3:-50}"
@@ -138,14 +138,14 @@ nds_nixcfg_register() {
 # Description: Merge registered blocks into configuration.nix (includes stateVersion).
 # Arguments:
 # - output_file: <String|optional> Destination path
-nds_nixcfg_write() {
+nixcfg_write() {
     local output_file="${1:-/mnt/etc/nixos/configuration.nix}"
     local state_ver note
 
     mkdir -p "$(dirname "$output_file")"
 
-    [[ -n "$NDS_NIXCFG_HEADER" ]] || NDS_NIXCFG_HEADER="${ _nds_nixcfg_file_header; }"
-    state_ver="${ _nds_nixcfg_state_version; }" || true
+    [[ -n "$NDS_NIXCFG_HEADER" ]] || NDS_NIXCFG_HEADER="${ _nixcfg_file_header; }"
+    state_ver="${ _nixcfg_state_version; }" || true
     if [[ ! "$state_ver" =~ ^[0-9]+\.[0-9]+$ ]]; then
         error "Cannot determine system.stateVersion (set NDS_NIXOS_STATE_VERSION=MAJOR.MINOR)"
         return 1
@@ -169,7 +169,7 @@ nds_nixcfg_write() {
         for key in $(printf '%s\n' "${!NDS_NIXCFG_BLOCKS[@]}" | sort); do
             local block_name="${key#*_}"
             echo "  # === ${block_name} ==="
-            note=${ _nds_nixcfg_section_note "$block_name"; }
+            note=${ _nixcfg_section_note "$block_name"; }
             [[ -n "$note" ]] && echo "  # ${note}"
             printf '%s\n' "${NDS_NIXCFG_BLOCKS[$key]}" | sed 's/^/  /'
             echo ""
@@ -189,13 +189,13 @@ nds_nixcfg_write() {
         echo "}"
     } > "$output_file"
 
-    log "NixOS configuration written to: $output_file"
+    debug "NixOS configuration written to: ${output_file}"
 }
 
 # Description: Merge registered blocks into a standalone NixOS module file.
 # Arguments:
 # - output_file: <String> Destination path
-nds_nixcfg_write_module() {
+nixcfg_write_module() {
     local output_file="$1"
 
     mkdir -p "$(dirname "$output_file")"
@@ -215,7 +215,7 @@ nds_nixcfg_write_module() {
 }
 
 # Description: Drop all registered nixcfg blocks and the cached header.
-nds_nixcfg_clear() {
+nixcfg_clear() {
     NDS_NIXCFG_BLOCKS=()
     NDS_NIXCFG_HEADER=""
     debug "Cleared all NixOS config blocks"

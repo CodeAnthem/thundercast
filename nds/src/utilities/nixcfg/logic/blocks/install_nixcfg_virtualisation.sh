@@ -7,7 +7,7 @@
 # ==================================================================================================
 
 
-_nds_nixcfg_virtualisation_generate() {
+_nixcfg_virtualisation_generate() {
     local vm_type="$1"
     local output=""
 
@@ -35,5 +35,5 @@ _nds_nixcfg_virtualisation_generate() {
             ;;
     esac
 
-    nds_nixcfg_register "virtualisation" "$output" 55
+    nixcfg_register "virtualisation" "$output" 55
 }

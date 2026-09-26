@@ -1,46 +1,31 @@
 #!/usr/bin/env bash
 # ==================================================================================================
-# NDS realize - classic plan (generated configuration.nix + nixos-install)
+# NDS - Classic realize plan
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-06 | Modified: 2026-09-03
+# Date:          Created: 2026-09-26 | Modified: 2026-09-26
 # ==================================================================================================
 
-# Description: Classic recipe. Reads settings once; each step is a utility call with arguments.
-# Returns:
-# - <Int> 0 on success; 14 config files, 15 install
-_nds_realize_plan_classic() {
-    local disk strategy encryption remote_unlock loader uefi secrets_dir
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
-    disk="$(nds_cfg_get DISK_TARGET)"
-    strategy="$(nds_cfg_get DISK_STRATEGY)"; strategy="${strategy:-nds}"
-    encryption="$(nds_cfg_get ENCRYPTION)"
-    remote_unlock="$(nds_cfg_get ENCRYPTION_REMOTE_UNLOCK)"
-    loader="$(nds_cfg_get BOOT_LOADER)"; loader="${loader:-grub}"
-    uefi="$(nds_cfg_get BOOT_UEFI_MODE)"
-    secrets_dir="${NDS_RUNTIME_DIR}/secrets"
-
-    nds_requireUtility nixos || return 15
-    nixos_setBootContext "$loader" "$uefi" "$disk" "$encryption"
-    NDS_UI_QUIET=true
-
-    nds_step_exec "Generating access secrets" _nds_realize_write_admin_password "$secrets_dir" || return 14
-    nds_step_exec "Generating configuration.nix" nds_nixcfg_write_classic || return 14
-
-    _nds_realize_disk_prepare "$disk" "$strategy" "$encryption" "$remote_unlock" "$uefi" "$loader" || return 15
-    nds_step_exec "Generating hardware configuration" \
-        _nds_realize_classic_hardware "/mnt/etc/nixos" "${NDS_RUNTIME_DIR}/config" || return 15
-
-    nds_step_exec "Installing configuration files" nixos_copyConfigs "${NDS_RUNTIME_DIR}/config" /mnt || return 15
-    nds_step_exec_nixos "Installing NixOS" _nds_realize_nixos_classic || return 15
-    nds_realize_diag_snapshot "after install"
-    nds_step_exec "Registering EFI boot entry" _nds_realize_register_efi "$disk" "$uefi" "$loader" || return 15
-    nds_step_exec "Verifying installation" nds_realize_verify classic "" || return 15
-    return 0
-}
-
-# Description: nixos-install then profile/bootloader repair (one visible step).
-_nds_realize_nixos_classic() {
-    nixos_installClassic /mnt || return 1
-    nixos_ensureInstallArtifacts || return 1
-    return 0
+nds_realize_plan_classic() {
+    local _plan_name=$1
+    local -n _R=$1
+    local _plan_cfg
+    _plan_cfg="${ nds_session_dir config; }"
+    eventRun realize.pre_disk "$_plan_name" || return 1
+    _realize_step "Disk" step_disk "$_plan_name" || return 1
+    eventRun realize.post_disk "$_plan_name" || return 1
+    _realize_step "Configuration" nixcfg_writeClassic "$_plan_name" "${_plan_cfg}/configuration.nix" || return 1
+    _realize_step "Hardware" step_hardware "$_plan_name" "$_plan_cfg" || return 1
+    _realize_step "Copy configuration" nixos_copyConfigs "$_plan_cfg" /mnt || return 1
+    eventRun realize.pre_install "$_plan_name" || return 1
+    _realize_step "Install" nixos_installClassic /mnt || return 1
+    if [[ -n ${_R[TARGET_SEED_DIR]:-} ]]; then
+        _realize_step "Seed" step_seed "$_plan_name" || return 1
+    fi
+    eventRun realize.post_install "$_plan_name" || return 1
+    _realize_step "EFI" step_efi "$_plan_name" || return 1
+    _realize_step "Verify" nds_realize_verify classic || return 1
+    nds_realize_diag "after install"
+    eventRun realize.done "$_plan_name" || return 1
 }

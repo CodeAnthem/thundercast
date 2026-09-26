@@ -10,7 +10,7 @@
 # - s: <String> Raw value
 # Returns:
 # - <String> Escaped value on stdout
-_nds_nixcfg_nix_escape() {
+_nixcfg_nix_escape() {
     local s="$1"
     s="${s//\\/\\\\}"
     s="${s//\"/\\\"}"

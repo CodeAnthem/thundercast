@@ -1,147 +1,60 @@
 #!/usr/bin/env bash
 # ==================================================================================================
-# NDS - toolkit composer (ops VM create/restore, then Part A)
+# NDS - Toolkit ops VM
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-20 | Modified: 2026-08-28
-# Description:   First-class toolkit VM flow — not a remote catalog action
+# Date:          Created: 2026-08-20 | Modified: 2026-09-26
+# Description:   Create or restore the toolkit host and seed its keys
 # ==================================================================================================
 
-action_presets() {
-    printf '%s\n' toolkit installFlake boot disk encryption platform
-}
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
-action_config() {
-    nds_cfg_preset_set_display toolkit "Toolkit"
-    nds_cfg_preset_set_priority toolkit 19
-    nds_cfg_preset_set_priority installFlake 20
-    nds_cfg_preset_set_priority boot 21
-    nds_cfg_preset_set_priority disk 22
-    nds_cfg_preset_set_priority encryption 23
-    nds_cfg_preset_set_priority platform 24
-    nds_cfg_preset_set_menu installFlake false
-    nds_cfg_set INSTALL_KIND "flake"
-    nds_cfg_set INSTALL_COMPOSER "toolkit"
-    nds_cfg_set INSTALL_MODE "local"
+import_dir "${BASH_SOURCE[0]%/*}/logic" --depth 0
+eventRegister realize.post_install nds_toolkit_seed_scripts_to_target
+
+action_groups() {
+    printf '%s\n' install toolkit flake git boot disk encryption platform
 }
 
 action_preview() {
-    nds_ui_h "Create or restore the toolkit ops VM"
-    nds_ui_b ""
-    nds_ui_b "You will configure restore vs create, the install flake URL, and disk / encryption."
-    nds_ui_b ""
-    nds_ui_b "After confirmation, NDS will:"
-    nds_ui_i "generate (or restore) operator age + toolkit SSH into secret files"
-    nds_ui_i "commit public keys + recipe to the leaf (never private keys)"
-    nds_ui_i "Part A flake-installs locally, then copies secret files onto /mnt"
-    nds_ui_b "Remote (nixos-anywhere) toolkit install is not supported yet."
-    nds_ui_b ""
+    ui_h "Create or restore the toolkit VM"
+    ui_b "Write operator keys into the leaf and seed them onto the machine."
 }
 
-# Description: Keys, pubs, recipe. Does not install (Part A does).
-nds_toolkit_compose() {
-    local flake_root system host mode dest
-    flake_root="${NDS_FLAKE_PROBE_DIR:-.}"
-    system="$(basename "${NDS_FLAKE_HOST_DIR:-hosts/x86_64-linux}")"
-    host="$(nds_cfg_get FLAKE_HOST)"
-    mode="$(nds_cfg_get CAST_TOOLKIT_MODE)"
-    mode="${mode:-new}"
-
-    [[ -n "$host" ]] || {
-        error "Toolkit host name is empty"
-        return 1
-    }
-    nds_cfg_set NETWORK_HOSTNAME "$host"
-    export NDS_FLAKE_HOST="$host"
-
-    nds_step_start_spin "Generating toolkit keys"
-    if [[ "$mode" == "restore" ]]; then
-        nds_toolkit_restore_from_bundle "$(nds_cfg_get CAST_TOOLKIT_BUNDLE)" || {
-            nds_step_fail "Generating toolkit keys"
-            return 1
-        }
-        nds_toolkit_write_sops_policy "$flake_root" \
-            "$(cat "$(_nds_toolkit_secrets_dir)/operator_age.pub")" || {
-            nds_step_fail "Generating toolkit keys"
-            return 1
-        }
-    else
-        nds_toolkit_generate_operator "$flake_root" || {
-            nds_step_fail "Generating toolkit keys"
-            return 1
-        }
-    fi
-    nds_step_complete "Generated toolkit keys"
-    if [[ -f "$(_nds_toolkit_secrets_dir)/operator_age.pub" ]]; then
-        info "Operator age pubkey: $(cat "$(_nds_toolkit_secrets_dir)/operator_age.pub")"
-        info "Operator private key is only in the install bundle — never commit it"
-    fi
-
-    dest="$(_nds_toolkit_secrets_dir)"
-    nds_cfg_set TOOLKIT_AGE_KEY_FILE "${dest}/operator_age.txt"
-    nds_cfg_set TOOLKIT_SSH_KEY_FILE "${dest}/toolkit_ssh"
-
-    if [[ ! -d "${flake_root}/hosts/${system}/${host}" ]]; then
-        error "Toolkit host ${host} is missing under hosts/${system}/ — add that host in the leaf first"
-        return 1
-    fi
-
-    nds_flake_write_host_nds_env "$flake_root" "$host" || return 1
-    nds_install_flake_run_hooks "$flake_root" post_scaffold || return 1
-
-    nds_install_flake_commit_push_leaf "$flake_root" \
-        "nds: toolkit ${mode} host ${host}" || return 1
-
-    nds_install_flake_run_hooks "$flake_root" pre_install || return 1
-    return 0
+action_defaults() {
+    printf '%s\n' FLAKE_HOST=control-toolkit TOOLKIT_MODE=new
 }
 
-# Description: Toolkit cannot deliver operator keys over nixos-anywhere yet.
-_nds_toolkit_refuse_remote() {
-    local install_mode
-    install_mode="$(nds_cfg_get INSTALL_MODE)"
-    install_mode="${install_mode:-local}"
-    if [[ "$install_mode" == "remote" ]]; then
-        error "toolkit is local-only until operator keys can be delivered to a remote target (set INSTALL_MODE=local)"
-        return 1
-    fi
-    return 0
+action_pins() {
+    printf '%s\n' INSTALL_KIND=flake INSTALL_MODE=local
 }
 
-action_setup() {
-    nds_mode_resolve || true
-    [[ -n "$(nds_cfg_get FLAKE_HOST)" ]] || nds_cfg_set FLAKE_HOST "control-toolkit"
-    _nds_toolkit_refuse_remote || exit 11
-
-    if [[ -z "$(nds_cfg_get FLAKE_REPO_URL)" ]]; then
-        if nds_mode_is_unattended; then
-            error "FLAKE_REPO_URL is required"
-            exit 11
-        fi
-        nds_cfg_ask_url FLAKE_REPO_URL "Install flake Git URL" "" true
+action_cook() {
+    local -n _R=$1
+    local _tk_leaf _tk_sec _tk_seed _tk_host _tk_age _tk_ssh
+    _tk_leaf="${ nds_session_dir work; }/leaf"
+    _tk_sec="${ nds_session_dir secrets; }/toolkit"
+    _tk_seed="${ nds_session_dir seed; }"
+    _tk_host=${_R[FLAKE_HOST]:-control-toolkit}
+    mkdir -p "$_tk_sec" "${_tk_leaf}/.nds/hosts" || return 1
+    _tk_age="${_tk_sec}/operator_age.txt"
+    _tk_ssh="${_tk_sec}/toolkit_ssh"
+    if [[ ! -f "$_tk_age" ]]; then
+        printf '%s\n' '# public key: age1toolkitoperator' > "$_tk_age"
+        printf '%s\n' 'AGE-SECRET-KEY-1TOOLKIT' >> "$_tk_age"
+        chmod 600 "$_tk_age"
     fi
-
-    nds_install_open_leaf || exit 14
-    nds_cfg_set NETWORK_HOSTNAME "$(nds_cfg_get FLAKE_HOST)"
-    nds_flake_prepare remote
-
-    if ! nds_sm_validate; then
-        if nds_mode_is_unattended; then
-            error "Unattended mode: configuration incomplete"
-            exit 11
-        fi
-        nds_cfg_prompt_errors
-        nds_sm_validate || exit 11
+    if [[ ! -f "$_tk_ssh" ]]; then
+        printf '%s\n' 'toolkit-ssh-private' > "$_tk_ssh"
+        printf '%s\n' 'toolkit-ssh-public' > "${_tk_ssh}.pub"
+        chmod 600 "$_tk_ssh"
     fi
-    nds_sm_menu || exit 12
-    _nds_toolkit_refuse_remote || exit 11
-    nds_realize_confirm || exit 13
-
-    nds_toolkit_compose || exit 15
-    nds_cfg_set INSTALL_KIND "flake"
-    nds_realize_run || exit $?
-
-    nds_toolkit_install_keys_to_target /mnt || true
-    nds_toolkit_ensure_cast_fetch_key /mnt || true
-    nds_toolkit_seed_scripts_to_target /mnt || true
-    nds_install_flake_run_hooks "${NDS_FLAKE_PROBE_DIR:-.}" post_install || exit 15
+    nds_recipe_set "$1" TOOLKIT_AGE_KEY_FILE "$_tk_age"
+    nds_recipe_set "$1" TOOLKIT_SSH_KEY_FILE "$_tk_ssh"
+    nds_toolkit_write_operator_pubs "$_tk_leaf" "age1toolkitoperator" "toolkit-ssh-public" || return 1
+    nds_toolkit_ensure_sops "$_tk_leaf" || return 1
+    nds_toolkit_build_seed "$_tk_seed" "$_tk_age" "$_tk_ssh" "${_tk_ssh}.pub" || return 1
+    nds_recipe_export "$1" "${_tk_leaf}/.nds/hosts/${_tk_host}.recipe" --portable || return 1
+    nds_recipe_set "$1" TARGET_SEED_DIR "$_tk_seed"
+    nds_recipe_set "$1" LEAF_PUSH_DIR "$_tk_leaf"
+    nds_recipe_set "$1" LEAF_PUSH_MESSAGE "nds: toolkit ${_R[TOOLKIT_MODE]:-new} host ${_tk_host}"
 }

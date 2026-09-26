@@ -1,0 +1,17 @@
+# nds-recipe 1
+[install]
+INSTALL_KIND="classic"
+INSTALL_MODE=local
+[region]
+REGION_TIMEZONE="UTC"
+REGION_LOCALE_MAIN="en_US.UTF-8"
+[network]
+NETWORK_HOSTNAME=host
+NETWORK_METHOD="dhcp"
+[access]
+ACCESS_ADMIN_USER="admin"
+[disk]
+DISK_STRATEGY="flake"
+[catalog]
+CATALOG_URL="https://example.com/catalog.git"
+CATALOG_ACTION="none"

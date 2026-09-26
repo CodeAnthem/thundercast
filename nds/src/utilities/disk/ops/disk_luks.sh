@@ -2,46 +2,34 @@
 # ==================================================================================================
 # disk utility - LUKS format
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-28 | Modified: 2026-09-02
+# Date:          Created: 2026-07-28 | Modified: 2026-09-26
 # ==================================================================================================
 
-# Description: Format partition as LUKS2, open cryptroot, mkfs.ext4 -L nixos.
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
+
+# Description: Format a partition as LUKS2 using the given secret files.
 # Arguments:
-# - partition:    <String> Block partition
-# - use_password: <Bool>
-# - use_key:      <Bool>
-# - secrets_dir:  <String> Dir with luks_password.txt and/or luks_key.bin
+# - partition:       <String> Block partition
+# - passphrase_file: <String> Passphrase file, or empty
+# - keyfile:         <String> Key file, or empty
 disk_luksFormat() {
-    local partition="$1"
-    local use_password="$2"
-    local use_key="$3"
-    local secrets_dir="$4"
-    local passphrase="" keyfile_path=""
-
-    log "Formatting LUKS2 on $partition"
-    wipefs -a "$partition" 2>/dev/null || true
-
-    [[ "$use_password" == "true" ]] && passphrase=$(<"${secrets_dir}/luks_password.txt")
-    [[ "$use_key" == "true" ]] && keyfile_path="${secrets_dir}/luks_key.bin"
-
-    if [[ "$use_password" == "true" && "$use_key" == "true" ]]; then
-        log "Formatting with password (slot 0) + keyfile (slot 1)"
-        printf '%s' "$passphrase" | cryptsetup luksFormat --type luks2 "$partition" - || return 1
-        printf '%s' "$passphrase" | cryptsetup open "$partition" cryptroot - || return 1
-        printf '%s' "$passphrase" | cryptsetup luksAddKey "$partition" "$keyfile_path" - || return 1
-    elif [[ "$use_password" == "true" ]]; then
-        log "Formatting with password (slot 0)"
-        printf '%s' "$passphrase" | cryptsetup luksFormat --type luks2 "$partition" - || return 1
-        printf '%s' "$passphrase" | cryptsetup open "$partition" cryptroot - || return 1
-    elif [[ "$use_key" == "true" ]]; then
-        log "Formatting with keyfile (slot 0)"
-        cryptsetup luksFormat --type luks2 "$partition" "$keyfile_path" || return 1
-        cryptsetup open "$partition" cryptroot "$keyfile_path" || return 1
-    else
-        err "No unlock method configured — cannot format LUKS"
+    local _disk_part=$1 _disk_pass=${2:-} _disk_key=${3:-}
+    [[ -n "$_disk_pass" || -n "$_disk_key" ]] || {
+        err "No unlock material — cannot format LUKS"
         return 1
+    }
+    debug "Formatting LUKS2 on ${_disk_part}"
+    wipefs -a "$_disk_part" 2>/dev/null || true
+    if [[ -n "$_disk_pass" && -n "$_disk_key" ]]; then
+        cryptsetup luksFormat --type luks2 "$_disk_part" --key-file "$_disk_pass" || return 1
+        cryptsetup open "$_disk_part" cryptroot --key-file "$_disk_pass" || return 1
+        cryptsetup luksAddKey "$_disk_part" "$_disk_key" --key-file "$_disk_pass" || return 1
+    elif [[ -n "$_disk_pass" ]]; then
+        cryptsetup luksFormat --type luks2 "$_disk_part" --key-file "$_disk_pass" || return 1
+        cryptsetup open "$_disk_part" cryptroot --key-file "$_disk_pass" || return 1
+    else
+        cryptsetup luksFormat --type luks2 "$_disk_part" "$_disk_key" || return 1
+        cryptsetup open "$_disk_part" cryptroot --key-file "$_disk_key" || return 1
     fi
-
     mkfs.ext4 -L nixos /dev/mapper/cryptroot || return 1
-    return 0
 }

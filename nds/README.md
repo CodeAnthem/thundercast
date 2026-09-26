@@ -9,14 +9,17 @@ Live-ISO / curl installer. Generic birth of NixOS machines (classic or flake).
 
 ```
 nds/
-  start.sh       # curl entry (clone repo → nds/src/app/main.sh)
-  src/           # app, install, wizard/git, utilities, ui, lib, tools, actions/
-  src/actions/   # core only: classicInstall, installFlake, apply, remoteAction, …
-  docs/TODO.md   # documentation backlog
-  dev/           # selftest + shellcheck
+  start.sh                 curl entry (clone repo → nds/src/app/main.sh)
+  src/app/                 framework: CLI, pipeline, confirm, finish
+  src/recipe/              recipe contract
+  src/wizard/              interactive fill, askers, git access
+  src/realize/             birth from a sealed recipe
+  src/utilities/           disk, nixos, nixcfg, git, flake, and the other tools
+  src/actions/             classicInstall, installFlake, apply, remoteAction, test, uiSmoke
+  dev/                     selftest and shellcheck
 ```
 
-Fleet birth wizards (`toolkit`, `addFleetHost`) live in `../fleet/nds-actions/` and are auto-discovered.
+Fleet actions (`toolkit`, `addFleetHost`) live in `../fleet/nds-actions/` and are discovered with the builtins.
 
 ## Run
 
@@ -24,17 +27,15 @@ Fleet birth wizards (`toolkit`, `addFleetHost`) live in `../fleet/nds-actions/` 
 curl -sSL https://raw.githubusercontent.com/CodeAnthem/thundercast/main/nds/start.sh | bash
 # or
 bash nds/src/app/main.sh
+bash nds/src/app/main.sh --unattended --action classicInstall
+bash nds/src/app/main.sh apply /path/to/host.recipe
 ```
 
 ## Tests
 
-NDS selftest is parked while `nds/` is under refactor. It does not run `nds/` tests or essentials.
-
 ```bash
-bash nds/dev/selftest.sh          # parked — no nds/ tests
+bash nds/dev/selftest.sh
 bash nds/dev/shellcheck.sh
-bash utilities/essentials/dev/selftest.sh
-bash utilities/bashTestSuite/dev/selftest.sh
 ```
 
 Requires Bash 5.3+.

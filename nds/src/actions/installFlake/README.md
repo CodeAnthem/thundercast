@@ -58,7 +58,7 @@ deploy-key setup in-place:
 - Switches the clone URL to SSH (`git@host:owner/repo.git`)
 - Expects git SSH access to every private repository in the flake closure
   (root flake plus locked inputs such as thundercast). NDS probes each repo via
-  `git ls-remote` before partitioning; the system is built once during `nixos-install`.
+  `git ls-remote` before partitioning; the system is built once during `the NixOS installer`.
 
 For env-driven installs you can still set `NDS_FLAKE_REPO_URL` (git URL) or
 `NDS_FLAKE_LOCAL_PATH` (path) directly; `FLAKE_SOURCE` is derived automatically.

@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 # ==================================================================================================
-# NDS - Self-test (parked)
+# NDS - Self-test
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-06-29 | Modified: 2026-09-23
-# Description:   NDS tests are parked while nds/ is under refactor. Do not discover nds/ here.
+# Date:          Created: 2026-06-29 | Modified: 2026-09-26
+# Description:   Run NDS and fleet action tests. Does not run essentials or bashTestSuite tests.
 # ==================================================================================================
 set -euo pipefail
-echo "NDS selftest is parked (nds/ mid-refactor). No nds/ tests run." >&2
-echo "Use: bash utilities/essentials/dev/selftest.sh" >&2
-echo "     bash utilities/bashTestSuite/dev/selftest.sh" >&2
-exit 0
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+exec bash "$ROOT/utilities/bashTestSuite/main.sh" "$ROOT/nds/src" "$ROOT/fleet/nds-actions"

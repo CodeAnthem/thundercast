@@ -13,10 +13,8 @@ declare -gA _GIT_GH_ACCOUNTS=()
 # Returns:
 # - <Bool> 0 when the account was recorded
 git_gh_setAccountUsingGh() {
-    local url="$1"
-    local acc
-    acc=${ git_store_getAccountUID "$url"; } || return 1
-    _GIT_GH_ACCOUNTS["$acc"]="true"
+    [[ -n ${1:-} ]] || return 1
+    _GIT_GH_ACCOUNTS["$1"]="true"
 }
 
 # Description: True when the account of this URL uses gh.
@@ -25,15 +23,7 @@ git_gh_setAccountUsingGh() {
 # Returns:
 # - <Bool> 0 when useGh is true
 git_gh_isAccountUsingGh() {
-    local url="$1"
-    local acc safe envn
-    acc=${ git_store_getAccountUID "$url"; } || return 1
-    if [[ "${_GIT_GH_ACCOUNTS[$acc]:-}" == "true" ]]; then
-        return 0
-    fi
-    safe="${acc//[^A-Za-z0-9]/_}"
-    envn="GIT_ACCOUNT_${safe}_useGh"
-    [[ "${!envn:-}" == "true" ]]
+    [[ -n ${1:-} && ${_GIT_GH_ACCOUNTS[$1]:-} == true ]]
 }
 
 # Description: Resolve gh binary (GH_BIN or PATH).
@@ -71,12 +61,6 @@ git_gh_isAuthenticated() {
 # Description: Interactive gh auth login.
 # Returns:
 # - <Bool> 0 on success
-git_gh_login() {
-    local bin
-    bin=${ git_gh_bin; } || return 1
-    "$bin" auth login
-}
-
 # Description: gh auth logout.
 # Returns:
 # - <Bool> 0 on success

@@ -1,6 +1,6 @@
 # UI smoke action
 
-Interactive **prompt walk** — no partition, no `nixos-install`, no flake clone, no GitHub API.
+Interactive screen walk — no partition, no `the NixOS installer`, no flake clone, no GitHub API.
 
 Shown in the action menu only when:
 
@@ -20,6 +20,6 @@ menu wiring after a UI change.
 | Action | Flag | Purpose |
 |--------|------|---------|
 | `test` | `NDS_TEST=true` | Parked NDS selftest stub (automated, read-only) |
-| `uiSmoke` | `NDS_TEST=true` | This interactive prompt walk |
+| `uiSmoke` | `NDS_TEST=true` | This interactive screen walk |
 
 Automated selftests: parked at `bash nds/dev/selftest.sh`. Use essentials / bashTestSuite runners instead.

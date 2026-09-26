@@ -6,9 +6,7 @@ ThunderCast birth wizards **addFleetHost** and **toolkit** live under `fleet/nds
 
 **Do not run unknown remote actions.** Scripts under `.nds/actions/` are `source`d into the NDS shell with installer privileges. NDS asks you to confirm **before** that source.
 
-**installFlake** is for a named host that already exists. **addFleetHost** scaffolds a new host from `.roles/`. **toolkit** creates or restores the ops VM. Catalog scripts compose host files, then Part A installs (unless `NDS_REMOTE_ACTION_DID_INSTALL=1`).
-
-`remote_action_run` must **compose only** (write flake files, register secrets as `*_FILE` paths). Do not call `nixos-install` unless you set `NDS_REMOTE_ACTION_DID_INSTALL=1` so Part A does not run twice.
+**installFlake** is for a named host that already exists. **addFleetHost** scaffolds a new host from `.roles/`. **toolkit** creates or restores the ops VM. A catalog action cooks its own groups and may register realize hooks. It does not birth the machine itself.
 
 ## Flow
 
@@ -18,14 +16,14 @@ ThunderCast birth wizards **addFleetHost** and **toolkit** live under `fleet/nds
 4. Pick an action from `.nds/actions/` (addFleetHost and toolkit ids are omitted if present)
 5. **Confirm before load** (orange warning — the catalog script is not sourced yet)
 6. Preview → settings (install flake URL, disk, …)
-7. Disk confirm, then `remote_action_run` (compose), then Part A
+7. Confirm, then realize births the machine from the sealed recipe
 
 ## Settings
 
 | Key | Meaning |
 |-----|---------|
 | `CAST_REPO_URL` | Catalog git URL (required). No ThunderCast default. |
-| `CAST_ACTION` | Action id from `.nds/actions/<id>.sh`. Interactive: catalog menu. Unattended: `NDS_CAST_ACTION` is required (no default). |
+| `CATALOG_ACTION` | Action id under `.nds/actions/<id>/setup.sh`. Interactive: catalog menu. Unattended: `NDS_CATALOG_ACTION` is required. |
 | `FLAKE_REPO_URL` | **Install flake** (your NixOS config repo) |
 | `NETWORK_HOSTNAME` | Machine hostname (Network preset). Copied to `FLAKE_HOST` for a new host. |
 
