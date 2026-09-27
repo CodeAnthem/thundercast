@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Shared test boot
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-24 | Modified: 2026-09-26
+# Date:          Created: 2026-09-24 | Modified: 2026-09-27
 # Description:   Loads essentials for NDS tests and points scriptInfo at nds/src.
 # ==================================================================================================
 
@@ -115,10 +115,23 @@ fi
 prev=
 _root=
 for arg in "\$@"; do
+    # -o/-f on lsblk, blkid, and findmnt are column names (NAME, value, SOURCE).
+    # An absolute path is a real output (age-keygen, ssh-keygen, nixos-facter).
     if [[ "\$prev" == -o || "\$prev" == -f ]]; then
-        printf '%s\\n' '# public key: age1testkey' > "\$arg"
-        printf '%s\\n' 'AGE-SECRET-KEY-TESTONLY' >> "\$arg"
-        printf '%s\\n' 'ssh-ed25519 AAAAC3R0b3JhdG9y test' > "\$arg.pub"
+        _out=\$arg
+        if [[ "\$_out" != /* ]]; then
+            if [[ '${_bin_name}' == age-keygen || '${_bin_name}' == ssh-keygen ]]; then
+                mkdir -p "\${TMPDIR:-/tmp}/nds-test-stubs"
+                _out="\${TMPDIR:-/tmp}/nds-test-stubs/\${_out##*/}"
+            else
+                _out=
+            fi
+        fi
+        if [[ -n "\$_out" ]]; then
+            printf '%s\\n' '# public key: age1testkey' > "\$_out"
+            printf '%s\\n' 'AGE-SECRET-KEY-TESTONLY' >> "\$_out"
+            printf '%s\\n' 'ssh-ed25519 AAAAC3R0b3JhdG9y test' > "\$_out.pub"
+        fi
     fi
     if [[ '${_bin_name}' == nixos-install && "\$prev" == --root ]]; then
         _root=\$arg
@@ -211,12 +224,14 @@ nds_test_assertResolved() {
     done
     while IFS= read -r _nds_name; do
         [[ -n "$_nds_name" ]] || continue
+        [[ "$_nds_name" == [A-Za-z]* ]] || _nds_name=${_nds_name:1}
+        [[ "$_nds_name" == *[A-Za-z_] ]] || _nds_name=${_nds_name:0:-1}
+        [[ -n "$_nds_name" ]] || continue
         if ! declare -F "$_nds_name" >/dev/null; then
             bts_fail "unresolved ${_nds_name}"
             _nds_missing=1
         fi
-    done < <(rg -o -N --no-filename -r '$2' \
-        '(^|[^A-Za-z0-9_./])((?:disk|nixos|nixcfg|flake|git|gh|facter|hwconfig|sops|targetSeed|pkg|age|qr|step|nds)_[A-Za-z_]+)($|[^A-Za-z0-9_.])' \
+    done < <(grep -h -oE '(^|[^A-Za-z0-9_./])(disk|nixos|nixcfg|flake|git|gh|facter|hwconfig|sops|targetSeed|pkg|age|qr|step|nds)_[A-Za-z_]+($|[^A-Za-z0-9_.])' \
         "${_nds_files[@]}" | sort -u)
     if [[ "$_nds_missing" -eq 0 ]]; then
         bts_pass "every cook and action command resolves"

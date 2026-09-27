@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Action store, check, and select tests
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-24 | Modified: 2026-09-25
+# Date:          Created: 2026-09-24 | Modified: 2026-09-27
 # ==================================================================================================
 
 # shellcheck source=../../setup_TEST.sh
@@ -163,7 +163,7 @@ suite_action() {
     unset NDS_ACTION
     _action_menu=0
     rc=0
-    nds_action_select 2>/dev/null || rc=$? # No terminal. Set NDS_ACTION
+    nds_action_select </dev/null 2>/dev/null || rc=$? # No terminal. Set NDS_ACTION
     if [[ "$rc" -ne 0 && "$_action_menu" -eq 0 ]]; then
         bts_pass "no terminal without NDS_ACTION fails and does not open the menu"
     else

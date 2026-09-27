@@ -20,7 +20,7 @@ _loop_luks() {
 
 suite_disk_loop() {
     [[ -n ${NDS_LOOP_DEV:-} ]] || { bts_pass "loop tier not requested"; return 0; }
-    local dev root part layout seed mode key
+    local dev root part layout seed mode key _loop_try _loop_out
     dev=$NDS_LOOP_DEV
     if [[ "$dev" != /dev/loop* ]]; then
         bts_fail "NDS_LOOP_DEV must be a loop device, was '${dev}'"
@@ -33,15 +33,23 @@ suite_disk_loop() {
     printf '%s\n' 'loop-passphrase-for-the-tier' > "$_loop_pass"
     chmod 600 "$_loop_pass"
 
-    if ! disk_partition "$dev" false "" >/dev/null 2>/dev/null; then
-        bts_fail "unencrypted disk_partition failed"
+    _loop_out=$(mktemp)
+    if ! disk_partition "$dev" false "" >"$_loop_out" 2>&1; then
+        bts_fail "unencrypted disk_partition failed: $(tr '\n' ' ' <"$_loop_out")"
+        rm -f "$_loop_out"
         return 0
     fi
-    layout=$(lsblk -no FSTYPE,LABEL "$dev")
+    rm -f "$_loop_out"
+    layout=
+    for _loop_try in 1 2 3 4 5 6 7 8 9 10; do
+        layout=$(lsblk -no FSTYPE,LABEL "$dev")
+        [[ "$layout" == *vfat* && "$layout" == *boot* && "$layout" == *ext4* && "$layout" == *nixos* ]] && break
+        sleep 0.5
+    done
     if [[ "$layout" == *vfat* && "$layout" == *boot* && "$layout" == *ext4* && "$layout" == *nixos* ]]; then
         bts_pass "lsblk shows the fat boot partition and the ext4 root"
     else
-        bts_fail "layout was '${layout}'"
+        bts_fail "layout was '${layout}' probe='$(blkid "$dev"* 2>/dev/null || true)'"
         return 0
     fi
 
@@ -54,11 +62,18 @@ suite_disk_loop() {
     fi
     disk_unmountTarget "$root" >/dev/null 2>/dev/null || true
 
-    if ! disk_partition "$dev" true true _loop_luks >/dev/null 2>/dev/null; then
-        bts_fail "encrypted disk_partition failed"
+    _loop_out=$(mktemp)
+    if ! disk_partition "$dev" true true _loop_luks >"$_loop_out" 2>&1; then
+        bts_fail "encrypted disk_partition failed: $(tr '\n' ' ' <"$_loop_out")"
+        rm -f "$_loop_out"
         return 0
     fi
-    part=$(disk_part "$dev" 2)
+    rm -f "$_loop_out"
+    if [[ -d /sys/firmware/efi ]]; then
+        part=$(disk_part "$dev" 2)
+    else
+        part=$(disk_part "$dev" 3)
+    fi
     if cryptsetup isLuks "$part"; then
         bts_pass "the root partition is LUKS"
     else

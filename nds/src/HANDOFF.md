@@ -48,11 +48,13 @@ Resume: read §1, run §4 G0, find the first unchecked task, work only that task
 - [x] T3 loop-device integration tier (`nds/dev/looptest.sh`)
 - [x] T4 vocabulary: fill phase → `recipe`, birth phase → `cook`
 - [x] T5 housekeeping and commits
-- [ ] T6 rewrite `nds/.wip/TESTING.md` for 6.x
+- [x] T6 rewrite `nds/.wip/TESTING.md` for 6.x
 - [ ] T7 closure
 
 **Log**
 
+- 2026-09-27 loop: first real `sudo bash nds/dev/looptest.sh` reached the device (BIOS, no `/sys/firmware/efi`). `lsblk` showed `vfat boot` and a root partition with no filesystem yet. `disk_partition` now `udevadm settle`s after mkfs so by-label and lsblk catch the ext4 label. Re-run the loop tier to confirm.
+- 2026-09-27 T6: `nds/.wip/TESTING.md` reset for 6.0.1. Every session is open, order 0 → U → A → R → B → T → T2 → M → C → D → E. Leaf `dp_cluster`, host `control-toolkit`, BIOS VMware, `/dev/sda` kept. The file is under `.wip/` and stays untracked. Old env tokens are named in words in the rename table so the name gate only sees current flags and schema keys.
 - 2026-09-27 T5: `nds/src/VERSION` is 6.0.1. Action docs follow the recipe/cook contract. `nds/.wip/OPEN.md` points here. One NDS commit covers the repair, the loop tier, and the vocabulary rename; they could not be split after the names moved. Essentials stayed in `2984074`. Not tagged, not pushed. T6 still rewrites `TESTING.md`.
 - 2026-09-27 T4: fill side is `action_recipe`, `nds_pipeline_recipe`, `recipe.schema`, `recipe.done`, `recipe.summary`, `_NDS_RECIPE`. Birth side is `nds/src/cook/`, `nds_cook`, and `cook.pre_disk` through `cook.done`. Toolkit logic file is `recipe.sh`. Self-test and ShellCheck are green. Not committed yet: the repair, the loop tier, and this rename are still one working tree, so T5 cannot split them into three commits without rewriting history.
 - 2026-09-27 T3: `nds/dev/looptest.sh` and `disk_LOOP_TEST.sh` are in. The unit walk skips the tier unless `NDS_LOOP_DEV` is set. On this WSL it only hit the skip path: `sudo -n true` failed and `parted` is not installed (`looptest` exit 2). Loop partition names use the `p` suffix (`/dev/loop0p1`), same as nvme.

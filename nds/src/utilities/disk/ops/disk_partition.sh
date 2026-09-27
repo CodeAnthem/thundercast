@@ -2,8 +2,36 @@
 # ==================================================================================================
 # disk utility - NDS GPT partition layout
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-28 | Modified: 2026-09-02
+# Date:          Created: 2026-07-28 | Modified: 2026-09-27
 # ==================================================================================================
+
+# Wait until udev has published the filesystems just written. lsblk and by-label are stale until then.
+_disk_publish() {
+    command -v udevadm >/dev/null 2>&1 || return 0
+    sync || true
+    udevadm settle --timeout=15 || true
+}
+
+# Loop devices ignore a plain partprobe often enough that the partition nodes never appear.
+_disk_reread() {
+    local disk=$1
+    partprobe "$disk" || true
+    [[ "$disk" == /dev/loop* ]] || return 0
+    losetup -c "$disk" 2>/dev/null || true
+    partx -u "$disk" 2>/dev/null || partx -a "$disk" 2>/dev/null || true
+}
+
+# Non-loop paths return immediately so a stubbed unit run does not wait on /dev/sda.
+_disk_part_ready() {
+    local part=$1 i
+    [[ "$part" == /dev/loop* ]] || return 0
+    for ((i = 0; i < 50; i++)); do
+        [[ -b "$part" ]] && return 0
+        sleep 0.1
+    done
+    err "Partition device did not appear: ${part}"
+    return 1
+}
 
 # Description: Partition disk for NixOS (NDS layout). Optional LUKS via callback name.
 # Arguments:
@@ -58,10 +86,14 @@ disk_partition() {
     fi
 
     sleep 2
-    partprobe "$disk" || true
+    _disk_reread "$disk"
 
     boot_part=${ disk_part "$disk" "$boot_idx"; }
     root_part=${ disk_part "$disk" "$root_idx"; }
+    _disk_part_ready "$boot_part" || return 1
+    _disk_part_ready "$root_part" || return 1
+    # udev probes the new partitions and holds them open. Settle before mkfs.
+    _disk_publish
 
     log "Formatting boot partition"
     mkfs.fat -F 32 -n boot "$boot_part" || return 1
@@ -75,7 +107,8 @@ disk_partition() {
         "$format_luks_fn" "$root_part" || return 1
     else
         log "Setting up standard root partition"
-        mkfs.ext4 -L nixos "$root_part" || return 1
+        mkfs.ext4 -F -L nixos "$root_part" || return 1
     fi
+    _disk_publish
     return 0
 }
