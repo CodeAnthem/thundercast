@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Session exit hooks
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-23 | Modified: 2026-09-24
+# Date:          Created: 2026-09-23 | Modified: 2026-09-27
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
@@ -13,13 +13,16 @@ _nds_session_publish() {
 }
 
 _nds_session_onExitError() {
-    logger_compose "NDS" session || return 1
-    warn "NDS failed (${1:-?}). Installer output stays in the nixos scope."
-    declare -f nds_session_showFailure >/dev/null && nds_session_showFailure "${1:-?}"
+    local code="${1:-?}"
+    logger_compose "NDS" session nixos || true
+    warn "NDS failed (${code})."
+    declare -f nds_session_showFailure >/dev/null && nds_session_showFailure "$code"
     _nds_session_publish || return 1
 }
 
 _nds_session_onExitClean() {
+    declare -f _nds_session_print_scope >/dev/null \
+        && _nds_session_print_scope "NDS finished." session 20
     _nds_session_publish || return 1
     runtime_purgeAll || return 1
 }
