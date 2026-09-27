@@ -82,11 +82,19 @@ _taskSpinnerStop() {
     fi
 }
 
+# A captured stderr must not receive frames. Chrome's stderr is a pipe that still paints the screen.
+_taskSpinnerLive() {
+    if declare -f chrome_isOn >/dev/null && chrome_isOn; then
+        return 0
+    fi
+    [[ -t 2 ]]
+}
+
 # Background spinner. Async children ignore SIGINT — parent must kill (taskOnInt).
 _taskSpinnerStart() {
     local message="$1"
     _taskSpinnerStop
-    _taskTty || return 0
+    _taskSpinnerLive || return 0
     (
         trap 'exit 0' TERM HUP INT
         local spinstr='|/-\\' char

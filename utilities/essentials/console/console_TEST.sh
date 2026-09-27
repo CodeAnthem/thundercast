@@ -69,6 +69,19 @@ suite_console() {
         taskCancel 2>/dev/null # drop the in-progress line
     fi
 
+    taskStart "Disk" 2>/dev/null # in-progress task line
+    yields_before="$_console_yields"
+    out_file="$(mktemp)"
+    console_writeOut "stdout line" >"$out_file" 2>&1
+    out=$(<"$out_file")
+    rm -f -- "$out_file"
+    if [[ "$out" == $'YIELD\nstdout line\nRESUME' && "$_console_yields" -eq $((yields_before + 1)) ]] && taskIsOpen; then
+        bts_pass "stdout joined to stderr yields"
+    else
+        bts_fail "joined stdout out='${out}' yield=${_console_yields}"
+    fi
+    taskCancel 2>/dev/null # drop the in-progress line
+
     bts_section "Logger"
 
     essentials_test_load logger

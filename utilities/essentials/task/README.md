@@ -37,6 +37,7 @@ taskOk
 ## Design
 
 - Hooks `ui.line.take` → `taskYield` (name stays). Hooks `ui.section.begin` → fail-if-open then fatal. Hooks `trap.INT` → `taskOnInt`.
+- The background spinner runs when stderr is a terminal, or when chrome is on. A captured stderr gets no frames.
 - Prompt must not call this API. It only `eventRun ui.line.take`.
 - No resume after prompt. Yield is vacate, not pause/resume around a question.
 

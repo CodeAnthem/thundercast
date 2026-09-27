@@ -7,7 +7,7 @@ Prints one finished line on stdout or stderr, and steps aside when a task owns t
 
 ## Use
 
-Pass one string. If a task line is open, that line is cleared, this line is printed with a newline, and the task line is drawn again. Stderr always does this. Stdout does it only when stdout is a terminal. If no task is open, or `taskYield` is not defined, the line is printed and that is all. Returns 0.
+Pass one string. If a task line is open, that line is cleared, this line is printed with a newline, and the task line is drawn again. Stderr always does this. Stdout does it when stdout is a terminal, or when stdout and stderr are the same stream. If no task is open, or `taskYield` is not defined, the line is printed and that is all. Returns 0.
 
 Levels, colour, and log files stay in the logger. Bootstrap lives in the [parent README](../README.md).
 
@@ -29,7 +29,7 @@ taskOk "Disk"
 ## Design
 
 - Ask `taskIsOpen` when printing. Do not yield during init.
-- Stdout skips the yield when it is not a terminal. A redirected stdout does not share the cursor the task line is on.
+- Stdout skips the yield when it is a different stream from stderr and not a terminal. A file or a pipe does not share the cursor. Chrome points both descriptors at one pipe, and that pipe does.
 - This feature does not read task state. `taskIsOpen` is the query.
 
 ## Develop

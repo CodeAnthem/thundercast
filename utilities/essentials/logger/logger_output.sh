@@ -64,8 +64,12 @@ _essentials_logger_bind_writers() {
             log|verbose|debug|info|warn|error) ;;
             fatal)
                 fatal() {
-                    _essentials_logger_output fatal "$1"
-                    local code=${2:-1}
+                    local _logger_line="$1" _logger_tag="" code=${2:-1}
+                    if declare -f logger_callerTag >/dev/null; then
+                        _logger_tag=$(logger_callerTag)
+                        [[ -n "$_logger_tag" ]] && _logger_line="${_logger_tag}: ${_logger_line}"
+                    fi
+                    _essentials_logger_output fatal "$_logger_line"
                     [[ "$code" =~ ^[0-9]+$ ]] || code=1
                     exit "$code"
                 }
@@ -77,7 +81,14 @@ _essentials_logger_bind_writers() {
         if [[ "${__LOGGER_OUTPUT_QUIETMAP[$level]:-}" == true ]]; then
             eval "${level}() { return 0; }"
         else
-            eval "${level}() { _essentials_logger_output ${level} \"\$@\"; }"
+            eval "${level}() {
+                local _logger_line=\"\$*\" _logger_tag=
+                if declare -f logger_callerTag >/dev/null; then
+                    _logger_tag=\$(logger_callerTag)
+                    [[ -n \"\$_logger_tag\" ]] && _logger_line=\"\${_logger_tag}: \${_logger_line}\"
+                fi
+                _essentials_logger_output ${level} \"\$_logger_line\"
+            }"
         fi
     done
 }

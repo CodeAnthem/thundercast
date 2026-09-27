@@ -14,13 +14,14 @@ _essentials_console_init() {
 }
 _essentials_console_init || return 1
 
-# fd 2 yields around an open task. fd 1 yields only when stdout is a terminal.
+# fd 2 yields around an open task. fd 1 yields when it is a terminal, or when it is
+# the same stream as stderr (chrome joins them onto one pipe, which is not a terminal).
 _essentials_console_emit() {
     local fd=$1 line=$2
     local yield=false
     if [[ "$fd" -eq 2 ]]; then
         yield=true
-    elif [[ -t 1 ]]; then
+    elif [[ -t 1 ]] || [[ /proc/self/fd/1 -ef /proc/self/fd/2 ]]; then
         yield=true
     fi
     if [[ "$yield" == true ]] && declare -f taskYield >/dev/null && declare -f taskIsOpen >/dev/null && taskIsOpen; then
