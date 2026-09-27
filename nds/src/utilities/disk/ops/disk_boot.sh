@@ -109,9 +109,9 @@ disk_efiRegister() {
     local label="${3:-NixOS}"
 
     [[ -n "$disk" && -n "$loader_path" ]] || return 1
-    [[ -d /sys/firmware/efi/efivars ]] || { err "live system is not UEFI-booted (no efivars)"; return 1; }
-    command -v efibootmgr &>/dev/null || { err "efibootmgr not available"; return 1; }
+    [[ -d /sys/firmware/efi/efivars ]] || { error "live system is not UEFI-booted (no efivars)"; return 1; }
+    command -v efibootmgr &>/dev/null || { error "efibootmgr not available"; return 1; }
     efibootmgr --create --disk "$disk" --part 1 --label "$label" --loader "$loader_path" >/dev/null 2>&1 \
-        || { err "efibootmgr could not create ${label} -> ${loader_path} on ${disk}1"; return 1; }
+        || { error "efibootmgr could not create ${label} -> ${loader_path} on ${disk}1"; return 1; }
     return 0
 }

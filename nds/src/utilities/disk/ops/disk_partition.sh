@@ -15,7 +15,7 @@ _disk_publish() {
 # Loop devices ignore a plain partprobe often enough that the partition nodes never appear.
 _disk_reread() {
     local disk=$1
-    partprobe "$disk" || true
+    _disk_cmd partprobe "$disk" || true
     [[ "$disk" == /dev/loop* ]] || return 0
     losetup -c "$disk" 2>/dev/null || true
     partx -u "$disk" 2>/dev/null || partx -a "$disk" 2>/dev/null || true
@@ -29,7 +29,7 @@ _disk_part_ready() {
         [[ -b "$part" ]] && return 0
         sleep 0.1
     done
-    err "Partition device did not appear: ${part}"
+    error "Partition device did not appear: ${part}"
     return 1
 }
 
@@ -55,7 +55,7 @@ disk_partition() {
     fi
 
     if ! disk_canUse "$disk"; then
-        err "Target disk does not exist: $disk"
+        error "Target disk does not exist: $disk"
         return 1
     fi
 
@@ -101,7 +101,7 @@ disk_partition() {
     if [[ "$use_encryption" == "true" ]]; then
         verbose "Setting up encrypted root partition"
         [[ -n "$format_luks_fn" ]] && declare -f "$format_luks_fn" &>/dev/null || {
-            err "Encrypted install requires format_luks_fn callback"
+            error "Encrypted install requires format_luks_fn callback"
             return 1
         }
         "$format_luks_fn" "$root_part" || return 1

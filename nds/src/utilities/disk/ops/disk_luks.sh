@@ -15,7 +15,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, 
 disk_luksFormat() {
     local _disk_part=$1 _disk_pass=${2:-} _disk_key=${3:-}
     [[ -n "$_disk_pass" || -n "$_disk_key" ]] || {
-        err "No unlock material — cannot format LUKS"
+        error "No unlock material — cannot format LUKS"
         return 1
     }
     debug "Formatting LUKS2 on ${_disk_part}"

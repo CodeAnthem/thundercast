@@ -19,7 +19,7 @@ eventCreate cook.done
 _cook_step() {
     local _cook_label=$1
     shift
-    taskStart "$_cook_label"
+    taskSpin "$_cook_label"
     if "$@"; then
         taskOk
         return 0

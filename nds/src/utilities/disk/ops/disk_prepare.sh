@@ -34,7 +34,7 @@ disk_prepare() {
         return 0
     fi
 
-    [[ -n "$disk" ]] || { err "disk required"; return 1; }
+    [[ -n "$disk" ]] || { error "disk required"; return 1; }
     disk_unmountTarget "$mount_root" || return 1
 
     if [[ "$strategy" == "disko" ]]; then
@@ -55,7 +55,7 @@ disk_prepare() {
             "${_dp[work_dir]:-}" || return 1
     else
         if [[ "$encryption" == "true" ]]; then
-            [[ -n "$secrets_dir" ]] || { err "secrets_dir required for encryption"; return 1; }
+            [[ -n "$secrets_dir" ]] || { error "secrets_dir required for encryption"; return 1; }
             declare -A _sec=(
                 [secrets_dir]="$secrets_dir"
                 [use_password]="$use_password"

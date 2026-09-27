@@ -101,6 +101,8 @@ main() {
     app_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 
     _nds_load_essentials "$app_dir" "$@"
+    # shellcheck source=session/log_tag.sh
+    source "${app_dir}/session/log_tag.sh"
     logger_scopeExists nixos || logger_scopeCreate "NixOS install" nixos
     logger_scopeExists diagnose || logger_scopeCreate "Diagnose" diagnose
     logger_scopeExists install || logger_scopeCreate "Install" install

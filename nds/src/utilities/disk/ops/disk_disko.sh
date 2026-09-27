@@ -8,7 +8,7 @@
 _disk_diskoGenerateParams() {
     local out="$1" disk="$2" fs_type="$3" swap_mib="$4" separate_home="$5" home_size="$6" enc="$7" unlock="$8"
     local boot_loader="${9:-systemd-boot}"
-    [[ -n "$out" && -n "$disk" ]] || { err "Missing disko params"; return 1; }
+    [[ -n "$out" && -n "$disk" ]] || { error "Missing disko params"; return 1; }
 
     cat >"$out" <<NIX
 {
@@ -66,7 +66,7 @@ disk_diskoApply() {
         disk_diskoRun "$user_file" || rc=$?
     else
         tmpl=${ _disk_diskoTemplate; }
-        [[ -f "$tmpl" ]] || { err "Disko template missing: $tmpl"; return 1; }
+        [[ -f "$tmpl" ]] || { error "Disko template missing: $tmpl"; return 1; }
         mkdir -p "$work_dir"
         cp "$tmpl" "${work_dir}/default.nix"
         _disk_diskoGenerateParams \
