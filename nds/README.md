@@ -10,7 +10,10 @@ Live-ISO / curl installer. Generic birth of NixOS machines (classic or flake).
 ```
 nds/
   start.sh                 curl entry (clone repo → nds/src/app/main.sh)
-  src/app/                 framework: CLI, pipeline, confirm, finish
+  src/app/                 entry: main, chrome
+  src/app/pipeline/        sequence, confirm, finish
+  src/app/actionSelect/    discover, check, and pick an action
+  src/app/session/         mode, skip, dirs, logs, exit
   src/recipe/              recipe contract
   src/wizard/              interactive fill, askers, git access
   src/cook/                birth from a sealed recipe

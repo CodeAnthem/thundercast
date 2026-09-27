@@ -5,16 +5,16 @@
 # Date:          Created: 2026-09-26 | Modified: 2026-09-26
 # ==================================================================================================
 
-# shellcheck source=../setup_TEST.sh
-source "$(dirname "${BASH_SOURCE[0]}")/../setup_TEST.sh"
+# shellcheck source=../../setup_TEST.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../../setup_TEST.sh"
 logger_setMinLevel warn
-# shellcheck source=session/mode.sh
-source "$(dirname "${BASH_SOURCE[0]}")/session/mode.sh"
-# shellcheck source=session/skip.sh
-source "$(dirname "${BASH_SOURCE[0]}")/session/skip.sh"
-import_dir "$(dirname "${BASH_SOURCE[0]}")/../recipe" --depth 0
-import_dir "$(dirname "${BASH_SOURCE[0]}")/../recipe/schema" --depth 0
-import_dir "$(dirname "${BASH_SOURCE[0]}")/../cook" --depth 0
+# shellcheck source=../session/mode.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../session/mode.sh"
+# shellcheck source=../session/skip.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../session/skip.sh"
+import_dir "$(dirname "${BASH_SOURCE[0]}")/../../recipe" --depth 0
+import_dir "$(dirname "${BASH_SOURCE[0]}")/../../recipe/schema" --depth 0
+import_dir "$(dirname "${BASH_SOURCE[0]}")/../../cook" --depth 0
 # shellcheck source=confirm.sh
 source "$(dirname "${BASH_SOURCE[0]}")/confirm.sh"
 

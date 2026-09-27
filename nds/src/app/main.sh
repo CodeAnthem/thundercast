@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - App entry
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2025-10-12 | Modified: 2026-09-24
+# Date:          Created: 2025-10-12 | Modified: 2026-09-27
 # ==================================================================================================
 set -euo pipefail
 
@@ -41,6 +41,38 @@ _nds_load_essentials() {
     essentials_init "$@"
 }
 
+_nds_load_features() {
+    local app_dir=$1
+    local src_dir="${app_dir%/*}"
+    local wizard="${src_dir}/wizard"
+
+    # shellcheck source=../lib/lib_rand.sh
+    source "${src_dir}/lib/lib_rand.sh" || return 1
+
+    import_dir "${app_dir}/session" --depth 0 || return 1
+    import_dir "${app_dir}/utility" --depth 0 || return 1
+    local _nds_util
+    for _nds_util in pkg age disk flake git hwconfig facter nixcfg nixos qr sops targetSeed; do
+        nds_requireUtility "$_nds_util" || return 1
+    done
+    eventRun utility.load || return 1
+    import_dir "${app_dir}/actionSelect" --depth 0 || return 1
+    # shellcheck source=pipeline/confirm.sh
+    source "${app_dir}/pipeline/confirm.sh" || return 1
+    # shellcheck source=pipeline/finish.sh
+    source "${app_dir}/pipeline/finish.sh" || return 1
+    # shellcheck source=pipeline/pipeline.sh
+    source "${app_dir}/pipeline/pipeline.sh" || return 1
+    import_dir "${src_dir}/recipe" --depth 0 || return 1
+    import_dir "${src_dir}/recipe/schema" --depth 0 || return 1
+    import_dir "${src_dir}/cook" --depth 0 || return 1
+    if [[ -d "$wizard" ]]; then
+        import_dir "$wizard" --depth 0 || return 1
+        [[ -d "${wizard}/askers" ]] && import_dir "${wizard}/askers" --depth 0
+        [[ -d "${wizard}/git" ]] && import_dir "${wizard}/git" --depth 0
+    fi
+}
+
 main() {
     local app_dir rc=0
     app_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -52,8 +84,6 @@ main() {
 
     # shellcheck source=chrome.sh
     source "${app_dir}/chrome.sh"
-    # shellcheck source=features.sh
-    source "${app_dir}/features.sh"
     _nds_load_features "$app_dir" || return 1
 
     nds_cli_parse "$@" || rc=$?

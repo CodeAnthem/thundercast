@@ -12,7 +12,7 @@ Every one of these was violated once already and had to be repaired. A change th
 
 **Shape**
 
-- Pipeline is a function sequence in `app/pipeline.sh`: discover → select → preview → fill the recipe → materialize secrets → seal to a file → confirm → cook from that file → bundle → finish. Events are hooks *into* that sequence, never the sequence itself.
+- Pipeline is a function sequence in `app/pipeline/pipeline.sh`: discover → select → preview → fill the recipe → materialize secrets → seal to a file → confirm → cook from that file → bundle → finish. Events are hooks *into* that sequence, never the sequence itself.
 - The recipe is a flat `KEY=value` associative array passed **by name**. There is no global recipe. The fill phase owns its array; cook (`nds_cook <file>`) loads its own `local -A R` from the sealed file and reads nothing else — no env, no fill-phase state, no other array.
 - The schema (`recipe/schema/*.sh`) is the single source of truth for keys: defaults, `--when` conditions, types, validators, askers, generators. Defaults, validate, ask, summary, env import, file import, export are generic walkers over it. No per-key special cases anywhere else.
 - Type checks are about the **value's shape**; checks about **machine state** (a block device exists, EFI vars present, `/mnt` mounted) belong to cook's preflight. This is what lets the unit tier run without hardware.
@@ -132,7 +132,7 @@ Ordering trap: `cook.done` exists on both sides with different meanings. Rename 
 
 Names that stay: `nds_bundle`, `nds_confirm`, `nds_finish`, `nds_wizard_fill`, `nds_recipe_*` (the contract module keeps its prefix; `nds_recipe_seal` reads fine).
 
-**Gate.** §4 G0; `rg -n 'realize|nds_realize|action_cook|nds_pipeline_cook|_NDS_COOK\b|cook\.schema|cook\.summary' nds/src fleet/nds-actions .cursor/project.md nds/README.md --glob '!REFACTOR-PLAN.md' --glob '!HANDOFF.md'` prints nothing; `rg -c 'eventRun cook\.' nds/src/cook` shows the five slots; `rg -c 'recipe\.(schema|done)' nds/src/app/pipeline.sh` is 2.
+**Gate.** §4 G0; `rg -n 'realize|nds_realize|action_cook|nds_pipeline_cook|_NDS_COOK\b|cook\.schema|cook\.summary' nds/src fleet/nds-actions .cursor/project.md nds/README.md --glob '!REFACTOR-PLAN.md' --glob '!HANDOFF.md'` prints nothing; `rg -c 'eventRun cook\.' nds/src/cook` shows the five slots; `rg -c 'recipe\.(schema|done)' nds/src/app/pipeline/pipeline.sh` is 2.
 
 ### T5 — housekeeping and commits
 

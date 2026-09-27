@@ -8,10 +8,10 @@
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
-declare -ga _NDS_REALIZE_VERIFY_FAILS=()
+declare -ga _NDS_COOK_VERIFY_FAILS=()
 
 _nds_cook_verify_fail() {
-    _NDS_REALIZE_VERIFY_FAILS+=("$1")
+    _NDS_COOK_VERIFY_FAILS+=("$1")
 }
 
 _nds_cook_verify_boot() {
@@ -43,7 +43,7 @@ nds_cook_verify() {
     local -n _R=$1
     local _ver_kind=$2
     local _ver_issue _ver_artifact _ver_dest _ver_host _ver_dir _ver_gen
-    _NDS_REALIZE_VERIFY_FAILS=()
+    _NDS_COOK_VERIFY_FAILS=()
     mountpoint -q "$_NDS_TARGET_ROOT" || _nds_cook_verify_fail "Target root is not mounted at ${_NDS_TARGET_ROOT}"
     nixos_systemProfileOk "$_NDS_TARGET_ROOT" || _nds_cook_verify_fail "NixOS system profile missing"
     if [[ ${_R[ENCRYPTION]:-} == true ]]; then
@@ -73,8 +73,8 @@ nds_cook_verify() {
             || _nds_cook_verify_fail "hardware-configuration.nix missing"
     fi
     _nds_cook_verify_boot "${_R[BOOT_LOADER]:-grub}" "${_R[BOOT_UEFI_MODE]:-}" "${_R[DISK_TARGET]:-}"
-    if ((${#_NDS_REALIZE_VERIFY_FAILS[@]})); then
-        for _ver_issue in "${_NDS_REALIZE_VERIFY_FAILS[@]}"; do
+    if ((${#_NDS_COOK_VERIFY_FAILS[@]})); then
+        for _ver_issue in "${_NDS_COOK_VERIFY_FAILS[@]}"; do
             error "verify: ${_ver_issue}"
         done
         return 1

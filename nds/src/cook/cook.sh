@@ -51,7 +51,7 @@ nds_cook() {
     if (( _cook_n != 0 )); then
         return 1
     fi
-    _NDS_REALIZE_AA=R
+    _NDS_COOK_AA=R
     nds_cook_preflight R || return 1
     _cook_kind=${R[INSTALL_KIND]:-}
     _cook_mode=${R[INSTALL_MODE]:-local}

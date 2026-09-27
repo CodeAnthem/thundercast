@@ -174,6 +174,48 @@ T7 does not start until T1–T6 are ticked (they are) and the user says session 
 - Runtime flags stay the §1 list. Do not add one. `_NDS_TARGET_ROOT` is internal.
 - `rg -c` counts lines. Do not "fix" the recipe event count from 4 to 2.
 - No Python. Do not edit `.cursor/rules` unless asked. Do not amend `b35a4ef` or `2984074`.
+- Production `ROOTREEXEC_ROOT` is `true` again. The ISO run is supposed to re-exec as root. Do not comment that line back out.
+
+## Update after the dialogue — read this first
+
+Written 2026-09-27 after the cleanup the user ordered. The dialogue below is the historical exchange. Where it describes the tree, this section wins.
+
+The handoff is still finished. Do not resume T7. Do not touch the loop tier. Cook as a phase runner is **6.1**, written in `nds/.wip/OPEN.md`. Do not start it before session U has installed a machine. The three plans stay until then.
+
+### What changed, and why
+
+**Action contract files moved into `test/`.** `*_TEST.sh` and `*.sealed` for `classicInstall`, `installFlake`, `apply`, and `remoteAction` are now `nds/src/actions/<name>/test/`. The same move was applied to `fleet/nds-actions/toolkit` and `addFleetHost`. `setup.sh` stays in the action folder, so discovery still finds the action and does not see the test. The user asked for this after confirming those files only check the action contract (groups, pins, sealed output), not the tools.
+
+**`lib_bool.sh` is deleted.** `nds_lib_env_is_true` and `nds_lib_bool_parse` had no callers. `lib_rand.sh` stays. `nds_lib_urandom_chars` is still used. The dialogue item that says both lib files are sourced from `features.sh` is stale.
+
+**Realize names in the live cook tree are gone.** `_NDS_REALIZE_AA`, `_NDS_REALIZE_DIAG_LAST`, and `_NDS_REALIZE_VERIFY_FAILS` are `_NDS_COOK_AA`, `_NDS_COOK_DIAG_LAST`, and `_NDS_COOK_VERIFY_FAILS`.
+
+**There is no `realize/` directory.** Not `nds/src/realize/`, not `nds/src/app/realize/`, not `nds/src/app/settings/`. A file index reported them. `find` and `git ls-files` do not. Do not delete or search for that tree.
+
+**`app/` matches the run.**
+
+```
+app/main.sh            entry. Essentials, log scopes, chrome, the load list, then nds_pipeline_run
+app/chrome.sh          NDS header colours only. The frame stays in essentials
+app/actionSelect/      discover, check, store, menu. Does not run the action
+app/pipeline/          pipeline.sh, confirm.sh, finish.sh
+app/session/           mode, skip, dirs, logs, failure, exit
+app/utility/           nds_requireUtility
+```
+
+`actionSelect` was `pipeline/action`. The user rejected the short name `action` and the name `actionHandler`, because this code does not run the action. Cook does.
+
+**`features.sh` is deleted.** It was only the import list. That list is `_nds_load_features` inside `main.sh`. The user asked for this so the load order is not a second entry file.
+
+**Confirm and finish stayed in `pipeline/`.** The user asked whether UI belongs in the wizard. It does not. The wizard fills schema fields. Confirm is the wipe and remote yes/no after the recipe is sealed (`install.confirm`). Finish is the copy and reboot screens after the zip exists (`finish.backup`, `finish.reboot`). Unattended skips those names and never enters the wizard. The `scp` / `ssh cat` lines in `finish.sh` are that screen talking to the person at the ISO. The bundle step only writes the zip.
+
+**`chrome.sh` stayed its own file.** It is 22 lines of NDS colours, used by the action menu, the wizard, confirm, and finish. A better place, if it is folded later, is next to `chrome_begin` in `main.sh`. Not the wizard, and not session.
+
+**Logs are `/tmp/nds/logs`, not inside the clone.** `start.sh` was warning that `nds/src/logs/` was untracked. That directory was the logger root. It is now `/tmp/nds/logs`.
+
+**A failed run prints the log tail on the real console.** Chrome uses the alternate screen, so the frame's text vanished on exit and only the warmup lines remained. `exitError` composes the session and nixos scopes and prints the last 40 lines to `/dev/tty`. A clean exit prints the last 20 lines of the session log. Disk and LUKS commands that return non-zero now `error` with the tool's own stderr, so that tail has a reason instead of stopping at "Cleaning up existing partitions".
+
+Self-test (`bash nds/dev/selftest.sh`) was green after these moves.
 
 ## User questions about the refactored tree
 

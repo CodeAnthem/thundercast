@@ -194,6 +194,8 @@ nds_test_assertResolved() {
     _nds_files=(
         "${_NDS_SRC_DIR}/cook/"*.sh
         "${_NDS_SRC_DIR}/app/"*.sh
+        "${_NDS_SRC_DIR}/app/pipeline/"*.sh
+        "${_NDS_SRC_DIR}/app/actionSelect/"*.sh
         "${_NDS_SRC_DIR}/actions/"*/setup.sh
         "${_nds_fleet}/"*/setup.sh
         "${_nds_fleet}/"*/logic/*.sh
@@ -206,17 +208,17 @@ nds_test_assertResolved() {
     done
     _nds_files=("${_nds_scan[@]}")
     import_dir "${_NDS_SRC_DIR}/app/session" --depth 0
-    import_dir "${_NDS_SRC_DIR}/app/action" --depth 0
+    import_dir "${_NDS_SRC_DIR}/app/actionSelect" --depth 0
     import_dir "${_NDS_SRC_DIR}/cook" --depth 0
     import_dir "${_NDS_SRC_DIR}/wizard" --depth 0
     import_dir "${_NDS_SRC_DIR}/wizard/askers" --depth 0
     import_dir "${_NDS_SRC_DIR}/wizard/git" --depth 0
-    # shellcheck source=app/confirm.sh
-    source "${_NDS_SRC_DIR}/app/confirm.sh"
-    # shellcheck source=app/finish.sh
-    source "${_NDS_SRC_DIR}/app/finish.sh"
-    # shellcheck source=app/pipeline.sh
-    source "${_NDS_SRC_DIR}/app/pipeline.sh"
+    # shellcheck source=app/pipeline/confirm.sh
+    source "${_NDS_SRC_DIR}/app/pipeline/confirm.sh"
+    # shellcheck source=app/pipeline/finish.sh
+    source "${_NDS_SRC_DIR}/app/pipeline/finish.sh"
+    # shellcheck source=app/pipeline/pipeline.sh
+    source "${_NDS_SRC_DIR}/app/pipeline/pipeline.sh"
     for _nds_file in "${_NDS_SRC_DIR}/actions/"*/setup.sh "${_nds_fleet}/"*/setup.sh "${_nds_fleet}/"*/logic/*.sh; do
         [[ -f "$_nds_file" ]] || continue
         # shellcheck disable=SC1090

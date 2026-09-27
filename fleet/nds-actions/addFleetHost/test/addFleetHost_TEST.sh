@@ -5,22 +5,22 @@
 # Date:          Created: 2026-09-26 | Modified: 2026-09-26
 # ==================================================================================================
 
-_src="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../nds/src" && pwd)"
-# shellcheck source=../../../nds/src/setup_TEST.sh
+_src="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../../nds/src" && pwd)"
+# shellcheck source=../../../../nds/src/setup_TEST.sh
 source "${_src}/setup_TEST.sh"
 logger_setMinLevel warn
-# shellcheck source=../../../nds/src/app/session/mode.sh
+# shellcheck source=../../../../nds/src/app/session/mode.sh
 source "${_src}/app/session/mode.sh"
-# shellcheck source=../../../nds/src/app/session/skip.sh
+# shellcheck source=../../../../nds/src/app/session/skip.sh
 source "${_src}/app/session/skip.sh"
 import_dir "${_src}/recipe" --depth 0
 import_dir "${_src}/recipe/schema" --depth 0
-# shellcheck source=../../../nds/src/app/pipeline.sh
-source "${_src}/app/pipeline.sh"
+# shellcheck source=../../../../nds/src/app/pipeline/pipeline.sh
+source "${_src}/app/pipeline/pipeline.sh"
 # shellcheck source=../../../nds/src/utilities/sops/ops/install_sops.sh
 source "${_src}/utilities/sops/ops/install_sops.sh"
-# shellcheck source=setup.sh
-source "$(dirname "${BASH_SOURCE[0]}")/setup.sh"
+# shellcheck source=../setup.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../setup.sh"
 
 nds_detect_firstDisk() { :; }
 flake_listHosts() { printf '%s\n' webhost; }

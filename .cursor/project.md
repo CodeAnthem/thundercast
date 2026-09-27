@@ -28,15 +28,13 @@ nds/src/
   app/main.sh                entry: essentials, CLI, then nds_pipeline_run
   VERSION
   setup_TEST.sh              shared test boot; provides nds_test_session
-  lib/                       lib_bool.sh, lib_rand.sh
-  app/                       framework, no install knowledge
-    features.sh              load order: session, utility, action, recipe, recipe/schema, cook, wizard, wizard/askers, wizard/git
+  lib/                       lib_rand.sh
+  app/                       entry only: main.sh, chrome.sh
+    main.sh                  load order: session, utility, actionSelect, pipeline, recipe, recipe/schema, cook, wizard
     session/                 cli, mode, skip, dirs, exit, failure, install logs
     utility/utility.sh       nds_requireUtility, nds_utility_addRoot
-    action/                  discover, store, check, UI
-    pipeline.sh              nds_pipeline_run, nds_pipeline_recipe
-    confirm.sh               summary, wipe warning, yes/no
-    finish.sh                bundle hints, USB key hints, reboot question
+    actionSelect/            discover, store, check, menu
+    pipeline/                pipeline.sh, confirm.sh, finish.sh
   recipe/                    the contract. No UI. No tools.
   wizard/                    interactive driver. ask.sh, askers/, git/
   cook/                      birth from one sealed file. No TTY.

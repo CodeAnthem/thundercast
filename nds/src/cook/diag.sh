@@ -8,7 +8,7 @@
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
-declare -g _NDS_REALIZE_DIAG_LAST=""
+declare -g _NDS_COOK_DIAG_LAST=""
 
 _nds_cook_diag_log() {
     if declare -f nds_session_dir >/dev/null; then
@@ -38,10 +38,10 @@ nds_cook_diag_disk() {
 
 nds_cook_diag_snapshot() {
     local _diag_reason=${1:-snapshot} _diag_path _diag_disk="" _diag_loader="" _diag_uefi=""
-    [[ "$_NDS_REALIZE_DIAG_LAST" == "$_diag_reason" ]] && return 0
-    _NDS_REALIZE_DIAG_LAST=$_diag_reason
-    if [[ -n ${_NDS_REALIZE_AA:-} ]]; then
-        local -n _diag_R=${_NDS_REALIZE_AA}
+    [[ "$_NDS_COOK_DIAG_LAST" == "$_diag_reason" ]] && return 0
+    _NDS_COOK_DIAG_LAST=$_diag_reason
+    if [[ -n ${_NDS_COOK_AA:-} ]]; then
+        local -n _diag_R=${_NDS_COOK_AA}
         _diag_disk=${_diag_R[DISK_TARGET]:-}
         _diag_loader=${_diag_R[BOOT_LOADER]:-}
         _diag_uefi=${_diag_R[BOOT_UEFI_MODE]:-}

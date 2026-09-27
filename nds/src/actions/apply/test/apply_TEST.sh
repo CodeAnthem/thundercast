@@ -5,19 +5,19 @@
 # Date:          Created: 2026-09-26 | Modified: 2026-09-26
 # ==================================================================================================
 
-# shellcheck source=../../setup_TEST.sh
-source "$(dirname "${BASH_SOURCE[0]}")/../../setup_TEST.sh"
+# shellcheck source=../../../setup_TEST.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../../../setup_TEST.sh"
 logger_setMinLevel warn
-# shellcheck source=../../app/session/mode.sh
-source "$(dirname "${BASH_SOURCE[0]}")/../../app/session/mode.sh"
-# shellcheck source=../../app/session/skip.sh
-source "$(dirname "${BASH_SOURCE[0]}")/../../app/session/skip.sh"
-import_dir "$(dirname "${BASH_SOURCE[0]}")/../../recipe" --depth 0
-import_dir "$(dirname "${BASH_SOURCE[0]}")/../../recipe/schema" --depth 0
-# shellcheck source=../../app/pipeline.sh
-source "$(dirname "${BASH_SOURCE[0]}")/../../app/pipeline.sh"
-# shellcheck source=setup.sh
-source "$(dirname "${BASH_SOURCE[0]}")/setup.sh"
+# shellcheck source=../../../app/session/mode.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../../../app/session/mode.sh"
+# shellcheck source=../../../app/session/skip.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../../../app/session/skip.sh"
+import_dir "$(dirname "${BASH_SOURCE[0]}")/../../../recipe" --depth 0
+import_dir "$(dirname "${BASH_SOURCE[0]}")/../../../recipe/schema" --depth 0
+# shellcheck source=../../../app/pipeline/pipeline.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../../../app/pipeline/pipeline.sh"
+# shellcheck source=../setup.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../setup.sh"
 
 nds_detect_firstDisk() { :; }
 flake_listHosts() { :; }
