@@ -73,12 +73,15 @@ _taskKillPidTree() {
 _taskSpinnerStop() {
     local pid="${__TASK_SPIN_PID:-}"
     [[ -n "$pid" ]] || return 0
-    _taskKillPidTree "$pid"
-    kill -KILL "$pid" 2>/dev/null || true
-    _taskKillPidTree "$pid"
+    __TASK_SPIN_PID=""
+    # Group TERM lets the spinner trap exit 0. SIGKILL is what makes bash print the source.
+    if ! kill -TERM -"$pid" 2>/dev/null; then
+        _taskKillPidTree "$pid" || true
+    fi
     wait "$pid" 2>/dev/null || true
-    if [[ "${__TASK_SPIN_PID:-}" == "$pid" ]]; then
-        __TASK_SPIN_PID=""
+    if kill -0 "$pid" 2>/dev/null; then
+        kill -KILL -"$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+        wait "$pid" 2>/dev/null || true
     fi
 }
 
@@ -95,6 +98,9 @@ _taskSpinnerStart() {
     local message="$1"
     _taskSpinnerStop
     _taskSpinnerLive || return 0
+    local _task_monitor=0
+    [[ $- == *m* ]] && _task_monitor=1
+    set -m
     (
         trap 'exit 0' TERM HUP INT
         local spinstr='|/-\\' char
@@ -106,6 +112,9 @@ _taskSpinnerStart() {
         done
     ) </dev/null &
     __TASK_SPIN_PID=$!
+    # Own process group, then drop the job so bash does not announce its death.
+    disown "$__TASK_SPIN_PID" 2>/dev/null || true
+    (( _task_monitor )) || set +m
 }
 
 _taskElapsed() {
