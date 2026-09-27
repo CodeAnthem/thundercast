@@ -195,8 +195,7 @@ The handoff is still finished. Do not resume T7. Do not touch the loop tier. Coo
 **`app/` matches the run.**
 
 ```
-app/main.sh            entry. Essentials, log scopes, chrome, the load list, then nds_pipeline_run
-app/chrome.sh          NDS header colours only. The frame stays in essentials
+app/main.sh            entry. Essentials, log scopes, chrome colours, the load list, then nds_pipeline_run
 app/actionSelect/      discover, check, store, menu. Does not run the action
 app/pipeline/          pipeline.sh, confirm.sh, finish.sh
 app/session/           mode, skip, dirs, logs, failure, exit
@@ -209,7 +208,7 @@ app/utility/           nds_requireUtility
 
 **Confirm and finish stayed in `pipeline/`.** The user asked whether UI belongs in the wizard. It does not. The wizard fills schema fields. Confirm is the wipe and remote yes/no after the recipe is sealed (`install.confirm`). Finish is the copy and reboot screens after the zip exists (`finish.backup`, `finish.reboot`). Unattended skips those names and never enters the wizard. The `scp` / `ssh cat` lines in `finish.sh` are that screen talking to the person at the ISO. The bundle step only writes the zip.
 
-**`chrome.sh` stayed its own file.** It is 22 lines of NDS colours, used by the action menu, the wizard, confirm, and finish. A better place, if it is folded later, is next to `chrome_begin` in `main.sh`. Not the wizard, and not session.
+**`chrome.sh` is deleted.** The colour setup is `_nds_setup_chrome` in `main.sh`. The frame still lives in essentials. A temporary exit hook runs before `chrome_end` when `NDS_CHROME_HOLD=true`: the frame stays up until Enter. That is only so the ISO frame can be looked at. Remove the hook after that visual pass. Session 0 (selftest) does not open the frame. The unattended classic block in `nds/.wip/TESTING.md` sets the variable.
 
 **Logs are `/tmp/nds/logs`, not inside the clone.** `start.sh` was warning that `nds/src/logs/` was untracked. That directory was the logger root. It is now `/tmp/nds/logs`.
 

@@ -29,7 +29,7 @@ nds/src/
   VERSION
   setup_TEST.sh              shared test boot; provides nds_test_session
   lib/                       lib_rand.sh
-  app/                       entry only: main.sh, chrome.sh
+  app/                       entry only: main.sh (chrome colours are set up there)
     main.sh                  load order: session, utility, actionSelect, pipeline, recipe, recipe/schema, cook, wizard
     session/                 cli, mode, skip, dirs, exit, failure, install logs
     utility/utility.sh       nds_requireUtility, nds_utility_addRoot
