@@ -119,7 +119,7 @@ main() {
     nds_mode_resolve || return 1
     info "NDS ${ scriptInfo_get_version; } mode=${NDS_MODE}"
     chrome_setSubtitle "$NDS_MODE"
-    nds_pipeline_run || return 1
+    # nds_pipeline_run || return 1
     chrome_setSubtitle "${NDS_CURRENT_ACTION:-}"
 }
 
