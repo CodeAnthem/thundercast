@@ -126,9 +126,8 @@ _essentials_test_loadOne() {
             source "${_ESSENTIALS_ROOT}/task/task.sh"
             ;;
         console)
-            _essentials_test_loadOne logger
             _essentials_test_loadOne task
-            declare -f console_write >/dev/null && return 0
+            declare -f console_writeErr >/dev/null && return 0
             # shellcheck source=./console/console.sh
             source "${_ESSENTIALS_ROOT}/console/console.sh"
             ;;

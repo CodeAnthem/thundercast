@@ -143,26 +143,31 @@ _essentials_logger_output() {
 _essentials_logger_console() {
     local message=$1
     local level=$2
-    local dest=1
-    [[ "${__LOGGER_OUTPUT_STDERRMAP[$level]:-}" == true ]] && dest=2
+    local line label
 
-    # Direct Output
     if [[ "$level" == "log" ]]; then
-        printf '%s\n' "$message" >&"$dest"
-        return
-    fi
-
-    # Colored Output
-    local label
-    if [[ "${LOG_COLOR:-false}" == true ]]; then
+        line=$message
+    elif [[ "${LOG_COLOR:-false}" == true ]]; then
         label=${__LOGGER_FORMATTED_LEVELS["${level}_color"]}
-        printf '%s%s%s\n' "$label" " $message" $'\033[0m' >&"$dest"
-        return
+        line="${label} ${message}"$'\033[0m'
+    else
+        label=${__LOGGER_FORMATTED_LEVELS["${level}_plain"]}
+        line="${label} ${message}"
     fi
 
-    # Plain Output
-    label=${__LOGGER_FORMATTED_LEVELS["${level}_plain"]}
-    printf '%s%s\n' "$label" " $message" >&"$dest"
+    if [[ "${__LOGGER_OUTPUT_STDERRMAP[$level]:-}" == true ]]; then
+        if declare -f console_writeErr >/dev/null; then
+            console_writeErr "$line"
+            return
+        fi
+        printf '%s\n' "$line" >&2
+        return
+    fi
+    if declare -f console_writeOut >/dev/null; then
+        console_writeOut "$line"
+        return
+    fi
+    printf '%s\n' "$line"
 }
 
 _essentials_logger_file() {

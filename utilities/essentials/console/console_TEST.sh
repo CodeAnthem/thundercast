@@ -25,74 +25,86 @@ _console_stub_task_io() {
 }
 
 suite_console() {
-    local out rc yields_before env out_file err_file out_got err_got
+    local out err rc yields_before out_file err_file
 
     essentials_test_load console
     _console_stub_task_io
 
-    bts_section "Write"
+    bts_section "Stderr"
 
-    out=${ console_write "partition done" 2>&1; }
+    out=${ console_writeErr "partition done" 2>&1; }
     if [[ "$out" == "partition done" && "$_console_yields" -eq 0 && "$_console_resumes" -eq 0 ]]; then
-        bts_pass "closed task prints the line and does not yield"
+        bts_pass "closed task prints stderr and does not yield"
     else
-        bts_fail "closed task out='${out}' yield=${_console_yields} resume=${_console_resumes}"
+        bts_fail "closed stderr out='${out}' yield=${_console_yields} resume=${_console_resumes}"
     fi
 
     taskStart "Disk" 2>/dev/null # in-progress task line
-    out=${ console_write "partition done" 2>&1; }
+    out=${ console_writeErr "partition done" 2>&1; }
     if [[ "$out" == $'YIELD\npartition done\nRESUME' && "$_console_yields" -eq 1 && "$_console_resumes" -eq 1 ]] && taskIsOpen; then
-        bts_pass "open task yields, prints, resumes, and stays open"
+        bts_pass "open task yields, prints stderr, resumes, and stays open"
     else
-        bts_fail "open task out='${out}' yield=${_console_yields} resume=${_console_resumes} open=$(taskIsOpen && printf yes || printf no)"
+        bts_fail "open stderr out='${out}' yield=${_console_yields} resume=${_console_resumes} open=$(taskIsOpen && printf yes || printf no)"
+    fi
+    taskCancel 2>/dev/null # drop the in-progress line
+
+    bts_section "Stdout"
+
+    if [[ -t 1 ]]; then
+        bts_fail "stdout is a terminal; the non-tty case is not observable"
+    else
+        taskStart "Disk" 2>/dev/null # in-progress task line
+        yields_before="$_console_yields"
+        out_file="$(mktemp)"
+        err_file="$(mktemp)"
+        console_writeOut "stdout line" >"$out_file" 2>"$err_file"
+        out=$(<"$out_file")
+        err=$(<"$err_file")
+        rm -f -- "$out_file" "$err_file"
+        if [[ "$out" == "stdout line" && -z "$err" && "$_console_yields" -eq "$yields_before" ]]; then
+            bts_pass "stdout that is not a terminal prints and does not yield"
+        else
+            bts_fail "stdout out='${out}' err='${err}' yield=${_console_yields}"
+        fi
+        taskCancel 2>/dev/null # drop the in-progress line
+    fi
+
+    bts_section "Logger"
+
+    essentials_test_load logger
+    logger_setMinLevel info
+    taskStart "Disk" 2>/dev/null # in-progress task line
+    yields_before="$_console_yields"
+    out_file="$(mktemp)"
+    err_file="$(mktemp)"
+    error "hello-error" >"$out_file" 2>"$err_file"
+    out=$(<"$out_file")
+    err=$(<"$err_file")
+    if [[ -z "$out" && "$err" == $'YIELD\n[ERROR] - hello-error\nRESUME' && "$_console_yields" -eq $((yields_before + 1)) ]]; then
+        bts_pass "error yields and prints on stderr"
+    else
+        bts_fail "logger stderr out='${out}' err='${err}' yield=${_console_yields}"
+    fi
+
+    yields_before="$_console_yields"
+    info "hello-info" >"$out_file" 2>"$err_file"
+    out=$(<"$out_file")
+    err=$(<"$err_file")
+    rm -f -- "$out_file" "$err_file"
+    if [[ "$out" == "[INFO]  - hello-info" && -z "$err" && "$_console_yields" -eq "$yields_before" ]]; then
+        bts_pass "info prints on stdout and does not yield"
+    else
+        bts_fail "logger stdout out='${out}' err='${err}' yield=${_console_yields}"
     fi
     taskCancel 2>/dev/null # drop the in-progress line
 
     yields_before="$_console_yields"
     unset -f taskYield
     rc=0
-    out=${ console_write "partition done" 2>&1; } || rc=$?
+    out=${ console_writeErr "partition done" 2>&1; } || rc=$?
     if [[ "$rc" -eq 0 && "$out" == "partition done" && "$_console_yields" -eq "$yields_before" ]]; then
-        bts_pass "missing taskYield prints and returns 0"
+        bts_pass "missing taskYield prints stderr and returns 0"
     else
         bts_fail "missing taskYield rc=${rc} out='${out}' yield=${_console_yields}"
     fi
-
-    bts_section "Stream"
-
-    env="$(dirname "${BASH_SOURCE[0]}")/../testEnvironment/testEnvironment.sh"
-    out_file="$(mktemp)"
-    err_file="$(mktemp)"
-
-    rc=0
-    bash -c '
-        source "$1"
-        _essentials_test_ensureConfig
-        essentials_config[CONSOLE_STREAM]=stdout
-        essentials_test_load console || exit 1
-        console_write "stream line"
-    ' bash "$env" >"$out_file" 2>"$err_file" || rc=$?
-    out_got=$(<"$out_file")
-    err_got=$(<"$err_file")
-    if [[ "$rc" -eq 0 && "$out_got" == "stream line" && -z "$err_got" ]]; then
-        bts_pass "CONSOLE_STREAM=stdout prints on stdout"
-    else
-        bts_fail "stdout stream rc=${rc} out='${out_got}' err='${err_got}'"
-    fi
-
-    rc=0
-    bash -c '
-        source "$1"
-        _essentials_test_ensureConfig
-        essentials_config[CONSOLE_STREAM]=file
-        essentials_test_load console
-    ' bash "$env" >"$out_file" 2>"$err_file" || rc=$? # Console: invalid CONSOLE_STREAM
-    err_got=$(<"$err_file")
-    if [[ "$rc" -ne 0 ]] && [[ "$err_got" == *"invalid CONSOLE_STREAM"* ]]; then
-        bts_pass "invalid CONSOLE_STREAM is rejected"
-    else
-        bts_fail "invalid stream rc=${rc} err='${err_got}'"
-    fi
-
-    rm -f -- "$out_file" "$err_file"
 }

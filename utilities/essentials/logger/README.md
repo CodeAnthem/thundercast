@@ -2,7 +2,7 @@
 
 Leveled console, scoped log files, and a compose file that merges several scopes.
 
-![uses none](https://img.shields.io/badge/uses-none-lightgrey?style=flat-square)
+[![uses console](https://img.shields.io/badge/uses-console-2ea44f?style=flat-square)](../console/README.md)
 ![subshells no](https://img.shields.io/badge/subshells-no-2ea44f?style=flat-square)
 
 ## Use
@@ -70,7 +70,7 @@ logger_composeRead
 
 Quiet levels are rebound to nops. `logger_setMinLevel` rebuilds that binding. `error` and `fatal` are never quiet. `error` / `fatal` increment the error counter; `warn` increments the warn counter. Quiet writers do not count. `logger_markError` / `logger_markWarn` count without writing.
 
-Console lines are labeled. File lines get a timestamp. `log` writes the message only. Scope names and filenames are lowercased and sanitized to `[a-z0-9._-]`.
+Console lines are labeled. When `console_writeErr` and `console_writeOut` exist, the line is printed through them. Otherwise it is printed directly. File lines get a timestamp. `log` writes the message only. Scope names and filenames are lowercased and sanitized to `[a-z0-9._-]`.
 
 ## Develop
 
