@@ -9,7 +9,7 @@
 _disk_publish() {
     command -v udevadm >/dev/null 2>&1 || return 0
     sync || true
-    udevadm settle --timeout=15 || true
+    _disk_quiet udevadm settle --timeout=15
 }
 
 # Loop devices ignore a plain partprobe often enough that the partition nodes never appear.
@@ -61,11 +61,11 @@ disk_partition() {
 
     verbose "Partitioning disk: $disk (firmware: $([[ "$uefi_mode" == "true" ]] && echo UEFI || echo BIOS))"
     verbose "Cleaning up existing partitions"
-    umount -R /mnt 2>/dev/null || true
-    cryptsetup close cryptroot 2>/dev/null || true
+    _disk_quiet umount -R /mnt
+    _disk_quiet cryptsetup close cryptroot
 
     for part in "${disk}"*; do
-        [[ -b "$part" ]] && wipefs -a "$part" 2>/dev/null || true
+        [[ -b "$part" ]] && _disk_quiet wipefs -a "$part"
     done
 
     _disk_cmd parted "$disk" --script -- mklabel gpt || return 1

@@ -21,6 +21,18 @@ if ! declare -F warn >/dev/null 2>&1; then
     warn() { printf 'DISK: warn: %s\n' "$1" >&2; }
 fi
 
+# Best-effort command. Output goes to the diagnose scope. Failure is ignored.
+_disk_quiet() {
+    local _disk_out
+    _disk_out=$(mktemp)
+    "$@" >"$_disk_out" 2>&1 || true
+    if [[ -s "$_disk_out" ]] && declare -f nds_diagnose_append >/dev/null; then
+        nds_diagnose_append "$(<"$_disk_out")"
+    fi
+    rm -f "$_disk_out"
+    return 0
+}
+
 _disk_cmd() {
     local _disk_out _disk_rc=0 _disk_msg
     _disk_out=$(mktemp)

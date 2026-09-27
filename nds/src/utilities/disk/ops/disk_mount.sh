@@ -12,7 +12,7 @@ disk_unmountTarget() {
     local root="${1:-/mnt}"
     mountpoint -q "$root" 2>/dev/null || return 0
     warn "Unmounting leftover ${root} from a previous install attempt"
-    umount -R "$root"
+    _disk_cmd umount -R "$root"
 }
 
 # Description: Mount nixos root + boot under mount root.
@@ -24,7 +24,7 @@ disk_mountRoot() {
     local root="${2:-/mnt}"
 
     verbose "Mounting filesystems"
-    umount -R "$root" 2>/dev/null || true
+    _disk_quiet umount -R "$root"
 
     if [[ "$use_encryption" == "true" ]]; then
         verbose "Mounting encrypted root"

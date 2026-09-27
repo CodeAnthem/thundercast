@@ -19,7 +19,7 @@ disk_luksFormat() {
         return 1
     }
     debug "Formatting LUKS2 on ${_disk_part}"
-    wipefs -a "$_disk_part" 2>/dev/null || true
+    _disk_quiet wipefs -a "$_disk_part"
     if [[ -n "$_disk_pass" && -n "$_disk_key" ]]; then
         _disk_cmd cryptsetup luksFormat --type luks2 "$_disk_part" --key-file "$_disk_pass" --batch-mode || return 1
         _disk_cmd cryptsetup open "$_disk_part" cryptroot --key-file "$_disk_pass" || return 1
