@@ -21,7 +21,7 @@ _nds_load_essentials() {
         [LOG_INDENT]="2"
         [LOG_COLOR]="true"
         [LOG_COMPOSE_FILENAME]="nds.log"
-        # [ROOTREEXEC_ROOT]="true" # temp disabled
+        [ROOTREEXEC_ROOT]="true"
         [ROOTREEXEC_SCRIPT]="${app_dir}/main.sh"
         [ROOTREEXEC_PURPOSE]="NixOS deployment"
         [ROOTREEXEC_KEEP_ENV_PREFIX]="NDS_"
