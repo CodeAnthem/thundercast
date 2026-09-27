@@ -21,6 +21,20 @@ if ! declare -F warn >/dev/null 2>&1; then
     warn() { printf 'DISK: warn: %s\n' "$1" >&2; }
 fi
 
+_disk_cmd() {
+    local _disk_out _disk_rc=0 _disk_msg
+    _disk_out=$(mktemp)
+    "$@" >"$_disk_out" 2>&1 || _disk_rc=$?
+    if [[ "$_disk_rc" -ne 0 ]]; then
+        _disk_msg=$(tr '\n' ' ' <"$_disk_out")
+        rm -f "$_disk_out"
+        error "$* failed (${_disk_rc}): ${_disk_msg}"
+        return "$_disk_rc"
+    fi
+    rm -f "$_disk_out"
+    return 0
+}
+
 _DISK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 _disk_source_dir() {

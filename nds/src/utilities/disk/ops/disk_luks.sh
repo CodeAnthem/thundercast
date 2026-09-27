@@ -21,15 +21,15 @@ disk_luksFormat() {
     debug "Formatting LUKS2 on ${_disk_part}"
     wipefs -a "$_disk_part" 2>/dev/null || true
     if [[ -n "$_disk_pass" && -n "$_disk_key" ]]; then
-        cryptsetup luksFormat --type luks2 "$_disk_part" --key-file "$_disk_pass" --batch-mode || return 1
-        cryptsetup open "$_disk_part" cryptroot --key-file "$_disk_pass" || return 1
-        cryptsetup luksAddKey "$_disk_part" "$_disk_key" --key-file "$_disk_pass" || return 1
+        _disk_cmd cryptsetup luksFormat --type luks2 "$_disk_part" --key-file "$_disk_pass" --batch-mode || return 1
+        _disk_cmd cryptsetup open "$_disk_part" cryptroot --key-file "$_disk_pass" || return 1
+        _disk_cmd cryptsetup luksAddKey "$_disk_part" "$_disk_key" --key-file "$_disk_pass" || return 1
     elif [[ -n "$_disk_pass" ]]; then
-        cryptsetup luksFormat --type luks2 "$_disk_part" --key-file "$_disk_pass" --batch-mode || return 1
-        cryptsetup open "$_disk_part" cryptroot --key-file "$_disk_pass" || return 1
+        _disk_cmd cryptsetup luksFormat --type luks2 "$_disk_part" --key-file "$_disk_pass" --batch-mode || return 1
+        _disk_cmd cryptsetup open "$_disk_part" cryptroot --key-file "$_disk_pass" || return 1
     else
-        cryptsetup luksFormat --type luks2 "$_disk_part" "$_disk_key" --batch-mode || return 1
-        cryptsetup open "$_disk_part" cryptroot --key-file "$_disk_key" || return 1
+        _disk_cmd cryptsetup luksFormat --type luks2 "$_disk_part" "$_disk_key" --batch-mode || return 1
+        _disk_cmd cryptsetup open "$_disk_part" cryptroot --key-file "$_disk_key" || return 1
     fi
-    mkfs.ext4 -F -L nixos /dev/mapper/cryptroot || return 1
+    _disk_cmd mkfs.ext4 -F -L nixos /dev/mapper/cryptroot || return 1
 }

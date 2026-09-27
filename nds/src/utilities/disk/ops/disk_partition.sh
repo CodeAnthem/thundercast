@@ -68,19 +68,19 @@ disk_partition() {
         [[ -b "$part" ]] && wipefs -a "$part" 2>/dev/null || true
     done
 
-    parted "$disk" --script -- mklabel gpt || return 1
+    _disk_cmd parted "$disk" --script -- mklabel gpt || return 1
 
     if [[ "$uefi_mode" == "true" ]]; then
-        parted "$disk" --script -- mkpart ESP fat32 1MiB 512MiB || return 1
-        parted "$disk" --script -- set 1 esp on || return 1
-        parted "$disk" --script -- mkpart primary 512MiB 100% || return 1
+        _disk_cmd parted "$disk" --script -- mkpart ESP fat32 1MiB 512MiB || return 1
+        _disk_cmd parted "$disk" --script -- set 1 esp on || return 1
+        _disk_cmd parted "$disk" --script -- mkpart primary 512MiB 100% || return 1
         boot_idx=1
         root_idx=2
     else
-        parted "$disk" --script -- mkpart bios_grub 1MiB 3MiB || return 1
-        parted "$disk" --script -- set 1 bios_grub on || return 1
-        parted "$disk" --script -- mkpart boot fat32 3MiB 515MiB || return 1
-        parted "$disk" --script -- mkpart primary 515MiB 100% || return 1
+        _disk_cmd parted "$disk" --script -- mkpart bios_grub 1MiB 3MiB || return 1
+        _disk_cmd parted "$disk" --script -- set 1 bios_grub on || return 1
+        _disk_cmd parted "$disk" --script -- mkpart boot fat32 3MiB 515MiB || return 1
+        _disk_cmd parted "$disk" --script -- mkpart primary 515MiB 100% || return 1
         boot_idx=2
         root_idx=3
     fi
@@ -96,7 +96,7 @@ disk_partition() {
     _disk_publish
 
     log "Formatting boot partition"
-    mkfs.fat -F 32 -n boot "$boot_part" || return 1
+    _disk_cmd mkfs.fat -F 32 -n boot "$boot_part" || return 1
 
     if [[ "$use_encryption" == "true" ]]; then
         log "Setting up encrypted root partition"
@@ -107,7 +107,7 @@ disk_partition() {
         "$format_luks_fn" "$root_part" || return 1
     else
         log "Setting up standard root partition"
-        mkfs.ext4 -F -L nixos "$root_part" || return 1
+        _disk_cmd mkfs.ext4 -F -L nixos "$root_part" || return 1
     fi
     _disk_publish
     return 0

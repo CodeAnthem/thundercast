@@ -14,7 +14,7 @@ _nds_load_essentials() {
     declare -gA essentials_config=(
         [BASHVERSION_MAJOR]="5"
         [BASHVERSION_MINOR]="3"
-        [LOG_ROOT]="${script_source}/logs"
+        [LOG_ROOT]="/tmp/nds/logs"
         [LOG_PURGE]="true"
         [LOG_MINLEVEL]="verbose"
         [LOG_STDERRLEVEL]="warn"
