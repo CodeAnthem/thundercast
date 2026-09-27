@@ -177,6 +177,14 @@ tty_guardEnable() {
     _tty_setPolicy idle
 }
 
+# Ctrl+Z. Exit so the EXIT hooks restore the terminal. 148 is 128+SIGTSTP.
+_tty_onSuspend() {
+    if declare -f taskCancel >/dev/null; then
+        taskCancel || true
+    fi
+    exit 148
+}
+
 # Restore the snapshot taken at tty_guardEnable. Idempotent. EXIT hook.
 tty_restore() {
     if [[ -n "${__TTY_STTY:-}" ]]; then

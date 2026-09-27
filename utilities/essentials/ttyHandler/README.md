@@ -29,6 +29,7 @@ Keys this feature reads from `essentials_config` (defaults from source). Map is 
 | Key | Default | Meaning |
 |-----|---------|---------|
 | `TTY_EXIT_PRIORITY` | `10` | `eventRegister exit tty_restore` priority (lower runs first) |
+| `TTY_ALLOW_SUSPEND` | `false` | `false`: Ctrl+Z exits and the EXIT hooks restore the terminal. `true`: Ctrl+Z suspends |
 
 ### API
 
@@ -88,6 +89,7 @@ tty_end
 - Prompt text, paste, and validation stay in [prompt](../prompt/README.md).
 - Charset names are keystrokes, not valid ports or IPs.
 - Register `exit`, not `exitClean`. Drain: never `while read -t 0`.
+- `TTY_ALLOW_SUSPEND=false` traps TSTP, cancels an open task, and exits 148 so EXIT still runs `chrome_end` and `tty_restore`. SIGSTOP cannot be caught.
 - Sliced reads exist because bash defers traps while a builtin `read` blocks and has one read timer: a trap that needs to paint (chrome WINCH) sets a flag while `__TTY_READING` is 1 and the hook paints between slices. Without a tick the read is byte-identical to before.
 
 ## Develop

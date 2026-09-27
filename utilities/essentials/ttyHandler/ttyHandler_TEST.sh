@@ -160,4 +160,47 @@ tty_restore
     else
         bts_fail "enable/restore rc=$rc err=$(printf '%q' "${__TTY_ISOLATED_ERR}")"
     fi
+
+    bts_section "Suspend"
+    rc=0
+    out=$(
+        trap 'printf "%s\n" HOOK' EXIT
+        _tty_onSuspend
+    ) || rc=$?
+    if [[ "$rc" -eq 148 && "$out" == HOOK ]]; then
+        bts_pass "suspend handler exits 148 and runs EXIT"
+    else
+        bts_fail "suspend handler rc=${rc} out='${out}'"
+    fi
+
+    rc=0
+    bash -c '
+        set -euo pipefail
+        source "$1/testEnvironment/testEnvironment.sh"
+        essentials_test_load trapBridge
+        essentials_config[TTY_ALLOW_SUSPEND]=false
+        essentials_test_load ttyHandler
+        trap -p TSTP | grep -q _essentials_trapBridge_dispatch
+    ' _tty_sus "$_ESSENTIALS_ROOT" || rc=$?
+    if (( rc == 0 )); then
+        bts_pass "default installs the TSTP trap"
+    else
+        bts_fail "default TSTP trap rc=${rc}"
+    fi
+
+    rc=0
+    bash -c '
+        set -euo pipefail
+        source "$1/testEnvironment/testEnvironment.sh"
+        essentials_test_load trapBridge
+        essentials_config[TTY_ALLOW_SUSPEND]=true
+        essentials_test_load ttyHandler
+        trap -p TSTP | grep -q _essentials_trapBridge_dispatch && exit 1
+        exit 0
+    ' _tty_sus "$_ESSENTIALS_ROOT" || rc=$?
+    if (( rc == 0 )); then
+        bts_pass "TTY_ALLOW_SUSPEND=true leaves Ctrl+Z alone"
+    else
+        bts_fail "allow suspend rc=${rc}"
+    fi
 }

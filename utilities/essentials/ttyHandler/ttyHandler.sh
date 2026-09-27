@@ -18,7 +18,17 @@ _essentials_tty_init() {
         return 1
     fi
 
+    local allow="${config[TTY_ALLOW_SUSPEND]:-false}"
+    case "$allow" in
+        true|false) ;;
+        *)
+            error "Tty: invalid TTY_ALLOW_SUSPEND: ${allow}"
+            return 1
+            ;;
+    esac
+
     declare -g __TTY_EXIT_PRIORITY="$prio"
+    declare -g __TTY_ALLOW_SUSPEND="$allow"
     declare -g __TTY_GUARD=0
     declare -g __TTY_STTY=""
     declare -g __TTY_DEPTH=0
@@ -36,6 +46,9 @@ _essentials_tty_init() {
 
     if declare -f eventRegister &>/dev/null; then
         eventRegister exit tty_restore "${__TTY_EXIT_PRIORITY}" || return 1
+    fi
+    if [[ "$allow" == false ]] && declare -f trapRegister >/dev/null; then
+        trapRegister TSTP _tty_onSuspend || return 1
     fi
 
     _essentials_init_mark ttyHandler

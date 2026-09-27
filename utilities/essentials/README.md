@@ -46,7 +46,7 @@ Feature init shares `__ESSENTIALS_INIT`. A feature starts with `_essentials_init
 | `BASHVERSION_MAJOR` `BASHVERSION_MINOR` | [bashVersion](bashVersion/README.md) |
 | `SCRIPTINFO_DIR` `SCRIPTINFO_NAME` `SCRIPTINFO_VERSION` | [scriptInfo](scriptInfo/README.md) |
 | `LOG_*` | [logger](logger/README.md) |
-| `TTY_EXIT_PRIORITY` | [ttyHandler](ttyHandler/README.md) |
+| `TTY_EXIT_PRIORITY` `TTY_ALLOW_SUSPEND` | [ttyHandler](ttyHandler/README.md) |
 | `RUNTIME_*` | [sessionDir](sessionDir/README.md) |
 | `UI_MODE` `UI_NO_CLEAR` `UI_BANNER_MIN` `UI_LABEL_WIDTH` | [ui](ui/README.md) |
 | `PROGRESS_WIDTH` `PROGRESS_FILL` `PROGRESS_EMPTY` | [progress](progress/README.md) |
