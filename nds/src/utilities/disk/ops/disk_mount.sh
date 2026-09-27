@@ -23,22 +23,27 @@ disk_mountRoot() {
     local use_encryption="${1:-false}"
     local root="${2:-/mnt}"
 
-    log "Mounting filesystems"
+    verbose "Mounting filesystems"
     umount -R "$root" 2>/dev/null || true
 
     if [[ "$use_encryption" == "true" ]]; then
-        log "Mounting encrypted root"
+        verbose "Mounting encrypted root"
         mount /dev/mapper/cryptroot "$root" || return 1
     else
-        log "Mounting standard root"
+        verbose "Mounting standard root"
         mount /dev/disk/by-label/nixos "$root" || return 1
     fi
 
-    log "Mounting boot partition"
+    verbose "Mounting boot partition"
     mkdir -p "${root}/boot" || return 1
     mount /dev/disk/by-label/boot "${root}/boot" || return 1
     mkdir -p "${root}/nix/store"
 
-    log "Filesystems mounted successfully"
+    verbose "Filesystems mounted successfully"
+    if declare -f nds_diagnose_append >/dev/null; then
+        nds_diagnose_append ""
+        nds_diagnose_append "=== mounts under ${root} ==="
+        nds_diagnose_append "$(findmnt -R "$root" 2>&1 || true)"
+    fi
     return 0
 }

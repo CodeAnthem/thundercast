@@ -18,7 +18,7 @@ nds_cook_plan_classic() {
     _cook_step "Disk" step_disk "$_plan_name" || return 1
     eventRun cook.post_disk "$_plan_name" || return 1
     _cook_step "Configuration" nixcfg_writeClassic "$_plan_name" "${_plan_cfg}/configuration.nix" || return 1
-    _cook_step "Hardware" step_hardware "$_plan_name" "$_plan_cfg" || return 1
+    _cook_step "Generate hardware-configuration.nix" step_hardware "$_plan_name" "$_plan_cfg" || return 1
     _cook_step "Copy configuration" nixos_copyConfigs "$_plan_cfg" "$_NDS_TARGET_ROOT" || return 1
     eventRun cook.pre_install "$_plan_name" || return 1
     _cook_step "Install" nixos_installClassic "$_NDS_TARGET_ROOT" || return 1
@@ -28,6 +28,5 @@ nds_cook_plan_classic() {
     eventRun cook.post_install "$_plan_name" || return 1
     _cook_step "EFI" step_efi "$_plan_name" || return 1
     _cook_step "Verify" nds_cook_verify "$_plan_name" classic || return 1
-    nds_cook_diag "after install"
     eventRun cook.done "$_plan_name" || return 1
 }

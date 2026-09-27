@@ -121,11 +121,13 @@ nds_pipeline_run() {
         return 1
     fi
     nds_action_select || return 1
+    info "Action: ${NDS_CURRENT_ACTION}"
     declare -gA _NDS_RECIPE=()
     nds_pipeline_recipe _NDS_RECIPE local "$NDS_CURRENT_ACTION" || return 1
     nds_recipe_materialize _NDS_RECIPE || return 1
     _pipe_sealed="${ nds_session_dir recipe; }/sealed.recipe"
     nds_recipe_seal _NDS_RECIPE "$_pipe_sealed" || return 1
+    info "Sealed recipe ${_pipe_sealed}"
     if ! nds_skip install.confirm; then
         nds_confirm "$_pipe_sealed" || return 1
     fi

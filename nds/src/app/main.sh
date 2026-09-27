@@ -102,6 +102,8 @@ main() {
 
     _nds_load_essentials "$app_dir" "$@"
     logger_scopeExists nixos || logger_scopeCreate "NixOS install" nixos
+    logger_scopeExists diagnose || logger_scopeCreate "Diagnose" diagnose
+    logger_scopeExists install || logger_scopeCreate "Install" install
     logger_scopeExists session || logger_scopeCreate "NDS session" session
     logger_scopeSet session
 
@@ -117,7 +119,7 @@ main() {
     tty_guardEnable
     chrome_begin
     nds_mode_resolve || return 1
-    info "NDS ${ scriptInfo_get_version; } mode=${NDS_MODE}"
+    info "mode=${NDS_MODE}"
     chrome_setSubtitle "$NDS_MODE"
     nds_pipeline_run || return 1
     chrome_setSubtitle "${NDS_CURRENT_ACTION:-}"

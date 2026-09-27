@@ -25,7 +25,7 @@ nds_cook_plan_flake_local() {
     _cook_step "Disk" step_disk "$_plan_name" || return 1
     eventRun cook.post_disk "$_plan_name" || return 1
     _cook_step "Stage flake" step_stageFlake "$_plan_name" "$_plan_install" || return 1
-    _cook_step "Hardware" step_hardware "$_plan_name" "$_plan_host_dir" || return 1
+    _cook_step "Generate facter.json" step_hardware "$_plan_name" "$_plan_host_dir" || return 1
     _cook_step "Generated host" nixcfg_writeGeneratedHost "$_plan_name" "$_plan_host_dir" || return 1
     _cook_step "Host structure" flake_hostStructureOk "$_plan_host_dir" || return 1
     _cook_step "Stage host files" flake_gitStageHostFiles "$_plan_install" "$_plan_host_dir" \
@@ -47,6 +47,5 @@ nds_cook_plan_flake_local() {
     eventRun cook.post_install "$_plan_name" || return 1
     _cook_step "EFI" step_efi "$_plan_name" || return 1
     _cook_step "Verify" nds_cook_verify "$_plan_name" flake || return 1
-    nds_cook_diag "after install"
     eventRun cook.done "$_plan_name" || return 1
 }

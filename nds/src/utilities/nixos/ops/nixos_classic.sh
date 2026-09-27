@@ -26,19 +26,22 @@ nixos_copyConfigs() {
 # - <Bool> 0 on success
 nixos_installClassic() {
     local root="${1:-/mnt}"
-    local nixos_log="${NDS_NIXOS_INSTALL_LOG:-/tmp/nds_nixosInstallation.log}"
+    local install_log="${NDS_NIXOS_INSTALL_LOG:-/tmp/nds_nixosInstallation.log}"
 
     [[ -f "${root}/etc/nixos/configuration.nix" ]] || {
         err "No configuration.nix under ${root}/etc/nixos"
         return 1
     }
-
-    if ! nixos-install --root "$root" --no-root-passwd; then
-        error "NixOS installation failed — last lines of ${nixos_log}:"
-        tail -n 30 "$nixos_log" 2>/dev/null | while IFS= read -r _line; do
-            printf '%s  %s\n' "${NDS_UI_INDENT_I:-}" "$_line" >&2
-        done || true
+    if declare -f logger_scopeExists >/dev/null && logger_scopeExists install; then
+        install_log=$(logger_scopeGetPath install)
+    else
+        mkdir -p "$(dirname "$install_log")"
+    fi
+    info "Installing NixOS with nixos-install. Log: ${install_log}"
+    if ! nixos-install --root "$root" --no-root-passwd >>"$install_log" 2>&1; then
+        error "nixos-install failed. Log: ${install_log}"
         return 1
     fi
+    info "nixos-install finished"
     return 0
 }

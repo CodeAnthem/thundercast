@@ -25,6 +25,9 @@ _disk_cmd() {
     local _disk_out _disk_rc=0 _disk_msg
     _disk_out=$(mktemp)
     "$@" >"$_disk_out" 2>&1 || _disk_rc=$?
+    if [[ -s "$_disk_out" ]] && declare -f nds_diagnose_append >/dev/null; then
+        nds_diagnose_append "$(<"$_disk_out")"
+    fi
     if [[ "$_disk_rc" -ne 0 ]]; then
         _disk_msg=$(tr '\n' ' ' <"$_disk_out")
         rm -f "$_disk_out"

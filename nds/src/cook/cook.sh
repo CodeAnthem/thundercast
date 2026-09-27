@@ -25,7 +25,9 @@ _cook_step() {
         return 0
     fi
     taskFail
-    nds_cook_diag_step_failure "$_cook_label" || true
+    if declare -f nds_diagnose_append >/dev/null; then
+        nds_diagnose_append "step failed: ${_cook_label}" || true
+    fi
     return 1
 }
 
@@ -51,10 +53,11 @@ nds_cook() {
     if (( _cook_n != 0 )); then
         return 1
     fi
-    _NDS_COOK_AA=R
     nds_cook_preflight R || return 1
     _cook_kind=${R[INSTALL_KIND]:-}
     _cook_mode=${R[INSTALL_MODE]:-local}
+    info "Cook plan ${_cook_kind}/${_cook_mode}"
+    debug "Target root ${_NDS_TARGET_ROOT}"
     case "${_cook_kind}/${_cook_mode}" in
         classic/local|classic/remote) nds_cook_plan_classic R || return 1 ;;
         flake/local) nds_cook_plan_flake_local R || return 1 ;;

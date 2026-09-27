@@ -14,13 +14,14 @@ _nds_session_publish() {
 
 _nds_session_onExitError() {
     local code="${1:-?}"
-    logger_compose "NDS" session nixos || true
+    declare -f nds_logs_compose >/dev/null && nds_logs_compose
     warn "NDS failed (${code})."
     declare -f nds_session_showFailure >/dev/null && nds_session_showFailure "$code"
     _nds_session_publish || return 1
 }
 
 _nds_session_onExitClean() {
+    declare -f nds_logs_compose >/dev/null && nds_logs_compose
     declare -f _nds_session_print_scope >/dev/null \
         && _nds_session_print_scope "NDS finished." session 20
     _nds_session_publish || return 1

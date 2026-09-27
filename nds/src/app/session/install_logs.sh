@@ -84,6 +84,26 @@ _nds_session_logs_write_section() {
     fi
 }
 
+# Append one block of text to the diagnose scope. No console output.
+nds_diagnose_append() {
+    declare -f logger_scopeAppend >/dev/null || return 0
+    logger_scopeExists diagnose || return 0
+    logger_scopeAppend "$1" diagnose || true
+}
+
+# Session scope plus the diagnose scope. The install scope stays its own file.
+nds_logs_compose() {
+    local path
+    declare -f logger_compose >/dev/null || return 0
+    logger_scopeExists diagnose || logger_scopeCreate "Diagnose" diagnose || true
+    if declare -f logger_scopeGetPath >/dev/null; then
+        path=$(logger_scopeGetPath internal_compose 2>/dev/null || true)
+        [[ -n "$path" ]] && : >"$path"
+    fi
+    logger_compose "NDS" session diagnose || true
+    logger_scopeExists session && logger_scopeSet session || true
+}
+
 # Merge session, step, and diagnostics logs. NixOS installer output stays separate.
 nds_session_logs_compose() {
     local dest="$1"

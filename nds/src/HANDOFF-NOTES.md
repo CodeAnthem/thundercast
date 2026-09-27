@@ -188,7 +188,7 @@ The handoff is still finished. Do not resume T7. Do not touch the loop tier. Coo
 
 **`lib_bool.sh` is deleted.** `nds_lib_env_is_true` and `nds_lib_bool_parse` had no callers. `lib_rand.sh` stays. `nds_lib_urandom_chars` is still used. The dialogue item that says both lib files are sourced from `features.sh` is stale.
 
-**Realize names in the live cook tree are gone.** `_NDS_REALIZE_AA`, `_NDS_REALIZE_DIAG_LAST`, and `_NDS_REALIZE_VERIFY_FAILS` are `_NDS_COOK_AA`, `_NDS_COOK_DIAG_LAST`, and `_NDS_COOK_VERIFY_FAILS`.
+**Realize names in the live cook tree are gone.** `_NDS_REALIZE_VERIFY_FAILS` is `_NDS_COOK_VERIFY_FAILS`. `_NDS_COOK_AA` and `_NDS_COOK_DIAG_LAST` were only used by `cook/diag.sh` and left with that file.
 
 **There is no `realize/` directory.** Not `nds/src/realize/`, not `nds/src/app/realize/`, not `nds/src/app/settings/`. A file index reported them. `find` and `git ls-files` do not. Do not delete or search for that tree.
 
@@ -213,6 +213,8 @@ app/utility/           nds_requireUtility
 **Logs are `/tmp/nds/logs`, not inside the clone.** `start.sh` was warning that `nds/src/logs/` was untracked. That directory was the logger root. It is now `/tmp/nds/logs`.
 
 **A failed run prints the log tail on the real console.** Chrome uses the alternate screen, so the frame's text vanished on exit and only the warmup lines remained. `exitError` composes the session and nixos scopes and prints the last 40 lines to `/dev/tty`. A clean exit prints the last 20 lines of the session log. Disk and LUKS commands that return non-zero now `error` with the tool's own stderr, so that tail has a reason instead of stopping at "Cleaning up existing partitions".
+
+**`cook/diag.sh` is deleted.** It wrote a private `diag.log` under the session directory. Diagnose output now goes to the logger scope `diagnose` through `nds_diagnose_append` in `app/session/install_logs.sh`. Disk appends the partition commands, `lsblk` / `parted` / `blkid` after partition, and `findmnt` after mount. A failed cook step appends `step failed: <label>`. A verify failure appends `verify: <reason>`. Compose is session plus diagnose. The install scope stays its own file and is not in that compose. The public logger writer is `logger_scopeAppend`.
 
 Self-test (`bash nds/dev/selftest.sh`) was green after these moves.
 

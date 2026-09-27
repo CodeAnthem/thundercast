@@ -59,8 +59,8 @@ disk_partition() {
         return 1
     fi
 
-    log "Partitioning disk: $disk (firmware: $([[ "$uefi_mode" == "true" ]] && echo UEFI || echo BIOS))"
-    log "Cleaning up existing partitions"
+    verbose "Partitioning disk: $disk (firmware: $([[ "$uefi_mode" == "true" ]] && echo UEFI || echo BIOS))"
+    verbose "Cleaning up existing partitions"
     umount -R /mnt 2>/dev/null || true
     cryptsetup close cryptroot 2>/dev/null || true
 
@@ -95,20 +95,27 @@ disk_partition() {
     # udev probes the new partitions and holds them open. Settle before mkfs.
     _disk_publish
 
-    log "Formatting boot partition"
+    verbose "Formatting boot partition"
     _disk_cmd mkfs.fat -F 32 -n boot "$boot_part" || return 1
 
     if [[ "$use_encryption" == "true" ]]; then
-        log "Setting up encrypted root partition"
+        verbose "Setting up encrypted root partition"
         [[ -n "$format_luks_fn" ]] && declare -f "$format_luks_fn" &>/dev/null || {
             err "Encrypted install requires format_luks_fn callback"
             return 1
         }
         "$format_luks_fn" "$root_part" || return 1
     else
-        log "Setting up standard root partition"
+        verbose "Setting up standard root partition"
         _disk_cmd mkfs.ext4 -F -L nixos "$root_part" || return 1
     fi
     _disk_publish
+    if declare -f nds_diagnose_append >/dev/null; then
+        nds_diagnose_append ""
+        nds_diagnose_append "=== disk ${disk} after partition ==="
+        nds_diagnose_append "$(lsblk -f "$disk" 2>&1 || true)"
+        nds_diagnose_append "$(parted "$disk" print 2>&1 || true)"
+        nds_diagnose_append "$(blkid "${disk}"* 2>&1 || true)"
+    fi
     return 0
 }

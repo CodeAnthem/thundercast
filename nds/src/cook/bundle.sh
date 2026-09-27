@@ -52,6 +52,41 @@ _bundle_rewrite_paths() {
     unset '_R[LEAF_PUSH_DIR]' '_R[LEAF_PUSH_MESSAGE]'
 }
 
+_bundle_copy_scope_logs() {
+    local _bundle_stage=$1 _bundle_compose="" _bundle_install=""
+    mkdir -p "${_bundle_stage}/logs"
+    declare -f nds_logs_compose >/dev/null && nds_logs_compose
+    if declare -f logger_scopeGetPath >/dev/null; then
+        _bundle_compose=$(logger_scopeGetPath internal_compose 2>/dev/null || true)
+        _bundle_install=$(logger_scopeGetPath install 2>/dev/null || true)
+        [[ -n "$_bundle_compose" && -f "$_bundle_compose" ]] && cp "$_bundle_compose" "${_bundle_stage}/logs/nds.log"
+        [[ -n "$_bundle_install" && -f "$_bundle_install" ]] && cp "$_bundle_install" "${_bundle_stage}/logs/nixosInstallation.log"
+    fi
+    [[ -f "${_bundle_stage}/logs/nds.log" ]] || : > "${_bundle_stage}/logs/nds.log"
+    [[ -f "${_bundle_stage}/logs/nixosInstallation.log" ]] || : > "${_bundle_stage}/logs/nixosInstallation.log"
+}
+
+_bundle_save_on_target() {
+    local _bundle_src=$2 _bundle_user _bundle_home _bundle_dest
+    local -n _bundle_R=$1
+    nds_recipe_true _bundle_R BUNDLE_SAVE_ON_TARGET || return 0
+    if [[ ! -d ${_NDS_TARGET_ROOT:-} ]]; then
+        warn "Bundle stays on the live system. Target root is not mounted"
+        return 0
+    fi
+    _bundle_user=${_bundle_R[ACCESS_ADMIN_USER]:-root}
+    if [[ "$_bundle_user" == root ]]; then
+        _bundle_home="${_NDS_TARGET_ROOT}/root"
+    else
+        _bundle_home="${_NDS_TARGET_ROOT}/home/${_bundle_user}"
+    fi
+    mkdir -p "$_bundle_home" || { warn "Could not create ${_bundle_home} for the bundle"; return 0; }
+    _bundle_dest="${_bundle_home}/$(basename "$_bundle_src")"
+    cp "$_bundle_src" "$_bundle_dest" || { warn "Could not copy the bundle to ${_bundle_dest}"; return 0; }
+    chmod 600 "$_bundle_dest" || true
+    info "Bundle on the installed system: ${_bundle_dest}"
+}
+
 _bundle_copy_tree() {
     local _bundle_src=$1 _bundle_dest=$2
     [[ -d "$_bundle_src" ]] || return 0
@@ -72,8 +107,7 @@ nds_bundle() {
     _bundle_rewrite_paths R "$_bundle_stage" || return 1
     _bundle_copy_tree "$(nds_session_dir config)" "${_bundle_stage}/config"
     _bundle_copy_tree "$(nds_session_dir logs)" "${_bundle_stage}/logs"
-    : > "${_bundle_stage}/logs/nds.log"
-    : > "${_bundle_stage}/logs/nixosInstallation.log"
+    _bundle_copy_scope_logs "$_bundle_stage"
     nds_recipe_export R "${_bundle_stage}/nds-restore.recipe" || return 1
     nds_bundle_quickstart R "${_bundle_stage}/QUICK_START.md" || return 1
     eventRun bundle.collect R || return 1
@@ -93,6 +127,8 @@ nds_bundle() {
     fi
     chmod 600 "$_bundle_out" || return 1
     chown "$_bundle_user" "$_bundle_out" 2>/dev/null || true
+    _bundle_save_on_target R "$_bundle_out"
+    info "Bundle: ${_bundle_out}"
     rm -rf "$_bundle_stage"
     _NDS_BUNDLE_STAGE=""
     printf '%s\n' "$_bundle_out"

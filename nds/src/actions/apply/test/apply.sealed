@@ -1,4 +1,6 @@
 # nds-recipe 1
+[cook]
+BUNDLE_SAVE_ON_TARGET="false"
 [access]
 ACCESS_ADMIN_USER="admin"
 ACCESS_ADMIN_PASSWORD_AUTO="true"

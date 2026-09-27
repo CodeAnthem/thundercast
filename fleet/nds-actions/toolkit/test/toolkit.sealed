@@ -3,6 +3,7 @@
 LEAF_PUSH_DIR="@SESSION@/work/leaf"
 LEAF_PUSH_MESSAGE="nds: toolkit new host control-toolkit"
 TARGET_SEED_DIR="@SESSION@/seed"
+BUNDLE_SAVE_ON_TARGET="false"
 [install]
 INSTALL_KIND="flake"
 INSTALL_MODE="local"

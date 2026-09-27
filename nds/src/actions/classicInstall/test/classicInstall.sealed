@@ -1,4 +1,6 @@
 # nds-recipe 1
+[cook]
+BUNDLE_SAVE_ON_TARGET="false"
 [install]
 INSTALL_KIND="classic"
 INSTALL_MODE="local"

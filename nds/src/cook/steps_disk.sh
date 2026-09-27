@@ -22,6 +22,7 @@ step_disk() {
     local _disk_target=${_R[DISK_TARGET]:-}
     local _disk_unlock=manual
     _NDS_STEP_DISK_AA=$1
+    info "Disk ${_disk_target:-unset}, strategy ${_disk_strategy}"
     if [[ "$_disk_strategy" == flake ]]; then
         mountpoint -q "$_NDS_TARGET_ROOT" || {
             error "DISK_STRATEGY: ${_NDS_TARGET_ROOT} is not mounted"

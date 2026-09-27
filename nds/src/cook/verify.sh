@@ -12,6 +12,9 @@ declare -ga _NDS_COOK_VERIFY_FAILS=()
 
 _nds_cook_verify_fail() {
     _NDS_COOK_VERIFY_FAILS+=("$1")
+    if declare -f nds_diagnose_append >/dev/null; then
+        nds_diagnose_append "verify: $1" || true
+    fi
 }
 
 _nds_cook_verify_boot() {
