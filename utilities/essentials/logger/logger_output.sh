@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Logger Output
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-06 | Modified: 2026-09-24
+# Date:          Created: 2026-08-06 | Modified: 2026-09-27
 # Description:   Level map, quiet writers, and the console and file write path.
 # ==================================================================================================
 
@@ -91,6 +91,7 @@ logger_setMinLevel() {
 
 # Initialize Logger Output
 _essentials_logger_output_init() {
+    _essentials_init_isDone loggerOutput && return 0
     local minLevel=$1
     local stderrLevel=$2
     local l
@@ -106,6 +107,7 @@ _essentials_logger_output_init() {
     _essentials_logger_build_quietmap "$minLevel"
     _essentials_logger_build_stderrmap "$stderrLevel"
     _essentials_logger_bind_writers || return 1
+    _essentials_init_mark loggerOutput
 }
 
 _essentials_logger_output() {
@@ -170,7 +172,7 @@ _essentials_logger_file() {
 
     # Direct Output
     if [[ "$level" == "log" ]]; then
-        _essentials_logger_scope_write "$message" "$scope"
+        logger_scopeAppend "$message" "$scope"
         return 0
     fi
 
@@ -179,5 +181,5 @@ _essentials_logger_file() {
     label=${__LOGGER_FORMATTED_LEVELS["${level}_file"]}
     printf -v date_time "%(%Y-%m-%d %H:%M:%S)T" -1
 
-    _essentials_logger_scope_write "${date_time} ${label} ${message}" "$scope"
+    logger_scopeAppend "${date_time} ${label} ${message}" "$scope"
 }

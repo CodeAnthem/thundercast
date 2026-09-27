@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Logger Formatter
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-06 | Modified: 2026-09-24
+# Date:          Created: 2026-08-06 | Modified: 2026-09-27
 # Description:   Console labels and the indent applied to them.
 # ==================================================================================================
 
@@ -11,6 +11,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, 
 
 # Initialize Logger Formatter
 _essentials_logger_formatter_init() {
+    _essentials_init_isDone loggerFormatter && return 0
     local indent=$1
     local -A level_tags=(
         [verbose]='[VERBOSE]'
@@ -47,4 +48,5 @@ _essentials_logger_formatter_init() {
         __LOGGER_FORMATTED_LEVELS["${level}_plain"]="${indentation}${level_tag} -"
         __LOGGER_FORMATTED_LEVELS["${level}_color"]="${indentation}${level_colors[$level]}${level_tag}${reset} -${colors_text[$level]}"
     done
+    _essentials_init_mark loggerFormatter
 }

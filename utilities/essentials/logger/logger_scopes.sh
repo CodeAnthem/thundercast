@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Logger Scopes
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-06 | Modified: 2026-09-24
+# Date:          Created: 2026-08-06 | Modified: 2026-09-27
 # Description:   Named log files under LOG_ROOT, and which scope is current.
 # ==================================================================================================
 
@@ -16,6 +16,7 @@ declare -gA __LOGGER_SCOPE_PATHS=()
 
 # Initialize Logger Scopes
 _essentials_logger_scopes_init() {
+    _essentials_init_isDone loggerScopes && return 0
     local rootDir=$1
     [[ -z "$rootDir" ]] && { echo "[ERROR] - [Logger] - Root directory is required" >&2; return 1; }
 
@@ -29,7 +30,8 @@ _essentials_logger_scopes_init() {
     fi
     declare -g __LOGGER_SCOPE_ROOT="$rootDir"
 
-    logger_scopeCreate "All Logs" "all"
+    logger_scopeCreate "All Logs" "all" || return 1
+    _essentials_init_mark loggerScopes
 }
 
 _essentials_logger_scope_sanitize() {
@@ -104,7 +106,8 @@ logger_scopeGetTitle() {
     printf '%s\n' "${__LOGGER_SCOPE_TITLES[$scope]}"
 }
 
-_essentials_logger_scope_write() {
+# Append one line to a scope file and to the all-logs file. Does not print.
+logger_scopeAppend() {
     local message=${1:-}
     local scope=${2:-${__LOGGER_SCOPE_CURRENT:-}}
     _essentials_logger_scope_require "$scope" || return 1

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Test environment (dummy config + load)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-18 | Modified: 2026-09-24
+# Date:          Created: 2026-09-18 | Modified: 2026-09-27
 # ==================================================================================================
 
 _ESSENTIALS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
@@ -124,6 +124,13 @@ _essentials_test_loadOne() {
             declare -f taskStart >/dev/null && return 0
             # shellcheck source=./task/task.sh
             source "${_ESSENTIALS_ROOT}/task/task.sh"
+            ;;
+        console)
+            _essentials_test_loadOne logger
+            _essentials_test_loadOne task
+            declare -f console_write >/dev/null && return 0
+            # shellcheck source=./console/console.sh
+            source "${_ESSENTIALS_ROOT}/console/console.sh"
             ;;
         prompt)
             _essentials_test_loadOne ui

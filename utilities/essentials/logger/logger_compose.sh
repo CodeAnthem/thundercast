@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Logger Compose
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-06 | Modified: 2026-09-24
+# Date:          Created: 2026-08-06 | Modified: 2026-09-27
 # Description:   Merges selected scope files into one compose file as titled sections.
 # ==================================================================================================
 
@@ -10,7 +10,11 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 # Initialize Logger Compose
-_essentials_logger_compose_init() { logger_scopeCreate "Compose Log" "internal_compose" "$1"; }
+_essentials_logger_compose_init() {
+    _essentials_init_isDone loggerCompose && return 0
+    logger_scopeCreate "Compose Log" "internal_compose" "$1" || return 1
+    _essentials_init_mark loggerCompose
+}
 
 logger_composeWrite() { _essentials_logger_output log "$1" file internal_compose; }
 

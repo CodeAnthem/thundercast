@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Task
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-17 | Modified: 2026-09-24
+# Date:          Created: 2026-09-17 | Modified: 2026-09-27
 # Description:   One in-progress line with a spinner and an OK or FAIL result; it yields on ui.line.take.
 # ==================================================================================================
 
@@ -111,6 +111,11 @@ _taskClear() {
     __TASK_NAME=""
     __TASK_START=0
     __TASK_WANT_SPIN=0
+}
+
+# True when an in-progress task name is set.
+taskIsOpen() {
+    [[ -n "${__TASK_NAME:-}" ]]
 }
 
 # Clear the in-progress task line so other TTY output can print.

@@ -21,6 +21,7 @@ INT: `trapRegister INT taskOnInt`. That cancels the line and exits 130. EXIT res
 | `taskWatch` | `<pid>` `[label]` | Foreground spinner until pid exits |
 | `taskOk` / `taskFail` | `[label]` | `[OK]` / `[FAIL]` with elapsed seconds |
 | `taskCancel` | — | Drop the line, no OK/FAIL |
+| `taskIsOpen` | — | True when an in-progress task name is set |
 | `taskYield` / `taskResume` | — | Let other TTY output through; redraw |
 | `taskOnInt` | — | Cancel, newline, exit 130 |
 

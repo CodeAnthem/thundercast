@@ -43,6 +43,7 @@ Severities, high to low: `fatal` `error` `warn` `info` `debug` `verbose`. `log` 
 | `logger_scopeGetPath` | `[scope]` | Print the file path (default: current) |
 | `logger_scopeGetTitle` | `[scope]` | Print the title (default: current) |
 | `logger_scopeExists` | `<scope>` | Silent true/false. Name must already be sanitized |
+| `logger_scopeAppend` | `<message>` `[scope]` | Append one line to that scope and to `all`. No console. Default scope is current |
 | `logger_scopeRead` | `<scope>` `[lines]` | `0` or omit: all. `>0`: `head`. `<0`: `tail` |
 | `logger_composeWrite` | `<message>` | Raw line into the compose file (no console) |
 | `logger_compose` | `<title>` `<scope>`… | Append those scopes as titled sections. First call also writes a banner. Unknown names are skipped |
@@ -73,7 +74,7 @@ Console lines are labeled. File lines get a timestamp. `log` writes the message 
 
 ## Develop
 
-Init in `logger.sh`: counts → output (maps, bind writers) → formatter (uses `__LOGGER_LEVELS`) → scopes (`all`) → compose (`internal_compose`, which `logger_scopeCreate` leaves current). Each `*_init` is unset after it runs. `logger_setMinLevel` re-`eval`s `verbose`/`debug`/…; `fatal` is never a nop.
+Init in `logger.sh`: counts → output (maps, bind writers) → formatter (uses `__LOGGER_LEVELS`) → scopes (`all`) → compose (`internal_compose`, which `logger_scopeCreate` leaves current). Each sub-init has its own done-token (`loggerOutput`, `loggerFormatter`, `loggerScopes`, `loggerCompose`). The feature token is `logger`. `logger_setMinLevel` re-`eval`s `verbose`/`debug`/…; `fatal` is never a nop.
 
 No calls to scriptInfo, eventBus, or bashVersion. Syntax here is nameref and `${var,,}` (Bash 4.3) plus `printf` time stamps (4.2). Nothing is 5.3-only.
 

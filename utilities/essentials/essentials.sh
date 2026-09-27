@@ -2,7 +2,7 @@
 # ==================================================================================================
 # Thundercast - Bash Essentials - Loader
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-08-06 | Modified: 2026-09-24
+# Date:          Created: 2026-08-06 | Modified: 2026-09-27
 # ==================================================================================================
 
 # Block Script Execution
@@ -87,6 +87,10 @@ essentials_init() {
 
     # shellcheck source=./task/task.sh
     _loadEssential "task/task.sh"
+
+    # Finished stderr line. Asks task if a line is open, so task is already loaded.
+    # shellcheck source=./console/console.sh
+    _loadEssential "console/console.sh"
 
     # shellcheck source=./prompt/prompt.sh
     _loadEssential "prompt/prompt.sh"

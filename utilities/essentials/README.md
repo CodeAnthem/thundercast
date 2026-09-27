@@ -16,6 +16,7 @@ Shared runtime for a Bash program: events, logging, script identity, and a termi
 - **Prompts** ([prompt](prompt/README.md)) — text, multiline, select, multi-select, confirm, a single key, or a pause.
 - **Progress** ([progress](progress/README.md)) — a progress bar, as a string or as a live line.
 - **Task line** ([task](task/README.md)) — one in-progress line, with a spinner and an OK or FAIL result.
+- **Console line** ([console](console/README.md)) — one finished line on the configured stream. An open task yields, the line prints, and the task returns.
 - **TTY** ([ttyHandler](ttyHandler/README.md)) — keyboard modes for the session: a normal line, a hidden line, a single key, or discarded input.
 - **Session directory** ([sessionDir](sessionDir/README.md)) — a scratch directory for this run, with named subdirectories.
 - **Bash version** ([bashVersion](bashVersion/README.md)) — a minimum Bash major and minor for this runtime.
@@ -54,6 +55,7 @@ Feature init shares `__ESSENTIALS_INIT`. A feature starts with `_essentials_init
 | `TRAP_PRESETS` | [trapBridge](trapBridge/README.md) |
 | `ROOTREEXEC_*` | [rootReexec](rootReexec/README.md) |
 | `IMPORTER_INCLUDE_TESTS` | [importer](importer/README.md) |
+| `CONSOLE_STREAM` | [console](console/README.md) |
 
 `eventBus` and `task` do not read the map.
 
