@@ -130,9 +130,9 @@ nixcfg_register() {
     local block_name="$1"
     local block_content="$2"
     local priority="${3:-50}"
-    
+
     NDS_NIXCFG_BLOCKS["$(printf '%03d' "$priority")_${block_name}"]="$block_content"
-    debug "Registered NixOS config block: $block_name (priority: $priority)"
+    verbose "Registered NixOS config block: $block_name (priority: $priority)"
 }
 
 # Description: Merge registered blocks into configuration.nix (includes stateVersion).

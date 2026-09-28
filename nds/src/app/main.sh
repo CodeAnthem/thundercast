@@ -34,6 +34,7 @@ _nds_load_essentials() {
         [RUNTIME_SUBDIRS]="recipe secrets config seed work logs"
         [RUNTIME_PURGE_STALE]="true"
         [UI_MODE]="auto"
+        [CHROME_HOLD]="${NDS_CHROME_HOLD:-false}"
     )
 
     # shellcheck source=../../../utilities/essentials/essentials.sh
@@ -84,16 +85,6 @@ _nds_setup_chrome() {
     _nds_chrome_subtitleIdle
     eventRegister prompt.pre _nds_chrome_subtitleWait || return 1
     eventRegister prompt.post _nds_chrome_subtitleIdle || return 1
-
-    # Temporary. The frame is the alternate screen, so it vanishes on exit.
-    # NDS_CHROME_HOLD=true waits for Enter before chrome_end. Remove after the visual check.
-    _nds_chrome_hold() {
-        [[ ${NDS_CHROME_HOLD:-} == true ]] || return 0
-        chrome_isOn || return 0
-        printf '\n%s\n' "Chrome held open. Press Enter to close." >/dev/tty
-        read -r _nds_hold </dev/tty || true
-    }
-    eventRegister exit _nds_chrome_hold 1 || return 1
 }
 
 main() {

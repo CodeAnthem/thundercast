@@ -128,7 +128,6 @@ nds_bundle() {
     chmod 600 "$_bundle_out" || return 1
     chown "$_bundle_user" "$_bundle_out" 2>/dev/null || true
     _bundle_save_on_target R "$_bundle_out"
-    info "Bundle: ${_bundle_out}"
     rm -rf "$_bundle_stage"
     _NDS_BUNDLE_STAGE=""
     printf '%s\n' "$_bundle_out"
