@@ -38,10 +38,6 @@ _ui_baseDetect() {
     __UI_MODE=$mode
 }
 
-_ui_err() {
-    echo "[ERROR] - [UI] - $1" >&2
-}
-
 # Widen H/B/I indents. Pair with ui_indentPop.
 ui_indentPush() {
     local extra="${1:-  }"

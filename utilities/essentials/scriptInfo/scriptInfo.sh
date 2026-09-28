@@ -17,9 +17,9 @@ _essentials_scriptInfo_init() {
         [script_name]="${config[SCRIPTINFO_NAME]:-}"
         [script_version]="${config[SCRIPTINFO_VERSION]:-}"
     )
-    [[ -n "${__ESSENTIALS_SCRIPTINFO[script_dir]}" ]] || { echo "[ERROR] - [ScriptInfo] - SCRIPTINFO_DIR is required" >&2; exit 1; }
-    [[ -n "${__ESSENTIALS_SCRIPTINFO[script_name]}" ]] || { echo "[ERROR] - [ScriptInfo] - SCRIPTINFO_NAME is required" >&2; exit 1; }
-    [[ -n "${__ESSENTIALS_SCRIPTINFO[script_version]}" ]] || { echo "[ERROR] - [ScriptInfo] - SCRIPTINFO_VERSION is required" >&2; exit 1; }
+    [[ -n "${__ESSENTIALS_SCRIPTINFO[script_dir]}" ]] || { error "ScriptInfo: SCRIPTINFO_DIR is required"; exit 1; }
+    [[ -n "${__ESSENTIALS_SCRIPTINFO[script_name]}" ]] || { error "ScriptInfo: SCRIPTINFO_NAME is required"; exit 1; }
+    [[ -n "${__ESSENTIALS_SCRIPTINFO[script_version]}" ]] || { error "ScriptInfo: SCRIPTINFO_VERSION is required"; exit 1; }
     _essentials_init_mark scriptInfo
 }
 _essentials_scriptInfo_init || return 1

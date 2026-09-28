@@ -101,7 +101,7 @@ suite_eventBus() {
     # --- Re-entrancy: nested rejected, sequential allowed -----------------------------------------
     bts_section "Re-entrancy"
 
-    # stderr: expected "[ERROR] - [EventBus] - Re-entrant eventRun is not allowed"
+    # stderr: EventBus: re-entrant eventRun is not allowed
     eventCreate test.eh.other
     eventRegister test.eh.nest _eh_hook_nested 50
     _EH_INNER=0

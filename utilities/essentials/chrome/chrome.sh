@@ -206,7 +206,12 @@ chrome_end() {
     [[ "${__CHROME_ON:-0}" == 1 ]] || return 0
     if [[ "${__CHROME_HOLD:-false}" == true ]]; then
         __CHROME_HOLD=false
-        prompt --type key "Press any key to close" || true
+        info "Press any key to close"
+        tty_begin
+        tty_setPreset cbreak
+        local _chrome_key=""
+        tty_getc _chrome_key raw || true
+        tty_end
     fi
     __CHROME_TEMP=0
     __CHROME_ON=0

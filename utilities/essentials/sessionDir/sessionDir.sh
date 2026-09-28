@@ -24,7 +24,7 @@ _essentials_sessionDir_sanitize() {
 
 _essentials_sessionDir_requireDir() {
     [[ -n "${__RUNTIME_DIR:-}" && -d "${__RUNTIME_DIR}" ]] || {
-        echo "[ERROR] - [SessionDir] - Root directory is not initialized" >&2
+        error "SessionDir: root directory is not initialized"
         return 1
     }
 }
@@ -71,7 +71,7 @@ runtime_getPath() {
     _essentials_sessionDir_requireDir || return 1
     _essentials_sessionDir_sanitize "${1:-}" name
     [[ -n "$name" && -n "${__RUNTIME_SUBDIRS[$name]+_}" ]] || {
-        echo "[ERROR] - [SessionDir] - Unknown subdir: ${1:-}" >&2
+        error "SessionDir: unknown subdir: ${1:-}"
         return 1
     }
     printf '%s\n' "${__RUNTIME_SUBDIRS[$name]}"
@@ -82,9 +82,9 @@ runtime_subdirCreate() {
     local name="" path
     _essentials_sessionDir_requireDir || return 1
     _essentials_sessionDir_sanitize "${1:-}" name
-    [[ -n "$name" ]] || { echo "[ERROR] - [SessionDir] - Subdir name is required" >&2; return 1; }
+    [[ -n "$name" ]] || { error "SessionDir: subdir name is required"; return 1; }
     [[ -z "${__RUNTIME_SUBDIRS[$name]+_}" ]] || {
-        echo "[ERROR] - [SessionDir] - Subdir already exists: ${name}" >&2
+        error "SessionDir: subdir already exists: ${name}"
         return 1
     }
     path="${__RUNTIME_DIR}/${name}"
@@ -95,7 +95,7 @@ runtime_subdirCreate() {
 # Remove tracked subdirs. Unknown names are skipped.
 runtime_purge() {
     local raw name path
-    (($# >= 1)) || { echo "[ERROR] - [SessionDir] - Subdir name required" >&2; return 1; }
+    (($# >= 1)) || { error "SessionDir: subdir name required"; return 1; }
     _essentials_sessionDir_requireDir || return 1
     for raw in "$@"; do
         name=""

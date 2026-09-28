@@ -47,7 +47,7 @@ eventRun() {
     shift
 
     eventHas "$event" || {
-        echo "[ERROR] - [EventBus] - Unknown event: ${event}" >&2
+        error "EventBus: unknown event: ${event}"
         return 1
     }
 
@@ -55,7 +55,7 @@ eventRun() {
         case "$event" in
             exit|exitError|exitClean) ;;
             *)
-                echo "[ERROR] - [EventBus] - Re-entrant eventRun is not allowed (${event})" >&2
+                error "EventBus: re-entrant eventRun is not allowed (${event})"
                 return 1
                 ;;
         esac
@@ -90,7 +90,7 @@ eventRun() {
 
 eventStop() {
     [[ "${__EVENT_DISPATCHING}" == true ]] || {
-        echo "[ERROR] - [EventBus] - eventStop is only valid during eventRun" >&2
+        error "EventBus: eventStop is only valid during eventRun"
         return 1
     }
     __EVENT_STOP=1

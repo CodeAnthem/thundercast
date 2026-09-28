@@ -20,7 +20,7 @@ _ui_promptLoadSelected() {
     done
     [[ -n "$name" ]] || return 0
     declare -p "$name" &>/dev/null || {
-        _prompt_err "prompt: --selected ${name} is not an array"
+        error "prompt: --selected ${name} is not an array"
         return 1
     }
     local -n _ui_prompt_sel="$name"
@@ -41,7 +41,7 @@ _ui_promptLoadSelected() {
             fi
         fi
         if ((found == 0)); then
-            _prompt_err "prompt: --selected unknown option ${spec}"
+            error "prompt: --selected unknown option ${spec}"
             return 1
         fi
     done

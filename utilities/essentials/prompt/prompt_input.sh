@@ -266,12 +266,12 @@ _ui_promptEditLine() {
 _ui_promptLoadOptions() {
     local name="${__PROMPT[options]}" spec value label desc i
     declare -p "$name" &>/dev/null || {
-        _prompt_err "prompt: --options ${name} is not an array"
+        error "prompt: --options ${name} is not an array"
         return 1
     }
     local -n _ui_prompt_opts="$name"
     ((${#_ui_prompt_opts[@]} > 0)) || {
-        _prompt_err "prompt: --options ${name} is empty"
+        error "prompt: --options ${name} is empty"
         return 1
     }
     __UI_PROMPT_OPT_VALS=()

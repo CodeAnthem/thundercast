@@ -18,14 +18,14 @@ declare -g __EH_SEQ_NEXT=0
 
 _essentials_eventBus_requireName() {
     [[ "$1" =~ ^[A-Za-z][A-Za-z0-9._:-]*$ ]] || {
-        echo "[ERROR] - [EventBus] - Invalid event name: ${1:-}" >&2
+        error "EventBus: invalid event name: ${1:-}"
         return 1
     }
 }
 
 _essentials_eventBus_requireFunction() {
     declare -f "$1" &>/dev/null || {
-        echo "[ERROR] - [EventBus] - Function not found: ${1:-}" >&2
+        error "EventBus: function not found: ${1:-}"
         return 1
     }
 }
@@ -66,7 +66,7 @@ eventRegister() {
     _essentials_eventBus_requireName "$event" || return 1
     _essentials_eventBus_requireFunction "$func" || return 1
     [[ "$priority" =~ ^[0-9]+$ ]] || {
-        echo "[ERROR] - [EventBus] - Priority must be a non-negative integer: ${priority}" >&2
+        error "EventBus: priority must be a non-negative integer: ${priority}"
         return 1
     }
 
@@ -90,7 +90,7 @@ eventUnregister() {
 
     _essentials_eventBus_requireName "$event" || return 1
     [[ -n "$func" ]] || {
-        echo "[ERROR] - [EventBus] - Function name is required" >&2
+        error "EventBus: function name is required"
         return 1
     }
 

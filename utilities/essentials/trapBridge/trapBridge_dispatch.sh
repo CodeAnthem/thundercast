@@ -105,7 +105,7 @@ trapRegister() {
 
     signal=${ _essentials_trapBridge_normalize "$raw"; }
     [[ -n "$signal" ]] || {
-        echo "[ERROR] - [TrapBridge] - Signal is required" >&2
+        error "TrapBridge: signal is required"
         return 1
     }
 

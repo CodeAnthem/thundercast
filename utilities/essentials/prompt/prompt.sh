@@ -45,10 +45,6 @@ _prompt_emit() {
     eventRun "$name" || true
 }
 
-_prompt_err() {
-    echo "[ERROR] - [prompt] - $1" >&2
-}
-
 _ui_promptReset() {
     UI_PROMPT_RESULT=""
     UI_PROMPT_ACTION=""
@@ -86,13 +82,13 @@ _ui_promptReset() {
 }
 
 _ui_promptUsage() {
-    _prompt_err "prompt: --type text|multiline|select|multi-select|confirm|key|pause  [--message TEXT]"
+    error "prompt: --type text|multiline|select|multi-select|confirm|key|pause  [--message TEXT]"
 }
 
 _ui_promptNeedArg() {
     local flag="$1" val="${2:-}"
     if [[ -z "$val" || "$val" == --* ]]; then
-        _prompt_err "prompt: ${flag} requires an argument"
+        error "prompt: ${flag} requires an argument"
         return 1
     fi
     return 0
@@ -122,16 +118,16 @@ _ui_promptHasAction() {
 _ui_promptBindSet() {
     local action="$1" key="${2,,}" prev
     [[ -n "$action" && -n "$key" ]] || {
-        _prompt_err "prompt: --bind needs ACTION=KEY"
+        error "prompt: --bind needs ACTION=KEY"
         return 1
     }
     if [[ "${__PROMPT[type]}" == select || "${__PROMPT[type]}" == multi-select ]] && [[ "$key" =~ ^[1-9]$ ]]; then
-        _prompt_err "prompt: cannot bind ${action} to option key ${key}"
+        error "prompt: cannot bind ${action} to option key ${key}"
         return 1
     fi
     prev="${__UI_PROMPT_BIND[$key]:-}"
     if [[ -n "$prev" && "$prev" != "$action" ]]; then
-        _prompt_err "prompt: key ${key} already bound to ${prev}"
+        error "prompt: key ${key} already bound to ${prev}"
         return 1
     fi
     __UI_PROMPT_BIND[$key]="$action"
@@ -140,7 +136,7 @@ _ui_promptBindSet() {
 _ui_promptBindApply() {
     local spec="$1" action key
     [[ "$spec" == *=* ]] || {
-        _prompt_err "prompt: --bind needs ACTION=KEY"
+        error "prompt: --bind needs ACTION=KEY"
         return 1
     }
     action="${spec%%=*}"
@@ -214,66 +210,66 @@ _ui_promptCheckCombo() {
     case "$t" in
         text|multiline|select|multi-select|confirm|key|pause) ;;
         "")
-            _prompt_err "prompt: --type or message required"
+            error "prompt: --type or message required"
             return 1
             ;;
         *)
-            _prompt_err "prompt: unknown type ${t}"
+            error "prompt: unknown type ${t}"
             return 1
             ;;
     esac
     if [[ "${__PROMPT[hide]}" == true && -n "${__PROMPT[mask]}" ]]; then
-        _prompt_err "prompt: --hide and --mask cannot be combined"
+        error "prompt: --hide and --mask cannot be combined"
         return 1
     fi
     if [[ -n "${__PROMPT[mask]}" && ${#__PROMPT[mask]} -ne 1 ]]; then
-        _prompt_err "prompt: --mask needs a single character"
+        error "prompt: --mask needs a single character"
         return 1
     fi
     if [[ -n "${__PROMPT[end]}" || "${__PROMPT[include_end]}" == true ]]; then
         [[ "$t" == multiline ]] || {
-            _prompt_err "prompt: --end is only valid with --type multiline"
+            error "prompt: --end is only valid with --type multiline"
             return 1
         }
     fi
     if [[ "$t" == multiline && -z "${__PROMPT[end]}" ]]; then
-        _prompt_err "prompt: --type multiline requires --end"
+        error "prompt: --type multiline requires --end"
         return 1
     fi
     if [[ -n "${__PROMPT[options]}" && "$t" != select && "$t" != multi-select ]]; then
-        _prompt_err "prompt: --options is only valid with select or multi-select"
+        error "prompt: --options is only valid with select or multi-select"
         return 1
     fi
     if [[ "$t" == select || "$t" == multi-select ]] && [[ -z "${__PROMPT[options]}" ]]; then
-        _prompt_err "prompt: --type ${t} requires --options"
+        error "prompt: --type ${t} requires --options"
         return 1
     fi
     if [[ -n "${__PROMPT[selected]}" && "$t" != multi-select ]]; then
-        _prompt_err "prompt: --selected is only valid with --type multi-select"
+        error "prompt: --selected is only valid with --type multi-select"
         return 1
     fi
     if [[ -n "${__PROMPT[default]}" && "$t" == multi-select ]]; then
-        _prompt_err "prompt: --default is not valid with --type multi-select (use --selected)"
+        error "prompt: --default is not valid with --type multi-select (use --selected)"
         return 1
     fi
     if [[ -n "${__PROMPT[mask]}" && "$t" != text ]]; then
-        _prompt_err "prompt: --mask is only valid with --type text"
+        error "prompt: --mask is only valid with --type text"
         return 1
     fi
     if [[ "${__PROMPT[hide]}" == true && "$t" != text && "$t" != multiline ]]; then
-        _prompt_err "prompt: --hide is only valid with text or multiline"
+        error "prompt: --hide is only valid with text or multiline"
         return 1
     fi
     if [[ -n "${__PROMPT[placeholder]}" && "$t" != text ]]; then
-        _prompt_err "prompt: --placeholder is only valid with --type text"
+        error "prompt: --placeholder is only valid with --type text"
         return 1
     fi
     if [[ "${__PROMPT[allow_empty]}" == true && "$t" != text && "$t" != multiline ]]; then
-        _prompt_err "prompt: --allow-empty is only valid with text or multiline"
+        error "prompt: --allow-empty is only valid with text or multiline"
         return 1
     fi
     if [[ -n "${__PROMPT[default]}" && "$t" == pause ]]; then
-        _prompt_err "prompt: --default is not valid with --type pause"
+        error "prompt: --default is not valid with --type pause"
         return 1
     fi
 }
@@ -445,7 +441,7 @@ _ui_promptParse() {
                 shift
                 ;;
             -*)
-                _prompt_err "prompt: unknown flag ${1}"
+                error "prompt: unknown flag ${1}"
                 return 1
                 ;;
             *)
@@ -497,7 +493,7 @@ prompt() {
         key) _ui_promptKey || rc=$? ;;
         pause) _ui_promptPause || rc=$? ;;
         *)
-            _prompt_err "prompt: unknown type ${__PROMPT[type]}"
+            error "prompt: unknown type ${__PROMPT[type]}"
             rc=1
             ;;
     esac

@@ -26,6 +26,9 @@ suite_scriptInfo() {
     err=$(
         bash -c '
 set -euo pipefail
+source "$1/testEnvironment/testEnvironment.sh"
+source "$1/essentials.sh"
+essentials_test_load logger
 declare -A essentials_config=(
     [SCRIPTINFO_DIR]="/tmp"
     [SCRIPTINFO_NAME]="x"
@@ -33,7 +36,7 @@ declare -A essentials_config=(
 source "$1/scriptInfo/scriptInfo.sh"
 ' _si_missing "$_ESSENTIALS_ROOT" 2>&1
     ) || rc=$?
-    if [[ "$rc" -ne 0 && "$err" == *"[ScriptInfo]"*"SCRIPTINFO_VERSION is required"* ]]; then
+    if [[ "$rc" -ne 0 && "$err" == *"SCRIPTINFO_VERSION is required"* ]]; then
         bts_pass "missing SCRIPTINFO_VERSION prints ScriptInfo error"
     else
         bts_fail "missing SCRIPTINFO_VERSION rc=$rc err=$(printf '%q' "$err")"

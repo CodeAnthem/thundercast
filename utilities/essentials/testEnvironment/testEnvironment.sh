@@ -63,11 +63,13 @@ _essentials_test_loadOne() {
             source "${_ESSENTIALS_ROOT}/bashVersion/bashVersion.sh"
             ;;
         scriptInfo)
+            _essentials_test_loadOne logger
             declare -f scriptInfo_get_name >/dev/null && return 0
             # shellcheck source=./scriptInfo/scriptInfo.sh
             source "${_ESSENTIALS_ROOT}/scriptInfo/scriptInfo.sh"
             ;;
         eventBus)
+            _essentials_test_loadOne logger
             declare -f eventRun >/dev/null && return 0
             # shellcheck source=./eventBus/eventBus.sh
             source "${_ESSENTIALS_ROOT}/eventBus/eventBus.sh"
@@ -98,6 +100,7 @@ _essentials_test_loadOne() {
             source "${_ESSENTIALS_ROOT}/sessionDir/sessionDir.sh"
             ;;
         ui)
+            _essentials_test_loadOne logger
             _essentials_test_loadOne scriptInfo
             _essentials_test_loadOne eventBus
             declare -f ui_h >/dev/null && return 0

@@ -256,7 +256,7 @@ _taskOnSectionBegin() {
     if declare -f fatal &>/dev/null; then
         fatal "step: ui.section.begin while open (${name})"
     fi
-    echo "[ERROR] - [step] - ui.section.begin while open (${name}); close it with taskOk, taskFail, or taskCancel" >&2
+    error "step: ui.section.begin while open (${name}); close it with taskOk, taskFail, or taskCancel"
     return 1
 }
 

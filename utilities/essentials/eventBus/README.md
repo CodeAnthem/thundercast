@@ -45,7 +45,7 @@ eventRun app.ready "ok"
 
 ## Design
 
-Hooks live in parallel arrays. Dispatch copies the function names, then calls `"$func" "$@" || rc=$?`, so `set -e` does not abort the run and a hook that `eventUnregister`s cannot retarget the rest of this run. Stop and dispatch flags reset once after the loop. This feature does not count errors or install traps.
+Hooks live in parallel arrays. Dispatch copies the function names, then calls `"$func" "$@" || rc=$?`, so `set -e` does not abort the run and a hook that `eventUnregister`s cannot retarget the rest of this run. Stop and dispatch flags reset once after the loop. Errors go through the logger (`error`). This feature does not install traps. Nested `eventRun` stays rejected, so an exit hook must not start another event. `chrome_end` reads the hold key with `tty_getc` for that reason.
 
 ## Develop
 
