@@ -8,22 +8,20 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 _nds_session_publish() {
-    declare -f nds_session_logs_publish >/dev/null || return 0
     nds_session_logs_publish || return 1
 }
 
 _nds_session_onExitError() {
     local code="${1:-?}"
-    declare -f nds_logs_compose >/dev/null && nds_logs_compose
     warn "NDS failed (${code})."
-    declare -f nds_session_showFailure >/dev/null && nds_session_showFailure "$code"
+    nds_logs_compose
+    nds_session_showFailure "$code"
     _nds_session_publish || return 1
 }
 
 _nds_session_onExitClean() {
-    declare -f nds_logs_compose >/dev/null && nds_logs_compose
-    declare -f _nds_session_print_scope >/dev/null \
-        && _nds_session_print_scope "NDS finished." session 20
+    info "NDS finished successfully"
+    nds_logs_compose
     _nds_session_publish || return 1
     runtime_purgeAll || return 1
 }

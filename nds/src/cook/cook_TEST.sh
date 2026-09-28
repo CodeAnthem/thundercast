@@ -8,6 +8,10 @@
 # shellcheck source=../setup_TEST.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../setup_TEST.sh"
 logger_setMinLevel warn
+logger_scopeExists diagnose || logger_scopeCreate "Diagnose" diagnose
+logger_scopeExists install || logger_scopeCreate "NixOS install" install nixosInstallation.log
+logger_scopeExists session || logger_scopeCreate "NDS session" session
+logger_scopeSet session
 _gap=
 _cook_load() { "import_${_gap}dir" "$@"; }
 _cook_load "$(dirname "${BASH_SOURCE[0]}")/../recipe" --depth 0

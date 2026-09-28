@@ -33,9 +33,7 @@ declare -g NDS_NIXCFG_HEADER=""
 # - <String> semver or "unknown"
 _nixcfg_nds_version() {
     local ver="" src
-    if declare -f scriptInfo_get_version >/dev/null; then
-        ver=$(scriptInfo_get_version)
-    fi
+    ver=$(scriptInfo_get_version)
     if [[ -z "$ver" || "$ver" == unknown ]]; then
         src="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)/VERSION"
         [[ -f "$src" ]] && ver=$(<"$src")

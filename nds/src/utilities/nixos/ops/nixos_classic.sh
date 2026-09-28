@@ -33,7 +33,7 @@ nixos_installClassic() {
         err "No configuration.nix under ${root}/etc/nixos"
         return 1
     }
-    debug "Installing NixOS with nixos-install. Log: ${install_log}"
+    debug "Installing NixOS to ${root}: ${install_log}"
     if ! nixos-install --root "$root" --no-root-passwd >>"$install_log" 2>&1; then
         error "nixos-install failed. Log: ${install_log}"
         return 1

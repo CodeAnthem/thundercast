@@ -186,8 +186,7 @@ git_gh_session_cleanup() {
 
     if [[ "$had_session" == "true" ]]; then
         success "Cleared gh session from this live ISO (SSH keys on GitHub were kept; do not revoke the GitHub CLI OAuth app)"
-        declare -f debug &>/dev/null \
-            && debug "gh: session cleared from live ISO (SSH key left on GitHub)"
+        debug "gh: session cleared from live ISO (SSH key left on GitHub)"
     fi
     return 0
 }

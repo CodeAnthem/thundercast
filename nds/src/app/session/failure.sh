@@ -11,25 +11,21 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, 
 # Chrome paints an alternate screen. exit restores the previous one, so anything drawn in the
 # frame is gone. Write the tail to /dev/tty, which is that restored console.
 _nds_session_print_scope() {
-    local title="$1" scope="$2" lines="$3" path=""
-    if declare -f logger_scopeGetPath >/dev/null; then
-        path=$(logger_scopeGetPath "$scope" 2>/dev/null || true)
-    fi
+    local title="$1" scope="$2" lines="$3" path
+    path=$(logger_scopeGetPath "$scope")
     {
         printf '\n%s\n' "$title"
-        if [[ -n "$path" ]]; then
-            printf '%s\n\n' "Last ${lines} lines of ${path}:"
-        fi
-        if [[ "$scope" == internal_compose ]] && declare -f logger_composeRead >/dev/null; then
+        printf '%s\n\n' "Last ${lines} lines of ${path}:"
+        if [[ "$scope" == internal_compose ]]; then
             logger_composeRead "-${lines}" || true
-        elif declare -f logger_scopeRead >/dev/null; then
+        else
             logger_scopeRead "$scope" "-${lines}" || true
         fi
     } >/dev/tty 2>/dev/tty || {
         printf '\n%s\n' "$title" >&2
-        if [[ "$scope" == internal_compose ]] && declare -f logger_composeRead >/dev/null; then
+        if [[ "$scope" == internal_compose ]]; then
             logger_composeRead "-${lines}" >&2 || true
-        elif declare -f logger_scopeRead >/dev/null; then
+        else
             logger_scopeRead "$scope" "-${lines}" >&2 || true
         fi
     }

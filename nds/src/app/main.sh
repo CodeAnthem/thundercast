@@ -38,8 +38,9 @@ _nds_load_essentials() {
     )
 
     # shellcheck source=../../../utilities/essentials/essentials.sh
-    source "${app_dir}/../../../utilities/essentials/essentials.sh"
-    essentials_init "$@"
+    source "${app_dir}/../../../utilities/essentials/essentials.sh" \
+        && essentials_init "$@" \
+        || { echo "[FATAL] - Failed to load essentials - abort"; exit 1; }
 }
 
 _nds_load_features() {

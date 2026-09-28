@@ -121,8 +121,7 @@ git_gh_register_account_key() {
 
     if git_gh_pubkey_on_user "$pub_file"; then
         if git_gh_pubkey_is_readonly "$pub_file"; then
-            declare -f debug &>/dev/null \
-                && debug "gh: account SSH key already present read-only"
+            debug "gh: account SSH key already present read-only"
             return 0
         fi
         error "SSH key already on GitHub as read/write"
@@ -154,8 +153,7 @@ git_gh_register_account_key() {
     fi
 
     if git_gh_ssh_key_is_readonly "$title" || git_gh_pubkey_is_readonly "$pub_file"; then
-        declare -f debug &>/dev/null \
-            && debug "gh: account SSH key added read-only (${title})"
+        debug "gh: account SSH key added read-only (${title})"
         warn "Do not revoke GitHub CLI under Settings → Applications — GitHub would delete SSH keys this OAuth app created. ISO logout is enough."
         return 0
     fi
@@ -228,8 +226,7 @@ git_gh_register_deploy_key() {
 
     debug "Checking whether this public key is already registered..."
     if git_gh_deploy_pubkey_on_repo "$owner" "$repo" "$pub_file"; then
-        declare -f debug &>/dev/null \
-            && debug "gh: deploy key already on ${owner}/${repo} (${title})"
+        debug "gh: deploy key already on ${owner}/${repo} (${title})"
         git_gh_session_mark_scopes_ok
         return 0
     fi
@@ -241,8 +238,7 @@ git_gh_register_deploy_key() {
             _git_gh_deploy_key_delete "$owner" "$repo" "$id" || true
         done < <(_git_gh_deploy_key_ids_by_title "$owner" "$repo" "$title")
         if git_gh_deploy_pubkey_on_repo "$owner" "$repo" "$pub_file"; then
-            declare -f debug &>/dev/null \
-                && debug "gh: deploy key already on ${owner}/${repo} (${title})"
+            debug "gh: deploy key already on ${owner}/${repo} (${title})"
             git_gh_session_mark_scopes_ok
             return 0
         fi
@@ -263,16 +259,14 @@ git_gh_register_deploy_key() {
             return 1
         fi
         if grep -qi 'already exists\|key is already in use' <<< "$err"; then
-            declare -f debug &>/dev/null \
-                && debug "gh: deploy key may already exist on ${owner}/${repo}"
+            debug "gh: deploy key may already exist on ${owner}/${repo}"
             git_gh_session_mark_scopes_ok
             return 0
         fi
         error "GitHub API rejected deploy key on ${owner}/${repo}"
         return 1
     fi
-    declare -f debug &>/dev/null \
-        && debug "gh: deploy key added (read_only=${read_only}) on ${owner}/${repo} (${title})"
+    debug "gh: deploy key added (read_only=${read_only}) on ${owner}/${repo} (${title})"
     git_gh_session_mark_scopes_ok
     return 0
 }

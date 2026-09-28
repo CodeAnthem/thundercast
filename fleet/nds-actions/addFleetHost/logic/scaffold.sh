@@ -20,9 +20,7 @@ nds_fleet_scaffold_host() {
     if [[ -d "$_sc_src" ]]; then
         cp -a "${_sc_src}/." "$_sc_dest/" || return 1
     fi
-    if declare -f scriptInfo_get_dir >/dev/null; then
-        _sc_tmpl="${ scriptInfo_get_dir; }/actions/installFlake/templates"
-    fi
+    _sc_tmpl="${ scriptInfo_get_dir; }/actions/installFlake/templates"
     [[ -d "$_sc_tmpl" ]] || return 0
     _sc_date=$(date -u +%Y-%m-%d)
     if [[ ! -f "${_sc_dest}/opts.nix" && -f "${_sc_tmpl}/host-opts.nix.tmpl" ]]; then

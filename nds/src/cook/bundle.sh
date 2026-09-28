@@ -55,13 +55,11 @@ _bundle_rewrite_paths() {
 _bundle_copy_scope_logs() {
     local _bundle_stage=$1 _bundle_compose="" _bundle_install=""
     mkdir -p "${_bundle_stage}/logs"
-    declare -f nds_logs_compose >/dev/null && nds_logs_compose
-    if declare -f logger_scopeGetPath >/dev/null; then
-        _bundle_compose=$(logger_scopeGetPath internal_compose 2>/dev/null || true)
-        _bundle_install=$(logger_scopeGetPath install 2>/dev/null || true)
-        [[ -n "$_bundle_compose" && -f "$_bundle_compose" ]] && cp "$_bundle_compose" "${_bundle_stage}/logs/nds.log"
-        [[ -n "$_bundle_install" && -f "$_bundle_install" ]] && cp "$_bundle_install" "${_bundle_stage}/logs/nixosInstallation.log"
-    fi
+    nds_logs_compose
+    _bundle_compose=$(logger_scopeGetPath internal_compose)
+    _bundle_install=$(logger_scopeGetPath install)
+    [[ -f "$_bundle_compose" ]] && cp "$_bundle_compose" "${_bundle_stage}/logs/nds.log"
+    [[ -f "$_bundle_install" ]] && cp "$_bundle_install" "${_bundle_stage}/logs/nixosInstallation.log"
     [[ -f "${_bundle_stage}/logs/nds.log" ]] || : > "${_bundle_stage}/logs/nds.log"
     [[ -f "${_bundle_stage}/logs/nixosInstallation.log" ]] || : > "${_bundle_stage}/logs/nixosInstallation.log"
 }
