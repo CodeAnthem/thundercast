@@ -56,7 +56,7 @@ nds_cook() {
     nds_cook_preflight R || return 1
     _cook_kind=${R[INSTALL_KIND]:-}
     _cook_mode=${R[INSTALL_MODE]:-local}
-    info "Cook plan ${_cook_kind}/${_cook_mode}"
+    debug "Cook plan ${_cook_kind}/${_cook_mode}"
     debug "Target root ${_NDS_TARGET_ROOT}"
     case "${_cook_kind}/${_cook_mode}" in
         classic/local|classic/remote) nds_cook_plan_classic R || return 1 ;;

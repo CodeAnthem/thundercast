@@ -154,7 +154,7 @@ nds_session_logs_init() {
 }
 
 nds_session_logs_publish() {
-    local user diag_home nds_home nixos_home
+    local user diag_home nds_home nixos_home install_log
 
     user="${ _nds_session_logs_user; }"
     diag_home="${ nds_session_logs_home_diag; }"
@@ -163,10 +163,9 @@ nds_session_logs_publish() {
 
     nds_session_logs_compose "$nds_home"
 
-    if [[ -f "${NDS_NIXOS_INSTALL_LOG:-}" && "${NDS_NIXOS_INSTALL_LOG}" != "$nixos_home" ]]; then
-        cp "${NDS_NIXOS_INSTALL_LOG}" "$nixos_home"
-    elif [[ ! -f "$nixos_home" ]]; then
-        : >"$nixos_home"
+    install_log=${ logger_scopeGetPath install; }
+    if [[ -f "$install_log" && "$install_log" != "$nixos_home" ]]; then
+        cp "$install_log" "$nixos_home"
     fi
 
     _nds_session_logs_chown_files "$user" "$diag_home" "$nds_home" "$nixos_home"

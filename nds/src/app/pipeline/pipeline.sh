@@ -91,7 +91,7 @@ nds_pipeline_recipe() {
 
 _nds_pipeline_unattended_finish() {
     local _pipe_sealed=$1 _pipe_zip=$2
-    info "Recipe: ${_pipe_sealed}"
+    debug "Recipe: ${_pipe_sealed}"
     info "Bundle: ${_pipe_zip}"
     if [[ ${NDS_REBOOT:-} == true ]]; then
         info "Rebooting"
@@ -103,7 +103,6 @@ _nds_pipeline_unattended_finish() {
 
 nds_pipeline_run() {
     local _pipe_src _pipe_fleet _pipe_sealed _pipe_zip
-    nds_mode_resolve || return 1
     nds_skip_startup || return 1
     _pipe_src=${ scriptInfo_get_dir; }
     nds_action_discover local "${_pipe_src}/actions" || return 1
@@ -127,7 +126,7 @@ nds_pipeline_run() {
     nds_recipe_materialize _NDS_RECIPE || return 1
     _pipe_sealed="${ nds_session_dir recipe; }/sealed.recipe"
     nds_recipe_seal _NDS_RECIPE "$_pipe_sealed" || return 1
-    info "Sealed recipe ${_pipe_sealed}"
+    debug "Sealed recipe ${_pipe_sealed}"
     if ! nds_skip install.confirm; then
         nds_confirm "$_pipe_sealed" || return 1
     fi

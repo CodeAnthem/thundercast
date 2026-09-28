@@ -103,9 +103,8 @@ main() {
     _nds_load_essentials "$app_dir" "$@"
     # shellcheck source=session/log_tag.sh
     source "${app_dir}/session/log_tag.sh"
-    logger_scopeExists nixos || logger_scopeCreate "NixOS install" nixos
     logger_scopeExists diagnose || logger_scopeCreate "Diagnose" diagnose
-    logger_scopeExists install || logger_scopeCreate "Install" install
+    logger_scopeExists install || logger_scopeCreate "NixOS install" install nixosInstallation.log
     logger_scopeExists session || logger_scopeCreate "NDS session" session
     logger_scopeSet session
 
@@ -121,11 +120,7 @@ main() {
     tty_guardEnable
     chrome_begin
     nds_mode_resolve || return 1
-    info "mode=${NDS_MODE}"
-    chrome_setSubtitle "$NDS_MODE"
     nds_pipeline_run || return 1
-    chrome_setSubtitle "${NDS_CURRENT_ACTION:-}"
-    prompt --type pause "Press Enter to continue" || true
 }
 
 # Run main only when this file is the program that was started, not when another file sources it.

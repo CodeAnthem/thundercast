@@ -215,9 +215,9 @@ _nixos_linkSystemProfile() {
 # Returns:
 # - <Bool> 0 on success
 _nixos_installBootloader() {
-    local root="$1" log
+    local root="$1" install_log
 
-    log="${NDS_NIXOS_INSTALL_LOG:-${NDS_INSTALL_DETAIL_LOG:-/tmp/nds_install.log}}"
+    install_log=${ nixos_installLog; }
     nixos_systemProfileOk "$root" || return 1
 
     mkdir -p "${root}/etc" "${root}/run"
@@ -234,7 +234,7 @@ mount --make-rslave "$mountPoint"
 /run/current-system/bin/switch-to-configuration boot
 umount -R "$mountPoint" && (rmdir "$mountPoint" 2>/dev/null || true)
 EOF
-)" >>"$log" 2>&1; then
+)" >>"$install_log" 2>&1; then
         debug "bootloader: switch-to-configuration boot failed (see verbose log)"
         return 1
     fi
@@ -247,7 +247,7 @@ EOF
         nds_requireUtility disk || return 1
         if disk_grubBiosBootOk "$_NIXOS_DISK"; then
             debug "grub: BIOS boot code already present on ${_NIXOS_DISK}"
-        elif disk_grubInstallBios "$_NIXOS_DISK" "$root" "$log"; then
+        elif disk_grubInstallBios "$_NIXOS_DISK" "$root" "$install_log"; then
             debug "grub: installed BIOS boot code on ${_NIXOS_DISK}"
         else
             warn "GRUB BIOS boot code install failed — see verbose log"
@@ -264,10 +264,10 @@ EOF
 # Returns:
 # - <Bool> 0 on success
 nixos_activateSystem() {
-    local root="$1" system_rel="$2" profile_dst log err
+    local root="$1" system_rel="$2" profile_dst install_log install_err
 
     profile_dst="${root}/nix/var/nix/profiles/system"
-    log="${NDS_NIXOS_INSTALL_LOG:-${NDS_INSTALL_DETAIL_LOG:-/tmp/nds_install.log}}"
+    install_log=${ nixos_installLog; }
     system_rel="${system_rel%/}"
     [[ "$system_rel" == /nix/store/* ]] || return 1
 
@@ -278,13 +278,13 @@ nixos_activateSystem() {
         mkdir -p "$(dirname "$profile_dst")"
         if env NIX_CONFIG="$(nixos_installNixConfig)" \
             nix-env --store "$root" --extra-substituters "auto?trusted=1" \
-            -p "$profile_dst" --set "$system_rel" >>"$log" 2>&1; then
+            -p "$profile_dst" --set "$system_rel" >>"$install_log" 2>&1; then
             debug "nix: system profile (nix-env) -> ${profile_dst}"
         elif _nixos_linkSystemProfile "$root" "$system_rel"; then
             debug "nix: system profile (manual) -> ${profile_dst}"
         else
-            err=$(tail -5 "$log" 2>/dev/null || true)
-            debug "activate: profile failed for ${system_rel}${err:+ — $err}"
+            install_err=$(tail -5 "$install_log" 2>/dev/null || true)
+            debug "activate: profile failed for ${system_rel}${install_err:+ — $install_err}"
             return 1
         fi
     fi
@@ -343,7 +343,7 @@ _nixos_findSystemClosure() {
 # Returns:
 # - <Bool> 0 on success
 _nixos_ensureSystemProfile() {
-    local root="$1" profile_dst system_out system_rel scratch log err
+    local root="$1" profile_dst system_out system_rel scratch install_log install_err
 
     profile_dst="${root}/nix/var/nix/profiles/system"
     nixos_systemProfileOk "$root" && return 0
@@ -353,7 +353,7 @@ _nixos_ensureSystemProfile() {
         return 1
     }
     system_out="${system_out%/}"
-    log="${NDS_NIXOS_INSTALL_LOG:-${NDS_INSTALL_DETAIL_LOG:-/tmp/nds_install.log}}"
+    install_log=${ nixos_installLog; }
 
     system_rel=$(_nixos_canonicalStorePath "$root" "$system_out") || {
         debug "ensure_system_profile: cannot canonicalize ${system_out}"
@@ -363,19 +363,19 @@ _nixos_ensureSystemProfile() {
     scratch=$(_nixos_scratchStorePath)
     if [[ "$system_out" != "${root}"/* ]] && [[ -d "$scratch" ]]; then
         info "Copying NixOS system closure into ${root}/nix/store"
-        nix copy --to "$root" "$system_rel" >>"$log" 2>&1 || return 1
+        nix copy --to "$root" "$system_rel" >>"$install_log" 2>&1 || return 1
     fi
 
     mkdir -p "$(dirname "$profile_dst")"
     if env NIX_CONFIG="$(nixos_installNixConfig)" \
         nix-env --store "$root" --extra-substituters "auto?trusted=1" \
-        -p "$profile_dst" --set "$system_rel" >>"$log" 2>&1; then
+        -p "$profile_dst" --set "$system_rel" >>"$install_log" 2>&1; then
         debug "nix: system profile -> ${profile_dst}"
         return 0
     fi
 
-    err=$(tail -3 "$log" 2>/dev/null || true)
-    debug "nix-env failed: store=${root} profile=${profile_dst} system=${system_rel}${err:+ — $err}"
+    install_err=$(tail -3 "$install_log" 2>/dev/null || true)
+    debug "nix-env failed: store=${root} profile=${profile_dst} system=${system_rel}${install_err:+ — $install_err}"
 
     warn "nix-env profile failed — linking system profile manually"
     if _nixos_linkSystemProfile "$root" "$system_rel"; then

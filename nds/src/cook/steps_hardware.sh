@@ -29,9 +29,9 @@ step_hardware() {
     [[ "$_hw_kind" == flake && "$_hw_place" == skip ]] && return 0
     _hw_artifact=${ hwconfig_artifactName "$_hw_kind"; } || return 1
     if [[ "$_hw_artifact" == facter.json ]]; then
-        info "Writing facter.json with nixos-facter"
+        debug "Writing facter.json with nixos-facter"
     else
-        info "Writing hardware-configuration.nix with nixos-generate-config"
+        debug "Writing hardware-configuration.nix with nixos-generate-config"
     fi
     _hw_cfg=${ nds_session_dir config; }
     mkdir -p "$_hw_cfg" || return 1

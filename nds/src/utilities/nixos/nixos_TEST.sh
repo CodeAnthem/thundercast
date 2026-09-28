@@ -52,6 +52,7 @@ suite_nixos_store() {
     unset NDS_NIX_TARGET_ROOT NDS_NIX_INSTALL_STORE_FORCE
     rm -rf "$root"
 
+    logger_scopeExists install || logger_scopeCreate "NixOS install" install nixosInstallation.log
     nds_test_stubBins nixos-install
     root=$(mktemp -d)
     local src

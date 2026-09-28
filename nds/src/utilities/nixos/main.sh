@@ -29,6 +29,11 @@ fi
 
 _NIXOS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Path of the install scope file. main creates that scope.
+nixos_installLog() {
+    logger_scopeGetPath install
+}
+
 # Boot context for bootloader repair / remount (set by the caller, never read from settings).
 declare -g _NIXOS_BOOT_LOADER="grub"
 declare -g _NIXOS_BOOT_UEFI=""

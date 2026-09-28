@@ -34,9 +34,9 @@ _nixos_gitInstallEnv() {
 nixos_flakeEval() {
     local flake_root="$1"
     local host_name="$2"
-    local log="${NDS_NIXOS_INSTALL_LOG:-/tmp/nds_nixosInstallation.log}"
-    local flake_ref rc=0
+    local install_log flake_ref rc=0
     local -a store_args=() git_env=()
+    install_log=${ nixos_installLog; }
 
     [[ -f "${flake_root}/flake.nix" ]] || { err "flake missing at ${flake_root}"; return 1; }
     [[ -n "$host_name" ]] || { err "host name is required"; return 1; }
@@ -49,17 +49,14 @@ nixos_flakeEval() {
         [[ -n "$line" ]] && git_env+=("$line")
     done < <(_nixos_gitInstallEnv 2>/dev/null || true)
 
-    mkdir -p "$(dirname "$log")" 2>/dev/null || true
-    printf '\n=== nix eval nixosConfigurations.%s ===\n' "$host_name" | tee -a "$log"
-    # stdout/stderr stay on this fd so the step runner captures them; tee keeps a copy.
+    logger_scopeAppend "=== nix eval nixosConfigurations.${host_name} ===" install
     (
-        set -o pipefail
         cd "$flake_root" || exit 1
         env NIX_CONFIG="$(nixos_installNixConfig)" "${git_env[@]}" nix eval --raw --impure --show-trace \
             --no-update-lock-file --no-write-lock-file \
             --extra-experimental-features 'nix-command flakes' \
             "${store_args[@]}" \
-            "path:${flake_root}#${flake_ref}.drvPath" 2>&1 | tee -a "$log"
+            "path:${flake_root}#${flake_ref}.drvPath" >>"$install_log" 2>&1
     )
     rc=$?
     [[ "$rc" -eq 0 ]] || { err "flake eval failed for ${host_name}"; return 1; }
@@ -79,14 +76,14 @@ nixos_buildFlakeSystem() {
     local host_name="$2"
     shift 2
     local -a build_flags=("$@") git_env=()
-    local root store nixos_log profile_dst flake_ref system_rel tmpdir out_link
+    local root store install_log profile_dst flake_ref system_rel tmpdir out_link
 
     [[ -d "$flake_root" ]] || return 1
     while IFS= read -r line; do
         [[ -n "$line" ]] && git_env+=("$line")
     done < <(_nixos_gitInstallEnv 2>/dev/null || true)
     root=$(nixos_targetRoot)
-    nixos_log="${NDS_NIXOS_INSTALL_LOG:-/tmp/nds_nixosInstallation.log}"
+    install_log=${ nixos_installLog; }
     store="$root"
     profile_dst="${root}/nix/var/nix/profiles/system"
     flake_ref=$(nixos_flakeSystemRef "$host_name")
@@ -101,7 +98,7 @@ nixos_buildFlakeSystem() {
         --extra-substituters "auto?trusted=1" \
         --profile "$profile_dst" \
         "${build_flags[@]}" \
-        "${flake_root}#${flake_ref}" >>"$nixos_log" 2>&1 \
+        "${flake_root}#${flake_ref}" >>"$install_log" 2>&1 \
         && nixos_systemProfileOk "$root"; then
         system_rel=$(env NIX_CONFIG="$(nixos_installNixConfig)" \
             nix --store "$store" path-info -M /nix/var/nix/profiles/system 2>/dev/null || true)
@@ -123,7 +120,7 @@ nixos_buildFlakeSystem() {
         --extra-substituters "auto?trusted=1" \
         --out-link "$out_link" \
         "${build_flags[@]}" \
-        "${flake_root}#${flake_ref}" >>"$nixos_log" 2>&1; then
+        "${flake_root}#${flake_ref}" >>"$install_log" 2>&1; then
         rm -rf "$tmpdir"
         return 1
     fi
