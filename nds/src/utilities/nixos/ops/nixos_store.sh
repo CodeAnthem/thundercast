@@ -226,7 +226,7 @@ _nixos_installBootloader() {
     ln -snf /nix/var/nix/profiles/system "${root}/run/current-system"
 
     export mountPoint="$root"
-    if ! NIXOS_INSTALL_BOOTLOADER=1 nixos-enter --root "$root" -c "$(cat <<'EOF'
+    if ! NIXOS_INSTALL_BOOTLOADER=1 nixos_runLogged nixos-enter --root "$root" -c "$(cat <<'EOF'
 set -e
 hash -r
 mount --rbind --mkdir / "$mountPoint"
@@ -234,7 +234,7 @@ mount --make-rslave "$mountPoint"
 /run/current-system/bin/switch-to-configuration boot
 umount -R "$mountPoint" && (rmdir "$mountPoint" 2>/dev/null || true)
 EOF
-)" >>"$install_log" 2>&1; then
+)"; then
         debug "bootloader: switch-to-configuration boot failed (see verbose log)"
         return 1
     fi
@@ -252,6 +252,7 @@ EOF
         else
             warn "GRUB BIOS boot code install failed — see verbose log"
         fi
+        nixos_progressSync
     fi
     return 0
 }
@@ -277,8 +278,8 @@ nixos_activateSystem() {
     if ! nixos_systemProfileOk "$root"; then
         mkdir -p "$(dirname "$profile_dst")"
         if env NIX_CONFIG="$(nixos_installNixConfig)" \
-            nix-env --store "$root" --extra-substituters "auto?trusted=1" \
-            -p "$profile_dst" --set "$system_rel" >>"$install_log" 2>&1; then
+            nixos_runLogged nix-env --store "$root" --extra-substituters "auto?trusted=1" \
+            -p "$profile_dst" --set "$system_rel"; then
             debug "nix: system profile (nix-env) -> ${profile_dst}"
         elif _nixos_linkSystemProfile "$root" "$system_rel"; then
             debug "nix: system profile (manual) -> ${profile_dst}"
@@ -363,13 +364,13 @@ _nixos_ensureSystemProfile() {
     scratch=$(_nixos_scratchStorePath)
     if [[ "$system_out" != "${root}"/* ]] && [[ -d "$scratch" ]]; then
         info "Copying NixOS system closure into ${root}/nix/store"
-        nix copy --to "$root" "$system_rel" >>"$install_log" 2>&1 || return 1
+        nixos_runLogged nix copy --to "$root" "$system_rel" || return 1
     fi
 
     mkdir -p "$(dirname "$profile_dst")"
     if env NIX_CONFIG="$(nixos_installNixConfig)" \
-        nix-env --store "$root" --extra-substituters "auto?trusted=1" \
-        -p "$profile_dst" --set "$system_rel" >>"$install_log" 2>&1; then
+        nixos_runLogged nix-env --store "$root" --extra-substituters "auto?trusted=1" \
+        -p "$profile_dst" --set "$system_rel"; then
         debug "nix: system profile -> ${profile_dst}"
         return 0
     fi

@@ -34,10 +34,11 @@ nixos_installClassic() {
         return 1
     }
     debug "Installing NixOS to ${root}: ${install_log}"
-    if ! nixos-install --root "$root" --no-root-passwd >>"$install_log" 2>&1; then
+    if ! nixos_runLogged nixos-install --root "$root" --no-root-passwd; then
         error "nixos-install failed. Log: ${install_log}"
         return 1
     fi
+    nixos_progressFinish
     debug "nixos-install finished"
     return 0
 }

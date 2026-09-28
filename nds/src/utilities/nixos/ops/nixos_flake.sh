@@ -34,9 +34,8 @@ _nixos_gitInstallEnv() {
 nixos_flakeEval() {
     local flake_root="$1"
     local host_name="$2"
-    local install_log flake_ref rc=0
+    local flake_ref rc=0
     local -a store_args=() git_env=()
-    install_log=${ nixos_installLog; }
 
     [[ -f "${flake_root}/flake.nix" ]] || { err "flake missing at ${flake_root}"; return 1; }
     [[ -n "$host_name" ]] || { err "host name is required"; return 1; }
@@ -50,15 +49,12 @@ nixos_flakeEval() {
     done < <(_nixos_gitInstallEnv 2>/dev/null || true)
 
     logger_scopeAppend "=== nix eval nixosConfigurations.${host_name} ===" install
-    (
-        cd "$flake_root" || exit 1
-        env NIX_CONFIG="$(nixos_installNixConfig)" "${git_env[@]}" nix eval --raw --impure --show-trace \
-            --no-update-lock-file --no-write-lock-file \
-            --extra-experimental-features 'nix-command flakes' \
-            "${store_args[@]}" \
-            "path:${flake_root}#${flake_ref}.drvPath" >>"$install_log" 2>&1
-    )
-    rc=$?
+    nixos_runLogged env -C "$flake_root" NIX_CONFIG="$(nixos_installNixConfig)" "${git_env[@]}" \
+        nix eval --raw --impure --show-trace \
+        --no-update-lock-file --no-write-lock-file \
+        --extra-experimental-features 'nix-command flakes' \
+        "${store_args[@]}" \
+        "path:${flake_root}#${flake_ref}.drvPath" || rc=$?
     [[ "$rc" -eq 0 ]] || { err "flake eval failed for ${host_name}"; return 1; }
     debug "flake: eval ok path:${flake_root}#${host_name}"
     return 0
@@ -66,24 +62,25 @@ nixos_flakeEval() {
 
 # Description: Build flake system on the target store; install into the system profile.
 # Arguments:
+# - out_var:     <Name> Variable that receives the /nix/store/… nixos-system path
 # - flake_root:  <String> Flake directory
 # - host_name:   <String> nixosConfigurations key
 # - build_flags: <String...> Extra nix build flags (e.g. --override-input)
 # Returns:
-# - <String> /nix/store/… nixos-system path (stdout)
+# - <Bool> 0 on success. The path is written to out_var (same shell, so the progress bar survives).
 nixos_buildFlakeSystem() {
-    local flake_root="$1"
-    local host_name="$2"
-    shift 2
+    local -n _nixos_built=$1
+    local flake_root="$2"
+    local host_name="$3"
+    shift 3
     local -a build_flags=("$@") git_env=()
-    local root store install_log profile_dst flake_ref system_rel tmpdir out_link
+    local root store profile_dst flake_ref system_rel tmpdir out_link
 
     [[ -d "$flake_root" ]] || return 1
     while IFS= read -r line; do
         [[ -n "$line" ]] && git_env+=("$line")
     done < <(_nixos_gitInstallEnv 2>/dev/null || true)
     root=$(nixos_targetRoot)
-    install_log=${ nixos_installLog; }
     store="$root"
     profile_dst="${root}/nix/var/nix/profiles/system"
     flake_ref=$(nixos_flakeSystemRef "$host_name")
@@ -91,21 +88,21 @@ nixos_buildFlakeSystem() {
     mkdir -p "${root}/nix/store" "$(dirname "$profile_dst")"
     nixos_ensureStoreReady "$store" || true
 
-    if env NIX_CONFIG="$(nixos_installNixConfig)" "${git_env[@]}" \
+    if nixos_runLogged env NIX_CONFIG="$(nixos_installNixConfig)" "${git_env[@]}" \
         nix build \
         --extra-experimental-features 'nix-command flakes' \
         --store "$store" \
         --extra-substituters "auto?trusted=1" \
         --profile "$profile_dst" \
         "${build_flags[@]}" \
-        "${flake_root}#${flake_ref}" >>"$install_log" 2>&1 \
+        "${flake_root}#${flake_ref}" \
         && nixos_systemProfileOk "$root"; then
         system_rel=$(env NIX_CONFIG="$(nixos_installNixConfig)" \
             nix --store "$store" path-info -M /nix/var/nix/profiles/system 2>/dev/null || true)
         [[ -n "$system_rel" ]] || system_rel=$(_nixos_findSystemClosure "$root")
         [[ -n "$system_rel" ]] || return 1
         system_rel=$(_nixos_canonicalStorePath "$store" "$system_rel") || return 1
-        printf '%s\n' "$system_rel"
+        _nixos_built=$system_rel
         return 0
     fi
 
@@ -113,14 +110,14 @@ nixos_buildFlakeSystem() {
     tmpdir=$(mktemp -d -p "$root")
     out_link="${tmpdir}/system"
 
-    if ! env NIX_CONFIG="$(nixos_installNixConfig)" "${git_env[@]}" \
+    if ! nixos_runLogged env NIX_CONFIG="$(nixos_installNixConfig)" "${git_env[@]}" \
         nix build \
         --extra-experimental-features 'nix-command flakes' \
         --store "$store" \
         --extra-substituters "auto?trusted=1" \
         --out-link "$out_link" \
         "${build_flags[@]}" \
-        "${flake_root}#${flake_ref}" >>"$install_log" 2>&1; then
+        "${flake_root}#${flake_ref}"; then
         rm -rf "$tmpdir"
         return 1
     fi
@@ -130,7 +127,7 @@ nixos_buildFlakeSystem() {
         return 1
     }
     rm -rf "$tmpdir"
-    printf '%s\n' "$system_rel"
+    _nixos_built=$system_rel
     return 0
 }
 
@@ -172,7 +169,11 @@ nixos_anywhere() {
     fi
 
     log "Running: ${cmd[*]}"
-    "${cmd[@]}" || { err "nixos-anywhere installation failed"; return 1; }
+    if ! nixos_runLogged "${cmd[@]}"; then
+        err "nixos-anywhere installation failed"
+        return 1
+    fi
+    nixos_progressFinish
     log "Remote install completed — commit ${facter_dest} to your flake repo"
     return 0
 }
@@ -221,8 +222,10 @@ nixos_installFlake() {
     if [[ "$_nixos_place" == etc-nixos && -f "${_nixos_target}/etc/nixos/hardware-configuration.nix" ]]; then
         _nixos_flags+=(--override-input hardware path:/etc/nixos/hardware-configuration.nix)
     fi
-    _nixos_system=${ nixos_buildFlakeSystem "$_nixos_root" "$_nixos_host" ${_nixos_flags[@]+"${_nixos_flags[@]}"}; } || return 1
+    nixos_buildFlakeSystem _nixos_system "$_nixos_root" "$_nixos_host" \
+        ${_nixos_flags[@]+"${_nixos_flags[@]}"} || return 1
     flake_gitUnstageHostFacts "$_nixos_root" "$_nixos_host_dir" || true
     nixos_activateSystem "$_nixos_target" "$_nixos_system" || return 1
     nixos_ensureInstallArtifacts || return 1
+    nixos_progressFinish
 }
