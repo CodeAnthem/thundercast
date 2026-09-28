@@ -49,7 +49,7 @@ onExit() { rm -f "${TMPFILE:-}"; }
 eventRegister exit onExit 50
 ```
 
-A signal hook replaces the default disposition. `exit` from the hook if the process should die. A subshell that inherits the trap does not run hooks. A signal during an event returns without starting another event; EXIT still runs.
+A signal hook replaces the default disposition. `exit` from the hook if the process should die. A subshell that inherits the trap does not run hooks. A signal during an event returns without starting another event; EXIT still runs. The exit sequence runs once per shell.
 
 ## Design
 

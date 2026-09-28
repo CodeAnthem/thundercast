@@ -30,6 +30,11 @@ case "$MODE" in
     clean) exit 0 ;;
     markerror) logger_markError; exit 0 ;;
     code) exit 2 ;;
+    twice)
+        _essentials_trapBridge_onPresetExit 0
+        _essentials_trapBridge_onPresetExit 0
+        trap - EXIT
+        ;;
 esac
 ' _th_exit_child "$_ESSENTIALS_ROOT" "$out" "$mode"
 }
@@ -114,6 +119,13 @@ kill -INT $$
         bts_pass "EXIT error path from non-zero status"
     else
         bts_fail "EXIT code rc=$rc was $(printf '%q' "$(<"$child_out")")"
+    fi
+    : >"$child_out"
+    _th_exit_child "$child_out" twice
+    if [[ "$(<"$child_out")" == $'exit:0\nexitClean:0' ]]; then
+        bts_pass "exit sequence runs once"
+    else
+        bts_fail "exit twice was $(printf '%q' "$(<"$child_out")")"
     fi
     rm -f "$child_out"
 }
