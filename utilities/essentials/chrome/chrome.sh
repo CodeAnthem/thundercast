@@ -196,6 +196,7 @@ chrome_begin() {
 
 # Flush the tee, restore fds, mouse off, reset region, leave the alt screen. Idempotent. EXIT hook.
 chrome_end() {
+    local code="${1:-0}"
     _chrome_winchOff
     if chrome_isSuspended; then
         __CHROME_SUSPENDED=0
@@ -204,7 +205,7 @@ chrome_end() {
         return 0
     fi
     [[ "${__CHROME_ON:-0}" == 1 ]] || return 0
-    if [[ "${__CHROME_HOLD:-false}" == true ]]; then
+    if [[ "${__CHROME_HOLD:-false}" == true && "$code" == 0 ]]; then
         __CHROME_HOLD=false
         info "Press any key to close"
         tty_begin

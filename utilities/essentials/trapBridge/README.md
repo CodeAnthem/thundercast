@@ -49,7 +49,7 @@ onExit() { rm -f "${TMPFILE:-}"; }
 eventRegister exit onExit 50
 ```
 
-A signal hook replaces the default disposition. `exit` from the hook if the process should die.
+A signal hook replaces the default disposition. `exit` from the hook if the process should die. A subshell that inherits the trap does not run hooks. A signal during an event returns without starting another event; EXIT still runs.
 
 ## Design
 
@@ -59,7 +59,7 @@ Event names are `trap.INT`, `trap.TERM`, `trap.EXIT`. On install, a pre-existing
 
 Init in `trapBridge.sh` always sources the bridge. `trapBridge_presets.sh` loads only when `TRAP_PRESETS` is `true`. Presets set `__TH_KEEP_EXIT` and install EXIT even with zero `trap.EXIT` hooks.
 
-Globals that must stay: `__TH_INSTALLED`, `__TH_PREV`, `__TRAP_LAST_EXIT_CODE`, `__TH_KEEP_EXIT` (presets). `_essentials_trapBridge_onPresetExit` is a stub in the bridge; presets replace it. The signal event is `trap.${signal}`.
+Globals that must stay: `__TH_INSTALLED`, `__TH_PREV`, `__TRAP_LAST_EXIT_CODE`, `__TH_OWNER`, `__TH_KEEP_EXIT` (presets). `_essentials_trapBridge_onPresetExit` is a stub in the bridge; presets replace it. The signal event is `trap.${signal}`.
 
 No subshells. `trap -p` and the hook count are captured with `${ …; }`.
 

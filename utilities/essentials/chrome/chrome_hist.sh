@@ -81,7 +81,6 @@ _chrome_teeAdd() {
 _chrome_tee() {
     local c rest chunk pending="" complete held=0 rc head mark tty ack
     set +e +u +o pipefail
-    trap '' INT QUIT
     declare -ga __CHROME_TEE_HIST=()
     if [[ -s "${__CHROME_HIST_PATH:-}" ]]; then
         mapfile -t __CHROME_TEE_HIST < "$__CHROME_HIST_PATH"

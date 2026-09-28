@@ -11,6 +11,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, 
 declare -gA __TH_INSTALLED=()
 declare -gA __TH_PREV=()
 declare -g __TRAP_LAST_EXIT_CODE=0
+declare -g __TH_OWNER=""
 
 # Overwritten by trapBridge_presets.sh when that module is loaded.
 _essentials_trapBridge_onPresetExit() { return 0; }
@@ -58,6 +59,13 @@ _essentials_trapBridge_restore() {
 _essentials_trapBridge_dispatch() {
     local code=$?
     local signal="$1"
+    # Process substitutions inherit the trap. They are not this shell.
+    [[ "${BASHPID:-}" == "${__TH_OWNER:-}" ]] || return 0
+    # Ctrl+C during an event (the hold read is inside exit) must not start
+    # another event. EXIT still runs, so an INT hook can exit into cleanup.
+    if [[ "$signal" != EXIT && "${__EVENT_DISPATCHING:-}" == true ]]; then
+        return 0
+    fi
     [[ "$signal" == EXIT ]] && __TRAP_LAST_EXIT_CODE=$code
 
     local event="trap.${signal}"
@@ -75,6 +83,7 @@ _essentials_trapBridge_dispatch() {
 
 _essentials_trapBridge_bind() {
     local signal="$1"
+    [[ -n "${__TH_OWNER:-}" ]] || __TH_OWNER=$BASHPID
     # Expand signal now so the dispatcher knows which trap fired.
     # shellcheck disable=SC2064
     trap "_essentials_trapBridge_dispatch ${signal}" "$signal"
