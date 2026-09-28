@@ -52,18 +52,22 @@ nixos_progressSync() {
 nixos_progressConsider() {
     local line next=0
     line=$(_nixos_progressPlain "$1")
-    if [[ "$line" == *"Installation finished"* ]]; then
+    local finished="${line,,}"
+    if [[ "$finished" == *"installation finished"* ]]; then
         next=6
     elif (( _NIXOS_PROGRESS_PHASE == 0 )); then
-        if [[ "$line" == *"=== nix eval"* || "$line" == *"=== Installing"* || "$line" == *"### Installing NixOS"* ]]; then
+        if [[ "$line" == *"=== nix eval"* || "$line" == *"=== Installing"* || "$line" == *"### Installing NixOS"* \
+            || "$line" == *"building the configuration"* ]]; then
             next=1
         fi
     elif (( _NIXOS_PROGRESS_PHASE == 1 )); then
-        if [[ "$line" == *"copying channel"* || "$line" == *"copying path"* ]]; then
+        if _nixos_progressIsPlan "$line"; then
+            next=3
+        elif [[ "$line" == *"copying channel"* || "$line" == *"copying path"* ]]; then
             next=2
         fi
     elif (( _NIXOS_PROGRESS_PHASE == 2 )); then
-        if [[ "$line" =~ these[[:space:]]+[0-9]+[[:space:]]+derivations[[:space:]]+will[[:space:]]+be[[:space:]]+built ]]; then
+        if _nixos_progressIsPlan "$line"; then
             next=3
         fi
     elif (( _NIXOS_PROGRESS_PHASE == 3 )); then
@@ -101,7 +105,12 @@ nixos_runLogged() {
     _nixos_progressDrain "$install_log"
     [[ $- == *m* ]] && monitor=1
     set +m
-    "$@" >>"$install_log" 2>&1 &
+    # nix block-buffers a log file. stdbuf makes those lines visible while it runs.
+    if command -v stdbuf >/dev/null 2>&1; then
+        stdbuf -oL -eL "$@" >>"$install_log" 2>&1 &
+    else
+        "$@" >>"$install_log" 2>&1 &
+    fi
     pid=$!
     while kill -0 "$pid" 2>/dev/null; do
         _nixos_progressDrain "$install_log" || true
@@ -135,11 +144,19 @@ _nixos_progressPaint() {
     chrome_setFooter 0 -t progress -m 6 -v "$phase" "Currently: ${label}" || true
 }
 
+_nixos_progressIsPlan() {
+    local line="$1"
+    [[ "$line" == *"these derivations will be built"* ]] && return 0
+    [[ "$line" =~ these[[:space:]]+[0-9]+[[:space:]]+derivations[[:space:]]+will[[:space:]]+be[[:space:]]+built ]]
+}
+
 _nixos_progressOpen() {
     [[ "${_NIXOS_PROGRESS_OPENED}" == true ]] && return 0
     _NIXOS_PROGRESS_OPENED=true
-    (( _NIXOS_PROGRESS_PHASE == 0 )) || return 0
-    chrome_setFooter 0 -t progress -m 6 -v 0 "Currently: starting" || true
+    if (( _NIXOS_PROGRESS_PHASE == 0 )); then
+        _NIXOS_PROGRESS_PHASE=1
+    fi
+    _nixos_progressPaint "$_NIXOS_PROGRESS_PHASE"
 }
 
 _nixos_progressPlain() {

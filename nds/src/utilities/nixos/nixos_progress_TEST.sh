@@ -45,12 +45,20 @@ suite_nixos_progress() {
     _np_is 2 "another copying path stays on copying files"
 
     nixos_progressReset
+    nixos_progressConsider "building the configuration in /mnt/etc/nixos/configuration.nix..."
+    _np_is 1 "classic nixos-install opens evaluating"
+    nixos_progressConsider "these 12 derivations will be built:"
+    _np_is 3 "a plan line before any copying opens planning"
+    nixos_progressConsider "building '/nix/store/abc.drv'"
+    _np_is 4 "building after the plan opens building"
+
+    nixos_progressReset
     nixos_progressConsider "=== nix eval ==="
-    nixos_progressConsider "these 12 derivations will be built"
-    _np_is 1 "plan line before copying stays on evaluating"
     nixos_progressConsider "copying channel 'nixos'"
     nixos_progressConsider "these 3 derivations will be built:"
-    _np_is 3 "plan line opens planning"
+    _np_is 3 "plan line after copying opens planning"
+    nixos_progressConsider "these derivations will be built:"
+    _np_is 3 "a plan line without a count stays on planning"
 
     nixos_progressReset
     nixos_progressConsider "=== Installing ==="
@@ -88,8 +96,18 @@ suite_nixos_progress() {
 
     nixos_progressReset
     nixos_progressConsider "=== nix eval ==="
-    nixos_progressConsider "Installation finished"
-    _np_is 6 "Installation finished jumps to the last phase"
+    nixos_progressConsider "installation finished!"
+    _np_is 6 "installation finished jumps to the last phase"
+
+    nixos_progressReset
+    nixos_progressConsider "building the configuration in /mnt/etc/nixos/configuration.nix..."
+    nixos_progressConsider "these 4 derivations will be built:"
+    nixos_progressConsider "building '/nix/store/abc.drv'"
+    nixos_progressConsider "installing the boot loader..."
+    _np_is 4 "boot loader before setting up stays on building"
+    nixos_progressConsider "setting up /etc..."
+    nixos_progressConsider "updating GRUB 2 menu..."
+    _np_is 6 "GRUB after setting up opens the last phase"
 
     bts_section "Logged command"
     logger_scopeExists install || logger_scopeCreate "NixOS install" install nixosInstallation.log
