@@ -11,6 +11,17 @@ declare -g _NIXOS_PROGRESS_PHASE=0
 declare -g _NIXOS_PROGRESS_OFFSET=0
 declare -g _NIXOS_PROGRESS_PARTIAL=""
 declare -g _NIXOS_PROGRESS_OPENED=false
+declare -g _NIXOS_LOGGED_PID=""
+
+# trap.INT hook, priority 5. Kills the installer group. taskOnInt exits.
+nds_onInt() {
+    local pid="${_NIXOS_LOGGED_PID:-}"
+    [[ -n "$pid" ]] || return 0
+    if ! kill -TERM -"$pid" 2>/dev/null; then
+        kill -TERM "$pid" 2>/dev/null || true
+    fi
+    return 0
+}
 
 # Current phase, 0..6.
 nixos_progressPhase() {
@@ -104,20 +115,25 @@ nixos_runLogged() {
     _nixos_progressOpen
     _nixos_progressDrain "$install_log"
     [[ $- == *m* ]] && monitor=1
-    set +m
-    # nix block-buffers a log file. stdbuf makes those lines visible while it runs.
+    # Own process group so nds_onInt can SIGTERM the installer. Job control off
+    # would make that child ignore SIGINT and share the shell's group.
+    set -m
     if command -v stdbuf >/dev/null 2>&1; then
         stdbuf -oL -eL "$@" >>"$install_log" 2>&1 &
     else
         "$@" >>"$install_log" 2>&1 &
     fi
     pid=$!
+    _NIXOS_LOGGED_PID=$pid
+    disown "$pid" 2>/dev/null || true
+    (( monitor )) || set +m
     while kill -0 "$pid" 2>/dev/null; do
         _nixos_progressDrain "$install_log" || true
         kill -0 "$pid" 2>/dev/null || break
         sleep 0.2
     done
     wait "$pid" || rc=$?
+    _NIXOS_LOGGED_PID=""
     if (( monitor )); then
         set -m
     fi
@@ -195,3 +211,5 @@ _nixos_progressFlush() {
     nixos_progressConsider "$_NIXOS_PROGRESS_PARTIAL"
     _NIXOS_PROGRESS_PARTIAL=""
 }
+
+trapRegister INT nds_onInt 5

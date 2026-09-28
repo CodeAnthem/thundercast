@@ -12,7 +12,7 @@ _NDS_SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 source "${_NDS_SRC_DIR}/../../utilities/essentials/testEnvironment/testEnvironment.sh"
 
 nds_test_boot() {
-    essentials_test_load logger eventBus importer ui chrome prompt scriptInfo task sessionDir || return 1
+    essentials_test_load logger eventBus trapBridge importer ui chrome prompt scriptInfo task sessionDir || return 1
     __ESSENTIALS_SCRIPTINFO[script_dir]="$_NDS_SRC_DIR"
     __ESSENTIALS_SCRIPTINFO[script_name]="NDS Test"
     __ESSENTIALS_SCRIPTINFO[script_version]="0.0.0"
