@@ -10,6 +10,12 @@ In-progress line, spinner, OK/FAIL. Vacates the CR line on `ui.line.take`. Does 
 
 Call after essentials has loaded. Bootstrap lives in the [parent README](../README.md). Close every start with `taskOk`, `taskFail`, or `taskCancel` before `ui_section`.
 
+### Config
+
+| Key | Default | Meaning |
+|-----|---------|---------|
+| `TASK_LOG` | `true` | `taskOk`, `taskFail`, and `taskCancel` write that one finished line to the current logger scope. File only. Spinner frames are not written |
+
 INT: `trapRegister INT taskOnInt`. That cancels the line and exits 130. EXIT restores the TTY.
 
 ### API

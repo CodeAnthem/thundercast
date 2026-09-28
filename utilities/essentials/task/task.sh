@@ -11,6 +11,17 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, 
 _essentials_task_init() {
     _essentials_init_isDone task && return 0
 
+    local -n config="essentials_config"
+    local task_log="${config[TASK_LOG]:-true}"
+    case "$task_log" in
+        true|false) ;;
+        *)
+            error "Task: invalid TASK_LOG: ${task_log}"
+            return 1
+            ;;
+    esac
+    declare -g __TASK_LOG="$task_log"
+
     declare -g __TASK_NAME=""
     declare -g __TASK_START=0
     declare -g __TASK_SPIN_PID=""
@@ -192,13 +203,21 @@ taskWatch() {
     done
 }
 
+# One finished line in the current logger scope. No console write.
+_taskLogFinal() {
+    [[ "${__TASK_LOG:-true}" == true ]] || return 0
+    log "$1" file
+}
+
 # Drop the in-progress task without OK/FAIL. Caller must do this before ui_section.
 taskCancel() {
+    local name="${__TASK_NAME:-}"
     _taskSpinnerStop
-    if _taskTty && [[ -n "${__TASK_NAME:-}" ]]; then
+    if _taskTty && [[ -n "$name" ]]; then
         printf '\r\033[K' >&2
     fi
     _taskClear
+    [[ -n "$name" ]] && _taskLogFinal "[CANCEL] ${name}"
 }
 
 # Finish the current task as success.
@@ -211,6 +230,7 @@ taskOk() {
     else
         printf '%s[OK] %s  (%ds)\n' "${__UI_INDENT_B:-  }" "$message" "$elapsed" >&2
     fi
+    _taskLogFinal "[OK] ${message}  (${elapsed}s)"
     _taskClear
 }
 
@@ -224,6 +244,7 @@ taskFail() {
     else
         printf '%s[FAIL] %s  (%ds)\n' "${__UI_INDENT_B:-  }" "$message" "$elapsed" >&2
     fi
+    _taskLogFinal "[FAIL] ${message}  (${elapsed}s)"
     _taskClear
 }
 

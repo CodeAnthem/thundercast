@@ -18,7 +18,17 @@ _essentials_chrome_init() {
         return 1
     fi
 
+    local hold="${config[CHROME_HOLD]:-false}"
+    case "$hold" in
+        true|false) ;;
+        *)
+            error "Chrome: invalid CHROME_HOLD: ${hold}"
+            return 1
+            ;;
+    esac
+
     declare -g __CHROME_EXIT_PRIORITY="$prio"
+    declare -g __CHROME_HOLD="$hold"
     declare -g __CHROME_ON=0
     declare -g __CHROME_SUSPENDED=0
     declare -g __CHROME_TEMP=0
@@ -194,6 +204,10 @@ chrome_end() {
         return 0
     fi
     [[ "${__CHROME_ON:-0}" == 1 ]] || return 0
+    if [[ "${__CHROME_HOLD:-false}" == true ]]; then
+        __CHROME_HOLD=false
+        prompt --type key "Press any key to close" || true
+    fi
     __CHROME_TEMP=0
     __CHROME_ON=0
     _chrome_histStop

@@ -50,13 +50,14 @@ Feature init shares `__ESSENTIALS_INIT`. A feature starts with `_essentials_init
 | `RUNTIME_*` | [sessionDir](sessionDir/README.md) |
 | `UI_MODE` `UI_NO_CLEAR` `UI_BANNER_MIN` `UI_LABEL_WIDTH` | [ui](ui/README.md) |
 | `PROGRESS_WIDTH` `PROGRESS_FILL` `PROGRESS_EMPTY` | [progress](progress/README.md) |
-| `CHROME_EXIT_PRIORITY` `CHROME_HEADER_*` `CHROME_FOOTER_*` `CHROME_TEMP_ROWS` `CHROME_HIST_MAX` | [chrome](chrome/README.md) |
+| `CHROME_EXIT_PRIORITY` `CHROME_HEADER_*` `CHROME_FOOTER_*` `CHROME_TEMP_ROWS` `CHROME_HIST_MAX` `CHROME_HOLD` | [chrome](chrome/README.md) |
+| `TASK_LOG` | [task](task/README.md) |
 | `UI_NO_PAUSE` | [prompt](prompt/README.md) |
 | `TRAP_PRESETS` | [trapBridge](trapBridge/README.md) |
 | `ROOTREEXEC_*` | [rootReexec](rootReexec/README.md) |
 | `IMPORTER_INCLUDE_TESTS` | [importer](importer/README.md) |
 
-`eventBus`, `task`, and `console` do not read the map.
+`eventBus` and `console` do not read the map.
 
 ## Tests
 

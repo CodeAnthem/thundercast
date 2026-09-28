@@ -120,6 +120,7 @@ _essentials_test_loadOne() {
             source "${_ESSENTIALS_ROOT}/chrome/chrome.sh"
             ;;
         task)
+            _essentials_test_loadOne logger
             _essentials_test_loadOne ui
             declare -f taskStart >/dev/null && return 0
             # shellcheck source=./task/task.sh

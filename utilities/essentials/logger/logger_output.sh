@@ -82,12 +82,13 @@ _essentials_logger_bind_writers() {
             eval "${level}() { return 0; }"
         else
             eval "${level}() {
-                local _logger_line=\"\$*\" _logger_tag=
+                local _logger_line=\"\$1\" _logger_tag=
+                shift
                 if declare -f logger_callerTag >/dev/null; then
                     _logger_tag=\$(logger_callerTag)
                     [[ -n \"\$_logger_tag\" ]] && _logger_line=\"\${_logger_tag}: \${_logger_line}\"
                 fi
-                _essentials_logger_output ${level} \"\$_logger_line\"
+                _essentials_logger_output ${level} \"\$_logger_line\" \"\$@\"
             }"
         fi
     done

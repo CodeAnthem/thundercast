@@ -44,6 +44,7 @@ Keys this feature reads from `essentials_config` (defaults from source). Map is 
 | `CHROME_FOOTER_BG` `CHROME_FOOTER_FG` | `reverse` / empty | Same for the footer |
 | `CHROME_TEMP_ROWS` | `12` | Unused by prompt (temp API only) |
 | `CHROME_HIST_MAX` | `1000` | Body history cap (lines) |
+| `CHROME_HOLD` | `false` | `true`: `chrome_end` waits for one key, then closes the frame |
 
 ### API
 
