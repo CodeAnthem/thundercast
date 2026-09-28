@@ -131,7 +131,12 @@ nds_pipeline_run() {
         nds_confirm "$_pipe_sealed" || return 1
     fi
     nds_cook "$_pipe_sealed" || return 1
-    _pipe_zip=${ nds_bundle "$_pipe_sealed"; } || return 1
+    # Do not capture stdout. info/debug write there, and this shell would
+    # print those lines a second time inside "Bundle:".
+    _NDS_BUNDLE_OUT=""
+    nds_bundle "$_pipe_sealed" || return 1
+    _pipe_zip=$_NDS_BUNDLE_OUT
+    [[ -n "$_pipe_zip" ]] || return 1
     if nds_mode_is_unattended; then
         _nds_pipeline_unattended_finish "$_pipe_sealed" "$_pipe_zip"
         return 0

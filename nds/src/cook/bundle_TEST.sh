@@ -54,7 +54,8 @@ suite_bundle() {
     nds_recipe_set RECIPE GIT_KEYS_DIR "$keys"
     nds_recipe_seal RECIPE "$sealed"
     eventRegister bundle.collect _bundle_collect
-    out=${ nds_bundle "$sealed"; }
+    nds_bundle "$sealed" >/dev/null
+    out=$_NDS_BUNDLE_OUT
     if [[ "$out" == *.tar.gz ]]; then
         listing=$(tar -tzf "$out")
     else

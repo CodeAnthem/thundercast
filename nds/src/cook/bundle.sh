@@ -110,18 +110,18 @@ nds_bundle() {
     nds_bundle_quickstart R "${_bundle_stage}/QUICK_START.md" || return 1
     eventRun bundle.collect R || return 1
     # The zip that should survive reboot lives in the installed admin home.
-    # /home/<ssh user> is the live system (the ISO user) and is gone after reboot.
+    # A plain -d check is not enough: /mnt exists on the live ISO even when the
+    # target disk is not mounted there.
     _bundle_user=${R[ACCESS_ADMIN_USER]:-admin}
-    if [[ -d ${_NDS_TARGET_ROOT:-} ]]; then
+    if [[ -n ${_NDS_TARGET_ROOT:-} ]] && mountpoint -q "$_NDS_TARGET_ROOT"; then
         if [[ "$_bundle_user" == root ]]; then
             _bundle_home="${_NDS_TARGET_ROOT}/root"
         else
             _bundle_home="${_NDS_TARGET_ROOT}/home/${_bundle_user}"
         fi
     else
-        _bundle_user=${ nds_session_sshUser; }
-        _bundle_home="/home/${_bundle_user}"
-        warn "Bundle stays on the live system. Target root is not mounted"
+        _bundle_home="${ nds_session_dir work; }"
+        warn "Bundle stays in the session work dir. Target root is not a mount"
     fi
     if [[ ! -d "$_bundle_home" || ! -w "$_bundle_home" ]]; then
         mkdir -p "$_bundle_home" 2>/dev/null || _bundle_home="${ nds_session_dir work; }"
@@ -142,5 +142,6 @@ nds_bundle() {
     fi
     rm -rf "$_bundle_stage"
     _NDS_BUNDLE_STAGE=""
+    declare -g _NDS_BUNDLE_OUT="$_bundle_out"
     printf '%s\n' "$_bundle_out"
 }
