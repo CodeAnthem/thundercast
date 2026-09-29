@@ -33,7 +33,7 @@ nds_bundle_quickstart() {
             "## What's in this bundle" "" \
             "| Path | What |" \
             "|------|------|" \
-            '| `nds-restore.recipe` | Settings recipe. Point `NDS_RECIPE_FILE` at it. |' \
+            '| `nds-restore.recipe` | Settings recipe. Pass this file, or pass the whole bundle zip. |' \
             '| `config/*` | Generated artifacts |' \
             '| `logs/nds.log` | Session log |' \
             '| `logs/nixosInstallation.log` | Installer output |'
@@ -84,10 +84,16 @@ nds_bundle_quickstart() {
                 "Add the machine age public key to .sops.yaml, re-encrypt the host secrets, and commit."
         fi
         printf '%s\n' "" "## Restore this install" "" \
+            "Pass the recipe file from an unpacked bundle:" "" \
             '```bash' \
             'export NDS_RECIPE_FILE="$PWD/nds-restore.recipe"' \
             'export NDS_YES=true' \
             'bash nds/src/app/main.sh apply "$NDS_RECIPE_FILE"' \
+            '```' "" \
+            "Or pass the whole bundle. \`apply\` reads \`nds-restore.recipe\` out of the zip:" "" \
+            '```bash' \
+            'export NDS_YES=true' \
+            'bash nds/src/app/main.sh apply /path/to/nds_bundle.zip' \
             '```' "" \
             "Online docs: https://github.com/CodeAnthem/thundercast"
     } > "$_qs_out"

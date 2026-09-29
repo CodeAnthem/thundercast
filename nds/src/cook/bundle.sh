@@ -68,8 +68,8 @@ _bundle_save_on_target() {
     local _bundle_src=$2 _bundle_user _bundle_home _bundle_dest
     local -n _bundle_R=$1
     nds_recipe_true _bundle_R BUNDLE_SAVE_ON_TARGET || return 0
-    if [[ ! -d ${_NDS_TARGET_ROOT:-} ]]; then
-        warn "Bundle stays on the live system. Target root is not mounted"
+    if [[ -z ${_NDS_TARGET_ROOT:-} ]] || ! mountpoint -q "$_NDS_TARGET_ROOT"; then
+        warn "BUNDLE_SAVE_ON_TARGET is set, but the target root is not a mount. Bundle stays on the live system"
         return 0
     fi
     _bundle_user=${_bundle_R[ACCESS_ADMIN_USER]:-root}
@@ -101,7 +101,7 @@ nds_bundle() {
     (( _bundle_n == 0 )) || return 1
     _bundle_stage=$(mktemp -d)
     _NDS_BUNDLE_STAGE=$_bundle_stage
-    mkdir -p "${_bundle_stage}/secrets" "${_bundle_stage}/config" "${_bundle_stage}/seed" "${_bundle_stage}/logs"
+    mkdir -p "${_bundle_stage}/secrets" "${_bundle_stage}/config" "${_bundle_stage}/logs"
     _bundle_rewrite_paths R "$_bundle_stage" || return 1
     _bundle_copy_tree "$(nds_session_dir config)" "${_bundle_stage}/config"
     _bundle_copy_tree "$(nds_session_dir logs)" "${_bundle_stage}/logs"
@@ -109,20 +109,10 @@ nds_bundle() {
     nds_recipe_export R "${_bundle_stage}/nds-restore.recipe" || return 1
     nds_bundle_quickstart R "${_bundle_stage}/QUICK_START.md" || return 1
     eventRun bundle.collect R || return 1
-    # The zip that should survive reboot lives in the installed admin home.
-    # A plain -d check is not enough: /mnt exists on the live ISO even when the
-    # target disk is not mounted there.
-    _bundle_user=${R[ACCESS_ADMIN_USER]:-admin}
-    if [[ -n ${_NDS_TARGET_ROOT:-} ]] && mountpoint -q "$_NDS_TARGET_ROOT"; then
-        if [[ "$_bundle_user" == root ]]; then
-            _bundle_home="${_NDS_TARGET_ROOT}/root"
-        else
-            _bundle_home="${_NDS_TARGET_ROOT}/home/${_bundle_user}"
-        fi
-    else
-        _bundle_home="${ nds_session_dir work; }"
-        warn "Bundle stays in the session work dir. Target root is not a mount"
-    fi
+    # Live copy, so it can be taken off the ISO before reboot.
+    # The installed-system copy is BUNDLE_SAVE_ON_TARGET / NDS_BUNDLE_SAVE_ON_TARGET.
+    _bundle_user=${ nds_session_sshUser; }
+    _bundle_home="/home/${_bundle_user}"
     if [[ ! -d "$_bundle_home" || ! -w "$_bundle_home" ]]; then
         mkdir -p "$_bundle_home" 2>/dev/null || _bundle_home="${ nds_session_dir work; }"
     fi
@@ -136,10 +126,8 @@ nds_bundle() {
         tar -C "$_bundle_stage" -czf "$_bundle_out" . || return 1
     fi
     chmod 600 "$_bundle_out" || return 1
-    if [[ "$_bundle_out" != "${_NDS_TARGET_ROOT%/}"/* ]]; then
-        chown "$_bundle_user" "$_bundle_out" 2>/dev/null || true
-        _bundle_save_on_target R "$_bundle_out"
-    fi
+    chown "$_bundle_user" "$_bundle_out" 2>/dev/null || true
+    _bundle_save_on_target R "$_bundle_out"
     rm -rf "$_bundle_stage"
     _NDS_BUNDLE_STAGE=""
     declare -g _NDS_BUNDLE_OUT="$_bundle_out"
