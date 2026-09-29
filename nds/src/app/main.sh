@@ -102,6 +102,7 @@ main() {
 
     _nds_setup_chrome || return 1
     _nds_load_features "$app_dir" || return 1
+    info "Starting NDS ${ scriptInfo_get_version; }"
 
     nds_cli_parse "$@" || rc=$?
     if [[ "$rc" -eq 2 ]]; then
