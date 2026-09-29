@@ -69,12 +69,9 @@ suite_disk_loop() {
         return 0
     fi
     rm -f "$_loop_out"
-    if [[ -d /sys/firmware/efi ]]; then
-        part=$(disk_part "$dev" 2)
-    else
-        part=$(disk_part "$dev" 3)
-    fi
-    if cryptsetup isLuks "$part"; then
+    # The call above forces UEFI, so the LUKS root is p2 even when the host has no EFI directory.
+    part=$(disk_part "$dev" 2)
+    if cryptsetup isLuks "$part" 2>/dev/null; then # missing node: "does not exist or access denied"
         bts_pass "the root partition is LUKS"
     else
         bts_fail "cryptsetup isLuks failed for ${part}"
