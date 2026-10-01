@@ -156,7 +156,7 @@ _nds_wizard_ask_one() {
     nds_schema_isActive "$_wiz_name" "$_wiz_key" || return 0
     nds_schema_isLocked "$_wiz_key" && return 0
     [[ ${_NDS_ANSWERED[$_wiz_key]:-} == 1 ]] && return 0
-    _nds_wiz_asked=$((_nds_wiz_asked + 1))
+    _nds_wiz_asked=$((${_nds_wiz_asked:-0} + 1))
     _wiz_fn=$(nds_schema_attr "$_wiz_key" ask)
     if [[ -z "$_wiz_fn" ]] || ! declare -f "$_wiz_fn" >/dev/null; then
         _wiz_fn="_nds_ask_${_NDS_SCHEMA_FIELD_TYPE[$_wiz_key]}"
