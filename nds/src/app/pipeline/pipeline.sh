@@ -26,10 +26,10 @@ _nds_pipeline_hooks() {
     local _pipe_hook_name=$1
     _NDS_RELOAD_HOOKS=0
     if declare -f hook_access >/dev/null; then
-        hook_access "$_pipe_hook_name"
+        hook_access "$_pipe_hook_name" || return 1
     fi
     if declare -f hook_ask >/dev/null; then
-        hook_ask "$_pipe_hook_name"
+        hook_ask "$_pipe_hook_name" || return 1
     fi
     if [[ ${_NDS_RELOAD_HOOKS:-} == 1 ]]; then
         _NDS_RELOAD_HOOKS=0
@@ -40,7 +40,7 @@ _nds_pipeline_hooks() {
         nds_flake_note_disko "$_pipe_hook_name"
     fi
     if declare -f hook_material >/dev/null; then
-        hook_material "$_pipe_hook_name"
+        hook_material "$_pipe_hook_name" || return 1
     elif declare -f nds_recipe_materialize >/dev/null; then
         nds_recipe_materialize "$_pipe_hook_name"
     fi

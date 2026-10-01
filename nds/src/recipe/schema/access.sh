@@ -29,7 +29,9 @@ nds_schema_field access ACCESS_ADMIN_PASSWORD_LENGTH int --default 32 --min 16 -
 nds_schema_field access ACCESS_ADMIN_PASSWORD_FILE secret \
     --generate nds_generate_password --generate-when 'ACCESS_ADMIN_PASSWORD_AUTO=true' \
     --label 'Admin password file'
-nds_schema_field access ACCESS_ADMIN_SSH_KEY string --label 'Admin SSH public key'
+nds_schema_field access ACCESS_ADMIN_SSH_KEY string \
+    --when 'ACCESS_SSH_ENABLE=true,ACCESS_SSH_PASSWORD_AUTH=false' \
+    --label 'Admin SSH public key'
 nds_schema_field access ACCESS_SUDO_PASSWORD_REQUIRED bool --default true --label 'Sudo requires password'
 nds_schema_field access ACCESS_SSH_ENABLE bool --default true --label 'Enable SSH'
 nds_schema_field access ACCESS_SSH_PORT port --default 22 --when 'ACCESS_SSH_ENABLE=true' --label 'SSH port'

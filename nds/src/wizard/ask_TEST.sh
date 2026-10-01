@@ -28,6 +28,8 @@ _ask_types() {
         fi
     done
     declare -gA R=()
+    mkdir -p "${_NDS_TEST_SESSION}/dir"
+    printf '%s\n' secret > "${_NDS_TEST_SESSION}/file"
     for _type in string bool int port choice path file dir disk ip hostname username url timezone locale keyboard country mask secret; do
         _key="T_${_type^^}"
         case "$_type" in
@@ -35,7 +37,9 @@ _ask_types() {
             int) _answer=8 ;;
             port) _answer=22 ;;
             choice) _answer=a ;;
-            path|file|dir|secret) _answer=/tmp/nds ;;
+            path) _answer=/tmp ;;
+            file|secret) _answer="${_NDS_TEST_SESSION}/file" ;;
+            dir) _answer="${_NDS_TEST_SESSION}/dir" ;;
             disk) _answer=/dev/sda ;;
             ip) _answer=1.2.3.4 ;;
             hostname) _answer=host ;;
@@ -44,7 +48,7 @@ _ask_types() {
             timezone) _answer=UTC ;;
             locale) _answer=en_US.UTF-8 ;;
             keyboard) _answer=us ;;
-            country) _answer=us ;;
+            country) _answer=US ;;
             mask) _answer=255.255.255.0 ;;
             *) _answer=hello ;;
         esac
@@ -191,5 +195,58 @@ suite_ask() {
         bts_pass "Edit group re-asks that group"
     else
         bts_fail "edit prompts were '${_text}' value '${_got}'"
+    fi
+
+    bts_section "Settings menu"
+    ui_h() { :; }
+    ui_b() { :; }
+    ui_kv() { :; }
+    ui_section() { :; }
+    _ui_promptSessionBegin() { :; }
+    _ui_promptSessionEnd() { :; }
+    declare -gA R=()
+    nds_schema_group menug "Region"
+    nds_schema_field menug MENU_TZ timezone --default UTC --label 'Timezone'
+    nds_schema_enable menug
+    _i=0
+    _msgs=()
+    _nds_settings_read_key() {
+        if [[ "$_i" -eq 0 ]]; then
+            _i=1
+            printf -v "$1" '%s' 1
+            return 0
+        fi
+        printf -v "$1" '%s' x
+    }
+    prompt() {
+        local _msg="${*: -1}"
+        _msgs+=("$_msg")
+        UI_PROMPT_RESULT=
+        return 0
+    }
+    nds_schema_field menug MENU_SECRET secret --generate nds_generate_password \
+        --generate-when 'MENU_TZ=UTC' --label 'Secret'
+    nds_recipe_set R MENU_TZ UTC
+    if _nds_settings_visible R MENU_SECRET; then
+        bts_fail "a generated secret stayed visible"
+        return
+    fi
+    nds_recipe_set R MENU_TZ nope
+    if _nds_settings_visible R MENU_SECRET; then
+        bts_pass "the secret is shown when it will not be generated"
+    else
+        bts_fail "the secret stayed hidden"
+        return
+    fi
+    nds_recipe_set R MENU_TZ UTC
+    if nds_settings_menu R menug; then
+        _text=$(printf '%s\n' "${_msgs[@]}")
+        if [[ "$_text" == 'Timezone (Europe/Zurich, or zurich)' ]]; then
+            bts_pass "the settings menu opens a category, then finishes on x"
+        else
+            bts_fail "menu prompts were '${_text}'"
+        fi
+    else
+        bts_fail "settings menu failed"
     fi
 }

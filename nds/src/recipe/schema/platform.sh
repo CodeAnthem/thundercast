@@ -10,6 +10,12 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, 
 _nds_platform_virt() {
     local _nds_plat_virt=""
     if command -v systemd-detect-virt >/dev/null 2>&1; then
+        _nds_plat_virt=$(systemd-detect-virt 2>/dev/null || true)
+        # -v reports the hypervisor. WSL reports "wsl" here and "microsoft" with -v.
+        if [[ "$_nds_plat_virt" == wsl ]]; then
+            printf '%s\n' none
+            return 0
+        fi
         _nds_plat_virt=$(systemd-detect-virt -v 2>/dev/null || true)
         case "$_nds_plat_virt" in
             none|"") printf '%s\n' none; return 0 ;;

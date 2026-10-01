@@ -254,7 +254,16 @@ _ui_promptEditLine() {
                 buf+=' '
                 _ui_promptPutChar ' '
                 ;;
-            up|down|left|right|pageup|pagedown|wheelup|wheeldn|home|end|ignore) ;;
+            pageup|pagedown|wheelup|wheeldn|home|end)
+                _ui_promptChromeScroll "$token"
+                printf '\r\033[K' >&2
+                _ui_promptTextLabel
+                for ((i = 0; i < ${#buf}; i++)); do
+                    ch="${buf:i:1}"
+                    _ui_promptPutChar "$ch"
+                done
+                ;;
+            up|down|left|right|ignore) ;;
             *)
                 buf+="$token"
                 _ui_promptPutChar "$token"

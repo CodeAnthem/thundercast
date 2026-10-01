@@ -10,6 +10,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, 
 
 nds_skip_register recipe.summary "ask only fields that fail validation"
 
+# shellcheck source=menu.sh
+source "${BASH_SOURCE[0]%/*}/menu.sh"
+
 _nds_ask_current() {
     local _ask_cur
     _ask_cur=$(nds_recipe_get "$1" "$2")
@@ -41,8 +44,85 @@ _nds_ask_run() {
     esac
 }
 
+_nds_ask_hint() {
+    case "$1" in
+        country) printf '%s\n' 'US, DE, CH — empty skips' ;;
+        timezone) printf '%s\n' 'Europe/Zurich, or zurich' ;;
+        locale) printf '%s\n' 'en_US.UTF-8' ;;
+        keyboard) printf '%s\n' 'us, de, ch' ;;
+    esac
+}
+
+_nds_ask_timezone_match() {
+    local _ask_raw=$1 _ask_list _ask_count _ask_hit
+    if _nds_type_timezone "$_ask_raw"; then
+        printf '%s\n' "$_ask_raw"
+        return 0
+    fi
+    command -v timedatectl >/dev/null 2>&1 || return 1
+    _ask_list=$(timedatectl list-timezones 2>/dev/null | grep -i -- "$_ask_raw" || true)
+    [[ -n "$_ask_list" ]] || return 1
+    _ask_count=$(printf '%s\n' "$_ask_list" | wc -l)
+    if [[ "$_ask_count" -eq 1 ]]; then
+        printf '%s\n' "$_ask_list"
+        return 0
+    fi
+    ui_b "  Multiple matches — be more specific"
+    return 2
+}
+
+_nds_ask_checked() {
+    local _ask_type=$1 _ask_value=$2 _ask_key=$3
+    case "$_ask_type" in
+        country) _ask_value=${_ask_value^^} ;;
+        keyboard) _ask_value=${_ask_value,,} ;;
+        locale) _ask_value=${_ask_value/.utf8/.UTF-8} ;;
+        timezone)
+            _ask_value=$(_nds_ask_timezone_match "$_ask_value") || return $?
+            printf '%s\n' "$_ask_value"
+            return 0
+            ;;
+    esac
+    _nds_type_ok "$_ask_type" "$_ask_value" "$_ask_key" || return 1
+    printf '%s\n' "$_ask_value"
+}
+
 _nds_ask_text() {
-    _nds_ask_run "$1" "$2" --type text
+    local _ask_name=$1 _ask_key=$2 _ask_rc=0 _ask_cur _ask_req _ask_type _ask_value _ask_hint _ask_label
+    local -a _ask_args=()
+    _ask_type=${_NDS_SCHEMA_FIELD_TYPE[$_ask_key]:-string}
+    _ask_cur=$(_nds_ask_current "$_ask_name" "$_ask_key")
+    _ask_req=$(nds_schema_attr "$_ask_key" required)
+    _ask_hint=$(_nds_ask_hint "$_ask_type")
+    _ask_label=$(nds_schema_attr "$_ask_key" label)
+    [[ -n "$_ask_hint" ]] && _ask_label="${_ask_label} (${_ask_hint})"
+    while true; do
+        _ask_args=(--type text)
+        [[ -n "$_ask_cur" ]] && _ask_args+=(--default "$_ask_cur")
+        if [[ "$_ask_req" != 1 || -n "$_ask_cur" ]]; then
+            _ask_args+=(--allow-empty)
+        fi
+        _ask_args+=(--back "$_ask_label")
+        _ask_rc=0
+        prompt "${_ask_args[@]}" || _ask_rc=$?
+        case "$_ask_rc" in
+            0) ;;
+            2) return 2 ;;
+            *) return "$_ask_rc" ;;
+        esac
+        _ask_value=$UI_PROMPT_RESULT
+        if [[ -z "$_ask_value" ]]; then
+            return 0
+        fi
+        _ask_rc=0
+        _ask_value=$(_nds_ask_checked "$_ask_type" "$_ask_value" "$_ask_key") || _ask_rc=$?
+        if [[ "$_ask_rc" -eq 0 ]]; then
+            nds_recipe_set "$_ask_name" "$_ask_key" "$_ask_value"
+            return 0
+        fi
+        [[ "$_ask_rc" -eq 2 ]] && continue
+        ui_b "  Error: invalid ${_ask_type}"
+    done
 }
 
 _nds_ask_string() { _nds_ask_text "$@"; }
@@ -137,31 +217,34 @@ nds_ask_if_empty() {
 }
 
 nds_ask_groups_if_empty() {
-    local _ask_name=$1 _ask_group _ask_key
+    local _ask_name=$1 _ask_group
     shift
     for _ask_group in "$@"; do
         nds_schema_enable "$_ask_group"
         if [[ "$_ask_group" == disk ]] && declare -f nds_flake_note_disko >/dev/null; then
             nds_flake_note_disko "$_ask_name"
         fi
-        while IFS= read -r _ask_key; do
-            [[ -n "$_ask_key" ]] || continue
-            nds_ask_if_empty "$_ask_name" "$_ask_key"
-        done < <(nds_schema_groupFields "$_ask_group")
     done
+    nds_mode_is_interactive || return 0
+    nds_settings_menu "$_ask_name" "$@"
 }
 
 _nds_wizard_ask_one() {
     local _wiz_name=$1 _wiz_key=$2 _wiz_fn _wiz_rc=0
     nds_schema_isActive "$_wiz_name" "$_wiz_key" || return 0
     nds_schema_isLocked "$_wiz_key" && return 0
-    [[ ${_NDS_ANSWERED[$_wiz_key]:-} == 1 ]] && return 0
+    if [[ ${_NDS_ASK_FORCE:-} != 1 && ${_NDS_ANSWERED[$_wiz_key]:-} == 1 ]]; then
+        return 0
+    fi
     _nds_wiz_asked=$((${_nds_wiz_asked:-0} + 1))
     _wiz_fn=$(nds_schema_attr "$_wiz_key" ask)
     if [[ -z "$_wiz_fn" ]] || ! declare -f "$_wiz_fn" >/dev/null; then
         _wiz_fn="_nds_ask_${_NDS_SCHEMA_FIELD_TYPE[$_wiz_key]}"
     fi
     "$_wiz_fn" "$_wiz_name" "$_wiz_key" || _wiz_rc=$?
+    if [[ ${_NDS_ASK_FORCE:-} == 1 && "$_wiz_rc" -eq 2 ]]; then
+        return 2
+    fi
     case "$_wiz_rc" in
         0|2) return 0 ;;
         *) return 1 ;;
