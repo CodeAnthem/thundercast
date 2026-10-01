@@ -38,7 +38,7 @@ nds_recipe_set() {
         error "$2: locked"
         return 1
     fi
-    _nds_recipe_set_aa[$2]=$3
+    _nds_recipe_set_aa[$2]="$3"
     if [[ ${_NDS_MARK_ANSWERED:-} == 1 ]]; then
         _NDS_ANSWERED[$2]=1
     fi

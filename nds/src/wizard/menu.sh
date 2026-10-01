@@ -8,12 +8,39 @@
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
+# ssh-ed25519 AAAA...Ic9y/1QDluotA averon@host — the full key stays in the recipe.
+_nds_settings_show_pubkey() {
+    local _set_line=$1 _set_type _set_rest _set_blob _set_comment
+    _set_type=${_set_line%% *}
+    _set_rest=${_set_line#"$_set_type"}
+    _set_rest=${_set_rest# }
+    _set_blob=${_set_rest%% *}
+    [[ "$_set_blob" =~ ^[A-Za-z0-9+/]+=*$ ]] || {
+        printf '%s\n' "$_set_line"
+        return 0
+    }
+    if [[ "$_set_rest" == *" "* ]]; then
+        _set_comment=${_set_rest#* }
+    else
+        _set_comment=""
+    fi
+    if (( ${#_set_blob} > 20 )); then
+        _set_blob="${_set_blob:0:4}...${_set_blob: -13}"
+    fi
+    if [[ -n "$_set_comment" ]]; then
+        printf '%s %s %s\n' "$_set_type" "$_set_blob" "$_set_comment"
+    else
+        printf '%s %s\n' "$_set_type" "$_set_blob"
+    fi
+}
+
 _nds_settings_show() {
     local _set_value=$1
     case "$_set_value" in
         true) printf '%s\n' yes ;;
         false) printf '%s\n' no ;;
         "") printf '%s\n' '-' ;;
+        ssh-*|ecdsa-*|sk-*) _nds_settings_show_pubkey "$_set_value" ;;
         *) printf '%s\n' "$_set_value" ;;
     esac
 }

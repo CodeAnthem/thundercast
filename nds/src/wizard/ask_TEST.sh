@@ -197,6 +197,19 @@ suite_ask() {
         bts_fail "edit prompts were '${_text}' value '${_got}'"
     fi
 
+    bts_section "Public key summary"
+    _blob="AAAAC3NzaC1lZDI1NTE5AAAAIabcdefghijklmnopqrstuvwxIc9y/1QDluotA"
+    _key="ssh-ed25519 ${_blob} averon@dp-bigbrotha"
+    declare -gA R=()
+    nds_recipe_set R ALPHA "$_key"
+    _got=$(nds_recipe_get R ALPHA)
+    _shown=$(_nds_settings_show "$_got")
+    if [[ "$_got" == "$_key" && "$_shown" == "ssh-ed25519 AAAA...Ic9y/1QDluotA averon@dp-bigbrotha" ]]; then
+        bts_pass "a public key is stored whole and shown shortened"
+    else
+        bts_fail "public key stored '${_got}' shown '${_shown}'"
+    fi
+
     bts_section "Settings menu"
     ui_h() { :; }
     ui_b() { :; }
