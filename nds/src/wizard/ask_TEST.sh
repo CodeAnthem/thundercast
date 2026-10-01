@@ -234,6 +234,14 @@ suite_ask() {
     prompt() {
         local _msg="${*: -1}"
         _msgs+=("$_msg")
+        if [[ "$_msg" == Region ]]; then
+            if [[ "${_sel:-0}" -eq 0 ]]; then
+                _sel=1
+                UI_PROMPT_RESULT=MENU_TZ
+                return 0
+            fi
+            return 2
+        fi
         UI_PROMPT_RESULT=
         return 0
     }
@@ -254,8 +262,8 @@ suite_ask() {
     nds_recipe_set R MENU_TZ UTC
     if nds_settings_menu R menug; then
         _text=$(printf '%s\n' "${_msgs[@]}")
-        if [[ "$_text" == 'Timezone (Europe/Zurich, or zurich)' ]]; then
-            bts_pass "the settings menu opens a category, then finishes on x"
+        if [[ "$_text" == $'Region\nTimezone (Europe/Zurich, or zurich)\nRegion' ]]; then
+            bts_pass "a category is a select, then the field, then the select again"
         else
             bts_fail "menu prompts were '${_text}'"
         fi

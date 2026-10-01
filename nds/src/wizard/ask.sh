@@ -32,7 +32,7 @@ _nds_ask_run() {
     _ask_hint=$(nds_schema_attr "$_ask_key" hint)
     [[ -n "$_ask_hint" ]] && ui_i "$_ask_hint"
     [[ -n "$_ask_cur" ]] && _ask_args+=(--default "$_ask_cur")
-    _ask_args+=(--back "$_ask_label")
+    _ask_args+=("$_ask_label")
     prompt "${_ask_args[@]}" || _ask_rc=$?
     case "$_ask_rc" in
         0)
@@ -102,7 +102,7 @@ _nds_ask_text() {
         if [[ "$_ask_req" != 1 || -n "$_ask_cur" ]]; then
             _ask_args+=(--allow-empty)
         fi
-        _ask_args+=(--back "$_ask_label")
+        _ask_args+=("$_ask_label")
         _ask_rc=0
         prompt "${_ask_args[@]}" || _ask_rc=$?
         case "$_ask_rc" in
@@ -147,7 +147,7 @@ _nds_ask_bool() {
     local _ask_name=$1 _ask_key=$2 _ask_cur _ask_def=y _ask_rc=0 _ask_value
     _ask_cur=$(_nds_ask_current "$_ask_name" "$_ask_key")
     [[ "$_ask_cur" == false ]] && _ask_def=n
-    prompt --type confirm --default "$_ask_def" --back "$(nds_schema_attr "$_ask_key" label)" || _ask_rc=$?
+    prompt --type confirm --default "$_ask_def" "$(nds_schema_attr "$_ask_key" label)" || _ask_rc=$?
     case "$_ask_rc" in
         0)
             case "${UI_PROMPT_RESULT,,}" in
@@ -242,8 +242,8 @@ _nds_wizard_ask_one() {
         _wiz_fn="_nds_ask_${_NDS_SCHEMA_FIELD_TYPE[$_wiz_key]}"
     fi
     "$_wiz_fn" "$_wiz_name" "$_wiz_key" || _wiz_rc=$?
-    if [[ ${_NDS_ASK_FORCE:-} == 1 && "$_wiz_rc" -eq 2 ]]; then
-        return 2
+    if [[ ${_NDS_ASK_FORCE:-} == 1 && ( "$_wiz_rc" -eq 2 || "$_wiz_rc" -eq 3 ) ]]; then
+        return "$_wiz_rc"
     fi
     case "$_wiz_rc" in
         0|2) return 0 ;;

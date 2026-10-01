@@ -343,7 +343,7 @@ _ui_promptEditLine() {
                     _ui_promptPutChar "$ch"
                 done
                 ;;
-            up|down|left|right|ignore) ;;
+            up|down|left|right|ignore|endpaste) ;;
             brpaste)
                 piece=""
                 nl=0

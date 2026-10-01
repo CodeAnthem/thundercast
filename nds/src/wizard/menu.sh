@@ -135,28 +135,52 @@ _nds_settings_clear() {
 }
 
 _nds_settings_configure() {
-    local _set_name=$1 _set_group=$2 _set_key _set_rc
+    local _set_name=$1 _set_group=$2 _set_key _set_rc _set_label _set_shown
     local _set_title=${_NDS_SCHEMA_GROUP_TITLE[$_set_group]:-$_set_group}
+    local -a _set_opts=()
     _NDS_ASK_FORCE=1
-    _nds_settings_clear
-    _nds_settings_title "$_set_title"
-    ui_b "Press Enter to keep the current value. b goes back."
-    ui_b ""
-    while IFS= read -r _set_key; do
-        [[ -n "$_set_key" ]] || continue
-        _nds_settings_visible "$_set_name" "$_set_key" || continue
-        _set_rc=0
-        _nds_wizard_ask_one "$_set_name" "$_set_key" || _set_rc=$?
-        if [[ "$_set_rc" -eq 2 ]]; then
+    while true; do
+        _set_opts=()
+        while IFS= read -r _set_key; do
+            [[ -n "$_set_key" ]] || continue
+            _nds_settings_visible "$_set_name" "$_set_key" || continue
+            _set_label=$(nds_schema_attr "$_set_key" label)
+            _set_shown=$(_nds_settings_show "$(nds_recipe_get "$_set_name" "$_set_key")")
+            _set_opts+=("${_set_key}|${_set_label:-$_set_key}|${_set_shown}")
+        done < <(nds_schema_groupFields "$_set_group")
+        if ((${#_set_opts[@]} == 0)); then
             _NDS_ASK_FORCE=
             return 0
         fi
-        if [[ "$_set_rc" -ne 0 ]]; then
+        declare -ga _NDS_SETTINGS_OPTS=("${_set_opts[@]}")
+        _nds_settings_clear
+        _nds_settings_title "$_set_title"
+        _set_rc=0
+        prompt --type select --options _NDS_SETTINGS_OPTS --bind back=x \
+            --footer "Enter edits the row. x returns." "$_set_title" || _set_rc=$?
+        case "$_set_rc" in
+            0) ;;
+            2|3)
+                _NDS_ASK_FORCE=
+                return 0
+                ;;
+            *)
+                _NDS_ASK_FORCE=
+                return "$_set_rc"
+                ;;
+        esac
+        _set_key=$UI_PROMPT_RESULT
+        [[ -n "$_set_key" ]] || continue
+        _nds_settings_clear
+        _nds_settings_title "$_set_title"
+        _set_rc=0
+        _nds_wizard_ask_one "$_set_name" "$_set_key" || _set_rc=$?
+        # Escape on the field drops the edit and shows this list again.
+        if [[ "$_set_rc" -ne 0 && "$_set_rc" -ne 2 && "$_set_rc" -ne 3 ]]; then
             _NDS_ASK_FORCE=
             return "$_set_rc"
         fi
-    done < <(nds_schema_groupFields "$_set_group")
-    _NDS_ASK_FORCE=
+    done
 }
 
 _nds_settings_has_country() {
