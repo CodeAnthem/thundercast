@@ -45,6 +45,10 @@ _ui_promptConfirmAllow() {
 
 _ui_promptSessionEnd() {
     printf '\033[?25h' >&2
+    if [[ "${__UI_PROMPT_BRACKET:-}" == 1 ]]; then
+        printf '\033[?2004l' >&2
+        __UI_PROMPT_BRACKET=0
+    fi
     tty_end
     if declare -f chrome_isOn &>/dev/null && chrome_isOn; then
         chrome_setMouse on || true
@@ -52,9 +56,25 @@ _ui_promptSessionEnd() {
     fi
 }
 
+# Text fields ask the terminal to wrap a paste, and they drop mouse reports so a click-paste is text.
+_ui_promptTextReady() {
+    printf '\033[?2004h' >&2
+    __UI_PROMPT_BRACKET=1
+    if declare -f chrome_setMouse >/dev/null; then
+        chrome_setMouse off || true
+    fi
+}
+
+# A paste is one burst. A zero-timeout check can miss the next byte and treat the Esc as cancel.
+_ui_promptEscPending() {
+    tty_pending && return 0
+    sleep 0.03
+    tty_pending
+}
+
 _ui_promptReadEsc() {
     local _ui_dest="$1" a="" ch="" rest=""
-    if ! tty_pending; then
+    if ! _ui_promptEscPending; then
         printf -v "$_ui_dest" '%s' esc
         return 0
     fi
@@ -67,7 +87,7 @@ _ui_promptReadEsc() {
         printf -v "$_ui_dest" '%s' esc
         return 0
     fi
-    if ! tty_pending; then
+    if ! _ui_promptEscPending; then
         printf -v "$_ui_dest" '%s' esc
         return 0
     fi
@@ -79,7 +99,7 @@ _ui_promptReadEsc() {
         fi
         rest+="$ch"
         [[ "$ch" == [@-~] ]] && break
-        tty_pending || break
+        _ui_promptEscPending || break
     done
     case "$rest" in
         A) printf -v "$_ui_dest" '%s' up ;;
@@ -92,8 +112,61 @@ _ui_promptReadEsc() {
         F|4~|8~|1\;*F) printf -v "$_ui_dest" '%s' end ;;
         \<64\;*M|\<64\;*m) printf -v "$_ui_dest" '%s' wheelup ;;
         \<65\;*M|\<65\;*m) printf -v "$_ui_dest" '%s' wheeldn ;;
+        200~) printf -v "$_ui_dest" '%s' brpaste ;;
+        201~) printf -v "$_ui_dest" '%s' endpaste ;;
         *) printf -v "$_ui_dest" '%s' ignore ;;
     esac
+}
+
+# Throw away the rest of a bracketed paste. Used when the prompt cannot accept it.
+_ui_promptDrainBracket() {
+    local ch="" token=""
+    while true; do
+        if ! _ui_promptEscPending; then
+            return 0
+        fi
+        ch=""
+        tty_getc ch raw || return 0
+        if [[ "$ch" == $'\e' ]]; then
+            token=""
+            _ui_promptReadEsc token
+            [[ "$token" == endpaste ]] && return 0
+        fi
+    done
+}
+
+# Body of a bracketed paste into <var>. Sets <nlvar> to 1 when the paste included a newline.
+_ui_promptCollectPaste() {
+    local _ui_dest="$1" _ui_nl="$2" ch="" token="" body=""
+    printf -v "$_ui_nl" '%s' 0
+    while true; do
+        if ! _ui_promptEscPending; then
+            break
+        fi
+        ch=""
+        tty_getc ch raw || break
+        if [[ "$ch" == $'\e' ]]; then
+            token=""
+            _ui_promptReadEsc token
+            [[ "$token" == endpaste ]] && break
+            continue
+        fi
+        case "$ch" in
+            $'\r') continue ;;
+            $'\n')
+                printf -v "$_ui_nl" '%s' 1
+                _ui_promptDrainBracket
+                break
+                ;;
+            [[:cntrl:]]) continue ;;
+        esac
+        body+="$ch"
+        if (( ${#body} >= 8192 )); then
+            _ui_promptDrainBracket
+            break
+        fi
+    done
+    printf -v "$_ui_dest" '%s' "$body"
 }
 
 # One token into <var>: char, enter, esc, up, down, left, right, pageup, pagedown, home, end,
@@ -108,6 +181,13 @@ _ui_promptGetKey() {
     fi
     if [[ "$ch" == $'\e' ]]; then
         _ui_promptReadEsc "$_ui_dest"
+        if [[ "$mode" == one ]]; then
+            local -n _ui_token="$_ui_dest"
+            if [[ "$_ui_token" == brpaste ]]; then
+                _ui_promptDrainBracket
+                _ui_token=paste
+            fi
+        fi
         return 0
     fi
     if [[ "$mode" == one ]] && tty_pending; then
@@ -198,7 +278,7 @@ _ui_promptRubout() {
 
 # Line editor on cbreak. dest var gets the line. rc 0 submit, 2 back, 3 cancel, 1 eof.
 _ui_promptEditLine() {
-    local dest="$1" buf="" token="" action="" i ch
+    local dest="$1" buf="" token="" action="" i ch piece="" nl=0
     _ui_promptTextLabel
     while true; do
         token=""
@@ -264,6 +344,22 @@ _ui_promptEditLine() {
                 done
                 ;;
             up|down|left|right|ignore) ;;
+            brpaste)
+                piece=""
+                nl=0
+                _ui_promptCollectPaste piece nl
+                if [[ -n "$piece" ]]; then
+                    buf+="$piece"
+                    for ((i = 0; i < ${#piece}; i++)); do
+                        _ui_promptPutChar "${piece:i:1}"
+                    done
+                fi
+                if [[ "$nl" == 1 ]]; then
+                    printf '\n' >&2
+                    printf -v "$dest" '%s' "$buf"
+                    return 0
+                fi
+                ;;
             *)
                 buf+="$token"
                 _ui_promptPutChar "$token"

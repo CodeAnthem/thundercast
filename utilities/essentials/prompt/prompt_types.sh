@@ -112,6 +112,7 @@ _ui_promptConfirm() {
 _ui_promptText() {
     local line="" rc
     _ui_promptSessionBegin cbreak || return 1
+    _ui_promptTextReady
     while true; do
         line=""
         _ui_promptEditLine line

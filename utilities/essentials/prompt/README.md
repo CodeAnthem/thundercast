@@ -55,7 +55,7 @@ Type defaults to `text` when a message is given. Remaining args are the message 
 | 4 | — | Read failed (EOF). Prior multiline lines are discarded |
 | 130 | — | Ctrl+C via `taskOnInt` / `trap.INT`, not returned by `prompt` |
 
-Select: arrows or `1-9` move, Enter submits the cursor. Multi-select: Space/`1-9` toggle, Enter submits checked values as a newline-separated `UI_PROMPT_RESULT` (empty set is ok). Description lines print only when an option has one. `UI_MODE=plain` or `--plain` uses a numbered line; a select number plus Enter submits. One-key types reject paste.
+Select: arrows or `1-9` move, Enter submits the cursor. Multi-select: Space/`1-9` toggle, Enter submits checked values as a newline-separated `UI_PROMPT_RESULT` (empty set is ok). Description lines print only when an option has one. `UI_MODE=plain` or `--plain` uses a numbered line; a select number plus Enter submits. Text accepts a paste (the terminal's bracketed paste is inserted; a trailing newline submits). One-key types reject paste. Mouse reporting is off during a text prompt so a click-paste is not eaten as a mouse event.
 
 ### Examples
 

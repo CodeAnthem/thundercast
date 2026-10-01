@@ -453,6 +453,53 @@ prompt --type confirm --default n "Go?" || exit 1
 
     rc=0
     _prompt_isolated '
+esc=$(printf "\033")
+_keys=("$esc" "[" "2" "0" "0" "~" h o s t "$esc" "[" "2" "0" "1" "~" "")
+_i=0
+tty_getc() {
+    if (( _i >= ${#_keys[@]} )); then
+        return 1
+    fi
+    printf -v "$1" "%s" "${_keys[_i]}"
+    _i=$((_i + 1))
+    return 0
+}
+tty_pending() { (( _i < ${#_keys[@]} )); }
+prompt --type text "Hostname" || exit 1
+[[ "$UI_PROMPT_RESULT" == host && "$UI_PROMPT_ACTION" == submit ]]
+' || rc=$?
+    if [[ "$rc" -eq 0 ]]; then
+        bts_pass "text prompt accepts a bracketed paste"
+    else
+        bts_fail "text paste rc=$rc err=$(printf '%q' "${__PROMPT_ISOLATED_ERR}")"
+    fi
+
+    rc=0
+    _prompt_isolated '
+esc=$(printf "\033")
+printf -v nl "\n"
+_keys=("$esc" "[" "2" "0" "0" "~" h o s t "$nl" "$esc" "[" "2" "0" "1" "~")
+_i=0
+tty_getc() {
+    if (( _i >= ${#_keys[@]} )); then
+        return 1
+    fi
+    printf -v "$1" "%s" "${_keys[_i]}"
+    _i=$((_i + 1))
+    return 0
+}
+tty_pending() { (( _i < ${#_keys[@]} )); }
+prompt --type text "Hostname" || exit 1
+[[ "$UI_PROMPT_RESULT" == host && "$UI_PROMPT_ACTION" == submit ]]
+' || rc=$?
+    if [[ "$rc" -eq 0 ]]; then
+        bts_pass "a pasted line submits the text prompt"
+    else
+        bts_fail "text paste newline rc=$rc err=$(printf '%q' "${__PROMPT_ISOLATED_ERR}")"
+    fi
+
+    rc=0
+    _prompt_isolated '
 prompt --type pause
 ' || rc=$?
     if [[ "$rc" -eq 0 ]]; then
