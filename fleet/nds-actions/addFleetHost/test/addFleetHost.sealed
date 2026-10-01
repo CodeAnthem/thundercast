@@ -4,7 +4,6 @@ LEAF_PUSH_DIR="@SESSION@/work/leaf"
 LEAF_PUSH_MESSAGE="nds: new host webhost (role web)"
 BUNDLE_SAVE_ON_TARGET="false"
 [install]
-INSTALL_KIND="flake"
 INSTALL_MODE="local"
 INSTALL_ACTION="addFleetHost"
 [flake]

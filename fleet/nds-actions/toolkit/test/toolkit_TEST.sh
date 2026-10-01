@@ -27,16 +27,15 @@ flake_hostHasDisko() { return 1; }
 git_probe() { return 0; }
 
 suite_toolkit() {
-    local sealed text leaf seed files hooks
+    local sealed text leaf seed files
     nds_test_session
     mkdir -p "${ nds_session_dir secrets; }/git"
     # shellcheck source=../setup.sh
     source "$(dirname "${BASH_SOURCE[0]}")/../setup.sh"
-    hooks=${ eventHookCount cook.post_install; }
-    if [[ "$hooks" == 1 ]]; then
-        bts_pass "cook.post_install is registered"
+    if declare -f hook_cook >/dev/null; then
+        bts_pass "hook_cook is defined"
     else
-        bts_fail "cook.post_install count was ${hooks}"
+        bts_fail "hook_cook is missing"
     fi
     export NDS_MODE=unattended
     nds_mode_resolve

@@ -58,7 +58,8 @@ nds_toolkit_build_seed() {
 }
 
 nds_toolkit_seed_scripts_to_target() {
-    local _tk_mnt=$1 _tk_url=$2 _tk_dest="${_tk_mnt}/var/lib/nds-toolkit"
+    local _tk_mnt=$1 _tk_url=$2
+    local _tk_dest="${_tk_mnt}/var/lib/nds-toolkit"
     mkdir -p "$_tk_dest" || return 1
     git_clone "" "$_tk_url" "${_tk_dest}/src" || return 1
     ln -sfn src/fleet/toolkit "${_tk_dest}/current"
@@ -67,6 +68,34 @@ nds_toolkit_seed_scripts_to_target() {
     fi
 }
 
-_nds_toolkit_on_post_install() {
-    nds_toolkit_seed_scripts_to_target /mnt "https://github.com/CodeAnthem/thundercast.git"
+nds_toolkit_prepare() {
+    local -n _R=$1
+    local _tk_leaf _tk_seed _tk_host _tk_age _tk_ssh _tk_age_pub _tk_ssh_pub
+    _tk_leaf="${ nds_session_dir work; }/leaf"
+    _tk_seed="${ nds_session_dir seed; }"
+    _tk_host=${_R[FLAKE_HOST]:-control-toolkit}
+    mkdir -p "${_tk_leaf}/.nds/hosts"
+    if [[ ${_R[TOOLKIT_MODE]:-new} == restore ]]; then
+        nds_toolkit_restore_from_bundle "${_R[TOOLKIT_BUNDLE]:-}" "${ nds_session_dir secrets; }/toolkit"
+    fi
+    _tk_age=${_R[TOOLKIT_AGE_KEY_FILE]:-}
+    _tk_ssh=${_R[TOOLKIT_SSH_KEY_FILE]:-}
+    [[ -f "$_tk_age" && -f "$_tk_ssh" ]] || { error "toolkit: keys missing"; return 1; }
+    _tk_age_pub=$(awk -F': ' '/^# public key: / { print $2; exit }' "$_tk_age")
+    _tk_ssh_pub=$(<"${_tk_ssh}.pub")
+    nds_toolkit_write_operator_pubs "$_tk_leaf" "$_tk_age_pub" "$_tk_ssh_pub"
+    nds_toolkit_ensure_sops "$_tk_leaf"
+    nds_toolkit_build_seed "$_tk_seed" "$_tk_age" "$_tk_ssh" "${_tk_ssh}.pub"
+    nds_recipe_set "$1" TARGET_SEED_DIR "$_tk_seed"
+    nds_recipe_set "$1" LEAF_PUSH_DIR "$_tk_leaf"
+    nds_recipe_set "$1" LEAF_PUSH_MESSAGE "nds: toolkit ${_R[TOOLKIT_MODE]:-new} host ${_tk_host}"
+    declare -f nds_requireUtility >/dev/null && nds_requireUtility sops
+    sops_writeLeafPub "$1" "$_tk_leaf"
+    nds_recipe_export "$1" "${_tk_leaf}/.nds/hosts/${_tk_host}.recipe" --portable
+}
+
+nds_toolkit_clone_scripts() {
+    local -n _R=$1
+    local _tk_url=${_R[TOOLKIT_CLONE_URL]:-https://github.com/CodeAnthem/thundercast.git}
+    nds_toolkit_seed_scripts_to_target "${_NDS_TARGET_ROOT:-/mnt}" "$_tk_url"
 }
