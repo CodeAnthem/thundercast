@@ -20,18 +20,10 @@ suite_mode() {
     bts_section "Resolve"
     _mode_reset
     nds_mode_resolve || { bts_fail "default resolve failed"; return; }
-    if [[ -t 0 ]]; then
-        if [[ "$NDS_MODE" == interactive ]] && nds_mode_is_interactive; then
-            bts_pass "a terminal defaults to interactive"
-        else
-            bts_fail "terminal mode was '${NDS_MODE}'"
-        fi
+    if [[ "$NDS_MODE" == interactive ]] && nds_mode_is_interactive; then
+        bts_pass "an unset mode stays interactive"
     else
-        if [[ "$NDS_MODE" == unattended ]] && nds_mode_is_unattended; then
-            bts_pass "no terminal defaults to unattended"
-        else
-            bts_fail "non-terminal mode was '${NDS_MODE}'"
-        fi
+        bts_fail "default mode was '${NDS_MODE}'"
     fi
 
     _mode_reset

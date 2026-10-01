@@ -11,13 +11,15 @@ logger_setMinLevel warn
 
 _main_run() {
     local rc=0
-    env -i \
+    # setsid drops the controlling terminal so chrome cannot paint this session.
+    # ROOTREEXEC_ROOT=false stops main.sh from exec'ing sudo.
+    setsid -w env -i \
         PATH="$PATH" \
         HOME="${HOME:-/tmp}" \
         TMPDIR="${TMPDIR:-/tmp}" \
         NDS_TEST_BIN_DIR="$NDS_TEST_BIN_DIR" \
         NDS_TEST_BIN_LOG="$NDS_TEST_BIN_LOG" \
-        ROOTREEXEC_ROOT= \
+        ROOTREEXEC_ROOT=false \
         _NDS_TARGET_ROOT="$_NDS_TARGET_ROOT" \
         NDS_MODE=unattended \
         NDS_ENCRYPTION=false \
@@ -27,7 +29,7 @@ _main_run() {
         NDS_NETWORK_HOSTNAME=host \
         "$@" \
         bash "$(dirname "${BASH_SOURCE[0]}")/main.sh" --unattended \
-        >"${_main_out}" 2>"${_main_err}" || rc=$?
+        </dev/null >"${_main_out}" 2>"${_main_err}" || rc=$?
     printf '%s\n' "$rc"
 }
 

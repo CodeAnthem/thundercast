@@ -21,7 +21,7 @@ _nds_load_essentials() {
         [LOG_INDENT]="2"
         [LOG_COLOR]="true"
         [LOG_COMPOSE_FILENAME]="nds.log"
-        [ROOTREEXEC_ROOT]="true"
+        [ROOTREEXEC_ROOT]="${ROOTREEXEC_ROOT:-true}"
         [ROOTREEXEC_SCRIPT]="${app_dir}/main.sh"
         [ROOTREEXEC_PURPOSE]="NixOS deployment"
         [ROOTREEXEC_KEEP_ENV_PREFIX]="NDS_"
@@ -108,6 +108,11 @@ main() {
         return 0
     fi
     [[ "$rc" -eq 0 ]] || return "$rc"
+
+    # curl | bash leaves stdin on the pipe. Prompts read the terminal.
+    if [[ ! -t 0 ]]; then
+        exec </dev/tty || true
+    fi
 
     tty_guardEnable
     chrome_begin
