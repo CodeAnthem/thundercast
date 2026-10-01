@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # ==================================================================================================
-# NDS - Cook EFI registration
+# NDS - Cook bootloader registration
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-09-26 | Modified: 2026-09-26
-# Description:   Register the firmware entry. No-op unless the recipe is UEFI.
+# Date:          Created: 2026-09-26 | Modified: 2026-09-29
+# Description:   UEFI registers the firmware entry. BIOS is a no-op; nixos-install wrote GRUB.
 # ==================================================================================================
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
-step_efi() {
+step_bootloader() {
     local -n _R=$1
     local _efi_path
     [[ ${_R[BOOT_UEFI_MODE]:-} == true ]] || return 0

@@ -37,8 +37,8 @@ _nds_cook_preflight_warn_lines() {
 
 nds_cook_preflight_local() {
     local _pre_disk=${1:-} _pre_uefi=${2:-} _pre_loader=${3:-}
-    command -v nix >/dev/null || { error "INSTALL_KIND: nix not found"; return 1; }
-    command -v nixos-install >/dev/null || { error "INSTALL_KIND: nixos-install not found"; return 1; }
+    command -v nix >/dev/null || { error "nix: not found"; return 1; }
+    command -v nixos-install >/dev/null || { error "nixos-install: not found"; return 1; }
     if [[ -n "$_pre_disk" ]] && ! disk_canUse "$_pre_disk"; then
         error "DISK_TARGET: not found"
         return 1
@@ -55,7 +55,7 @@ nds_cook_preflight_local() {
 
 nds_cook_preflight_remote() {
     local _pre_ip=$1
-    command -v nix >/dev/null || { error "INSTALL_KIND: nix not found"; return 1; }
+    command -v nix >/dev/null || { error "nix: not found"; return 1; }
     [[ -n "$_pre_ip" ]] || { error "REMOTE_TARGET_IP: required"; return 1; }
 }
 
@@ -70,17 +70,20 @@ nds_cook_preflight() {
         _nds_cook_preflight_warn_lines "$1"
         return 0
     fi
-    [[ ${_R[INSTALL_KIND]:-} == classic || ${_R[INSTALL_KIND]:-} == flake ]] || {
-        error "INSTALL_KIND: unsupported"
-        return 1
-    }
-    if [[ ${_R[INSTALL_MODE]:-} == remote ]]; then
+    local _pre_phases=" ${_R[COOK_PHASES]:-} "
+    nds_check_phases "$1" || return 1
+    if [[ "$_pre_phases" == *" install_anywhere "* ]]; then
         nds_cook_preflight_remote "${_R[REMOTE_TARGET_IP]:-}" || return 1
-    elif [[ ${_R[DISK_STRATEGY]:-nds} != flake ]]; then
+    fi
+    if [[ "$_pre_phases" == *" install_classic "* || "$_pre_phases" == *" install_flake "* \
+        || "$_pre_phases" == *" install_anywhere "* ]]; then
+        command -v nix >/dev/null || { error "nix: not found"; return 1; }
+    fi
+    if [[ "$_pre_phases" == *" install_classic "* || "$_pre_phases" == *" install_flake "* ]]; then
+        command -v nixos-install >/dev/null || { error "nixos-install: not found"; return 1; }
+    fi
+    if [[ "$_pre_phases" == *" disk "* && ${_R[DISK_STRATEGY]:-nds} != flake ]]; then
         nds_cook_preflight_local "${_R[DISK_TARGET]:-}" "${_R[BOOT_UEFI_MODE]:-}" \
             "${_R[BOOT_LOADER]:-}" || return 1
-    else
-        command -v nix >/dev/null || { error "INSTALL_KIND: nix not found"; return 1; }
-        command -v nixos-install >/dev/null || { error "INSTALL_KIND: nixos-install not found"; return 1; }
     fi
 }

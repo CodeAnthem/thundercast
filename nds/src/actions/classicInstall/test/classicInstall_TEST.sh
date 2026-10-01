@@ -32,7 +32,6 @@ suite_classicInstall() {
     export NDS_BOOT_LOADER=grub
     declare -gA _NDS_RECIPE=()
     nds_pipeline_recipe _NDS_RECIPE local classicInstall || { bts_fail "unattended cook failed"; return; }
-    nds_recipe_materialize _NDS_RECIPE || { bts_fail "materialize failed"; return; }
     sealed="${ nds_session_dir recipe; }/sealed.recipe"
     nds_recipe_seal _NDS_RECIPE "$sealed" || { bts_fail "seal failed"; return; }
     session=$_NDS_TEST_SESSION

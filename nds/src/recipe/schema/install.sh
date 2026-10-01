@@ -8,8 +8,6 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 nds_schema_group install "Install"
-nds_schema_field install INSTALL_KIND choice --required \
-    --choices 'classic|flake' --labels 'classic=Classic|flake=Flake' --label 'Install kind'
 nds_schema_field install INSTALL_MODE choice --default local \
     --choices 'local|remote' --labels 'local=On target|remote=From operator' --label 'Install mode'
 nds_schema_field install INSTALL_ACTION string --label 'Install action'

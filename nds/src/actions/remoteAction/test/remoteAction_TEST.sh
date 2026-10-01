@@ -81,7 +81,11 @@ suite_remoteAction() {
     sealed="${ nds_session_dir recipe; }/sealed.recipe"
     nds_recipe_seal _NDS_RECIPE "$sealed" || { bts_fail "seal failed"; return; }
     text=$(<"$sealed")
-    assert_contains "$text" 'INSTALL_KIND="flake"' "sealed file pins INSTALL_KIND"
+    if [[ "$text" == *INSTALL_KIND* ]]; then
+        bts_fail "sealed file still has INSTALL_KIND"
+    else
+        bts_pass "sealed file has no install kind"
+    fi
     assert_contains "$text" 'INSTALL_ACTION="remoteAction"' "sealed file keeps remoteAction"
     assert_contains "$text" 'CATALOG_ACTION="good"' "sealed file keeps the catalog action"
     rm -rf "$_cat_fix"

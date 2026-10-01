@@ -125,10 +125,37 @@ _nds_wizard_field_bad() {
     return 1
 }
 
+nds_ask_if_empty() {
+    local _ask_name=$1 _ask_key=$2 _ask_fn=${3:-}
+    [[ ${_NDS_ANSWERED[$_ask_key]:-} == 1 ]] && return 0
+    nds_mode_is_interactive || return 0
+    if [[ -n "$_ask_fn" ]]; then
+        "$_ask_fn" "$_ask_name" "$_ask_key"
+        return
+    fi
+    _nds_wizard_ask_one "$_ask_name" "$_ask_key"
+}
+
+nds_ask_groups_if_empty() {
+    local _ask_name=$1 _ask_group _ask_key
+    shift
+    for _ask_group in "$@"; do
+        nds_schema_enable "$_ask_group"
+        if [[ "$_ask_group" == disk ]] && declare -f nds_flake_note_disko >/dev/null; then
+            nds_flake_note_disko "$_ask_name"
+        fi
+        while IFS= read -r _ask_key; do
+            [[ -n "$_ask_key" ]] || continue
+            nds_ask_if_empty "$_ask_name" "$_ask_key"
+        done < <(nds_schema_groupFields "$_ask_group")
+    done
+}
+
 _nds_wizard_ask_one() {
     local _wiz_name=$1 _wiz_key=$2 _wiz_fn _wiz_rc=0
     nds_schema_isActive "$_wiz_name" "$_wiz_key" || return 0
     nds_schema_isLocked "$_wiz_key" && return 0
+    [[ ${_NDS_ANSWERED[$_wiz_key]:-} == 1 ]] && return 0
     _nds_wiz_asked=$((_nds_wiz_asked + 1))
     _wiz_fn=$(nds_schema_attr "$_wiz_key" ask)
     if [[ -z "$_wiz_fn" ]] || ! declare -f "$_wiz_fn" >/dev/null; then
@@ -156,6 +183,9 @@ _nds_wizard_ask_all() {
     while IFS= read -r _wiz_group; do
         [[ -n "$_wiz_group" ]] || continue
         nds_schema_groupIsActive "$_wiz_name" "$_wiz_group" || continue
+        if [[ "$_wiz_group" == disk ]] && declare -f nds_flake_note_disko >/dev/null; then
+            nds_flake_note_disko "$_wiz_name"
+        fi
         _nds_wizard_ask_group "$_wiz_name" "$_wiz_group" || return 1
     done < <(nds_schema_groups)
 }

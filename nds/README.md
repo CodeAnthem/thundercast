@@ -18,7 +18,7 @@ nds/
   src/wizard/              interactive fill, askers, git access
   src/cook/                birth from a sealed recipe
   src/utilities/           disk, nixos, nixcfg, git, flake, and the other tools
-  src/actions/             classicInstall, installFlake, apply, remoteAction, test, uiSmoke
+  src/actions/             classicInstall, installFlake, remoteAction, test, uiSmoke
   dev/                     selftest and shellcheck
 ```
 
@@ -31,8 +31,8 @@ bash nds/src/app/main.sh --unattended --action classicInstall
 bash nds/src/app/main.sh --yes
 bash nds/src/app/main.sh --skip action.preview,recipe.summary
 bash nds/src/app/main.sh --reboot
-bash nds/src/app/main.sh apply /path/to/host.recipe
-bash nds/src/app/main.sh apply /path/nds_bundle.zip --unattended
+bash nds/src/app/main.sh --import /path/to/host.recipe
+bash nds/src/app/main.sh --restore /path/nds_bundle.zip
 ```
 
 ## Tests

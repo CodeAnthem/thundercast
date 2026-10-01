@@ -5,7 +5,7 @@ Write when the installer story is stable. Prefer short how-tos over essays.
 ## Todo
 
 - [ ] Live ISO quickstart (curl `nds/start.sh`, BIOS/UEFI notes)
-- [ ] Action matrix: classicInstall / installFlake / apply / remoteAction
+- [ ] Action matrix: classicInstall / installFlake / remoteAction
 - [ ] Unattended env reference (`NDS_*`) — draft notes in `nds/.wip/reference.md`
 - [ ] LUKS + remote unlock — draft notes in `nds/.wip/reference.md`
 - [ ] Bundle / recipe restore

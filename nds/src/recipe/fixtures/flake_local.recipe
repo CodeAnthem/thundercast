@@ -1,6 +1,7 @@
 # nds-recipe 1
+[cook]
+COOK_PHASES="disk stage_flake hardware_facter write_generated_host host_structure stage_host_files prefetch eval install_flake bootloader verify"
 [install]
-INSTALL_KIND="flake"
 INSTALL_MODE="local"
 [network]
 NETWORK_HOSTNAME="host"

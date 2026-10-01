@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Install from a flake
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-01 | Modified: 2026-09-26
+# Date:          Created: 2026-07-01 | Modified: 2026-10-01
 # Description:   Install NixOS from a local or remote flake
 # ==================================================================================================
 
@@ -17,6 +17,25 @@ action_preview() {
     ui_b "Choose the flake, the host, git access, boot, disk, and encryption."
 }
 
-action_pins() {
-    printf '%s\n' INSTALL_KIND=flake
+hook_access() {
+    nds_access_read "$1" FLAKE_LOCATION
+}
+
+hook_ask() {
+    nds_ask_if_empty "$1" FLAKE_HOST nds_ask_flakeHost
+    nds_ask_if_empty "$1" INSTALL_MODE
+    if [[ $(nds_recipe_get "$1" INSTALL_MODE) == remote ]]; then
+        nds_ask_if_empty "$1" REMOTE_TARGET_IP
+        return 0
+    fi
+    nds_flake_note_disko "$1"
+    nds_ask_groups_if_empty "$1" network access boot disk encryption
+}
+
+hook_material() {
+    nds_materialize "$1"
+}
+
+hook_cook() {
+    nds_install_flake "$1"
 }

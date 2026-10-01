@@ -16,11 +16,31 @@ _nds_flake_tool() {
     return 1
 }
 
+_nds_flake_plan_needs() {
+    local _nds_flake_phases=" ${1:-} "
+    [[ "$_nds_flake_phases" == *" stage_flake "* || "$_nds_flake_phases" == *" install_flake "* \
+        || "$_nds_flake_phases" == *" install_anywhere "* || "$_nds_flake_phases" == *" hardware_facter "* ]]
+}
+
 nds_check_flake() {
     local _nds_flake_name=$1
     local -n _nds_flake_aa=$1
     local _nds_flake_n=0 _nds_flake_tools=0 _nds_flake_dest="" _nds_flake_hosts="" _nds_flake_host _nds_flake_found=0
-    local _nds_flake_url _nds_flake_rev _nds_flake_nar _nds_flake_lock
+    local _nds_flake_url _nds_flake_rev _nds_flake_nar _nds_flake_lock _nds_flake_need=0
+    case ${_nds_flake_aa[INSTALL_ACTION]:-} in
+        installFlake|toolkit|addFleetHost) _nds_flake_need=1 ;;
+    esac
+    if _nds_flake_plan_needs "${_nds_flake_aa[COOK_PHASES]:-}"; then
+        _nds_flake_need=1
+    fi
+    if [[ -z ${_nds_flake_aa[FLAKE_LOCATION]:-} && -z ${_nds_flake_aa[FLAKE_REPO_URL]:-} \
+        && -z ${_nds_flake_aa[FLAKE_LOCAL_PATH]:-} && -z ${_nds_flake_aa[FLAKE_HOST]:-} ]]; then
+        if (( _nds_flake_need )); then
+            error "FLAKE_LOCATION: required"
+            return 1
+        fi
+        return 0
+    fi
     if [[ ${_nds_flake_aa[INSTALL_MODE]:-} == remote && -z ${_nds_flake_aa[REMOTE_TARGET_IP]:-} ]]; then
         error "REMOTE_TARGET_IP: required"
         _nds_flake_n=$((_nds_flake_n + 1))
@@ -82,8 +102,22 @@ nds_check_flake() {
     return "$_nds_flake_n"
 }
 
-nds_schema_group flake "Flake" --when 'INSTALL_KIND=flake' --check nds_check_flake
-nds_schema_field flake FLAKE_LOCATION string --required --ask nds_ask_flakeLocation --label 'Flake location'
+nds_flake_note_disko() {
+    local _nds_flake_name=$1 _nds_flake_root _nds_flake_host
+    _nds_flake_host=$(nds_recipe_get "$_nds_flake_name" FLAKE_HOST)
+    [[ -n "$_nds_flake_host" ]] || return 0
+    declare -f flake_hostHasDisko >/dev/null || return 0
+    declare -f _nds_ask_flake_root >/dev/null || return 0
+    _nds_flake_root=${ _nds_ask_flake_root "$_nds_flake_name"; }
+    [[ -d "$_nds_flake_root" ]] || return 0
+    if flake_hostHasDisko "$_nds_flake_root" "$_nds_flake_host" \
+        "$(nds_recipe_get "$_nds_flake_name" FLAKE_HOST_DIR)"; then
+        nds_recipe_set "$_nds_flake_name" DISK_STRATEGY flake
+    fi
+}
+
+nds_schema_group flake "Flake" --check nds_check_flake
+nds_schema_field flake FLAKE_LOCATION string --ask nds_ask_flakeLocation --label 'Flake location'
 nds_schema_field flake FLAKE_SOURCE choice --default remote \
     --choices 'remote|local' --labels 'remote=Git URL|local=Local path' --label 'Flake source'
 nds_schema_field flake FLAKE_REPO_URL url --when 'FLAKE_SOURCE=remote' --label 'Flake repository URL'
@@ -93,7 +127,7 @@ nds_detect_flakeInstallPath() {
 }
 
 nds_schema_field flake FLAKE_INSTALL_PATH path --detect nds_detect_flakeInstallPath --label 'Flake path on installed disk'
-nds_schema_field flake FLAKE_HOST hostname --required --ask nds_ask_flakeHost --label 'Flake host'
+nds_schema_field flake FLAKE_HOST hostname --ask nds_ask_flakeHost --label 'Flake host'
 nds_schema_field flake FLAKE_HOST_DIR string --default 'hosts/x86_64-linux' --label 'Host directory'
 nds_schema_field flake FLAKE_HARDWARE_PLACEMENT choice --default 'host-dir' \
     --choices 'host-dir|etc-nixos|skip' \

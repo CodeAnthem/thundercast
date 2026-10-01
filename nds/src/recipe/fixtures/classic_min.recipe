@@ -1,6 +1,7 @@
 # nds-recipe 1
+[cook]
+COOK_PHASES="disk write_classic hardware_nix copy_configs install_classic bootloader verify"
 [install]
-INSTALL_KIND="classic"
 INSTALL_MODE=local
 [region]
 REGION_TIMEZONE="UTC"

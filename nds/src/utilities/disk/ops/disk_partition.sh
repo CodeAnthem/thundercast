@@ -61,7 +61,6 @@ disk_partition() {
 
     verbose "Partitioning disk: $disk (firmware: $([[ "$uefi_mode" == "true" ]] && echo UEFI || echo BIOS))"
     verbose "Cleaning up existing partitions"
-    _disk_quiet umount -R /mnt
     _disk_quiet cryptsetup close cryptroot
 
     for part in "${disk}"*; do

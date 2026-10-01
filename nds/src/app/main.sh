@@ -34,7 +34,6 @@ _nds_load_essentials() {
         [RUNTIME_SUBDIRS]="recipe secrets config seed work logs"
         [RUNTIME_PURGE_STALE]="true"
         [UI_MODE]="auto"
-        [CHROME_HOLD]="${NDS_CHROME_HOLD:-false}"
     )
 
     # shellcheck source=../../../utilities/essentials/essentials.sh

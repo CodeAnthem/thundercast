@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Classic install action
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-06-29 | Modified: 2026-09-26
+# Date:          Created: 2026-06-29 | Modified: 2026-10-01
 # Description:   Install NixOS from a generated configuration
 # ==================================================================================================
 
@@ -18,6 +18,14 @@ action_preview() {
     ui_b "NDS then writes the configuration and installs NixOS."
 }
 
-action_pins() {
-    printf '%s\n' INSTALL_KIND=classic
+hook_ask() {
+    nds_ask_groups_if_empty "$1" region network access boot disk encryption platform
+}
+
+hook_material() {
+    nds_materialize "$1"
+}
+
+hook_cook() {
+    nds_install_classic "$1"
 }

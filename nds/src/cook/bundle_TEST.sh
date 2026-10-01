@@ -68,12 +68,13 @@ suite_bundle() {
         unzip -q "$out" -d "$recipe"
     fi
     if [[ "$listing" == *nds-restore.recipe* && "$listing" == *secrets/admin* \
-        && "$listing" == *config/note.txt* && "$listing" == *seed/marker* \
-        && "$listing" == *logs/nds.log* && "$listing" == *QUICK_START.md* \
+        && "$listing" != *config/note.txt* && "$listing" != *seed/marker* \
+        && "$listing" != *logs/nds.log* && "$listing" == *QUICK_START.md* \
         && "$listing" == *extras/note.txt* \
         && $(<"$recipe/nds-restore.recipe") == *'ACCESS_ADMIN_PASSWORD_FILE="secrets/admin"'* \
-        && $(<"$recipe/nds-restore.recipe") != *LEAF_PUSH_* ]]; then
-        bts_pass "bundle lists the restore recipe, session files, and collected extra"
+        && $(<"$recipe/nds-restore.recipe") != *LEAF_PUSH_* \
+        && $(<"$recipe/nds-restore.recipe") != *TARGET_SEED_DIR* ]]; then
+        bts_pass "bundle keeps the recipe, secrets, and collected extra"
     else
         bts_fail "bundle listing was '${listing}'"
     fi

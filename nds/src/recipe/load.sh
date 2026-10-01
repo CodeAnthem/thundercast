@@ -115,6 +115,44 @@ _nds_recipe_applyValue() {
     nds_recipe_set "$_nds_load_name" "$_nds_load_key" "$_nds_load_value"
 }
 
+nds_recipe_fileKey() {
+    local _nds_load_file=$1 _nds_load_want=$2 _nds_load_line _nds_load_value
+    [[ -f "$_nds_load_file" ]] || { error "recipe: file not found"; return 1; }
+    while IFS= read -r _nds_load_line || [[ -n "$_nds_load_line" ]]; do
+        [[ "$_nds_load_line" == "${_nds_load_want}="* ]] || continue
+        _nds_load_key=${_nds_load_line%%=*}
+        _nds_load_value=${_nds_load_line#*=}
+        if [[ "$_nds_load_value" == '"'*'"' && ${#_nds_load_value} -ge 2 ]]; then
+            _nds_load_value=${_nds_load_value:1:${#_nds_load_value}-2}
+            _nds_load_value=${ _nds_recipe_unescape "$_nds_load_value"; }
+        fi
+        printf '%s\n' "$_nds_load_value"
+        return 0
+    done < "$_nds_load_file"
+    error "${_nds_load_want}: missing"
+    return 1
+}
+
+nds_recipe_unpackBundle() {
+    local _nds_load_src=$1 _nds_load_dest
+    _nds_load_dest="${ nds_session_dir work; }/restore"
+    rm -rf "$_nds_load_dest"
+    mkdir -p "$_nds_load_dest"
+    case "$_nds_load_src" in
+        *.zip) _nds_recipe_extractZip "$_nds_load_src" "$_nds_load_dest" ;;
+        *.tar.gz|*.tgz) tar -xzf "$_nds_load_src" -C "$_nds_load_dest" ;;
+        *)
+            error "--restore: expected a zip or tar.gz"
+            return 1
+            ;;
+    esac
+    [[ -f "${_nds_load_dest}/nds-restore.recipe" ]] || {
+        error "bundle: nds-restore.recipe missing"
+        return 1
+    }
+    printf '%s\n' "${_nds_load_dest}/nds-restore.recipe"
+}
+
 nds_recipe_loadFile() {
     local _nds_load_name=$1 _nds_load_file=$2
     local _nds_load_line _nds_load_key _nds_load_value _nds_load_dir _nds_load_dest

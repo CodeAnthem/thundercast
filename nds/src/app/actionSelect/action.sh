@@ -41,12 +41,28 @@ _nds_action_load() {
     import_file "$setup"
 }
 
+# Preview sources setup.sh in a copy of this process. eventRegister there
+# does not exist here. The parent sources the file only after accept.
+_nds_action_preview_in_subshell() {
+    local setup rc=0
+    setup="${ _nds_action_store_path local "$NDS_CURRENT_ACTION"; }"
+    (
+        import_file "$setup" || exit 1
+        _nds_action_ui_preview
+        exit $?
+    ) || rc=$?
+    return "$rc"
+}
+
 _nds_action_preview_skipped() {
+    if [[ -n ${NDS_IMPORT:-} || -n ${NDS_RESTORE_FILE:-} ]]; then
+        return 1
+    fi
     nds_skip action.preview
 }
 
 _nds_action_clear_sourced() {
-    unset -f action_groups action_preview action_defaults action_pins action_recipe
+    unset -f action_groups action_preview action_defaults action_pins action_recipe action_plan action_access
 }
 
 # Add setup.sh folders from one directory. Does not clear the store.
@@ -81,14 +97,17 @@ nds_action_select() {
             _nds_action_ui_select || return $?
         fi
 
-        _nds_action_load || return 1
         if _nds_action_preview_skipped; then
+            _nds_action_load || return 1
             return 0
         fi
 
         rc=0
-        _nds_action_ui_preview || rc=$?
-        [[ "$rc" -eq 0 ]] && return 0
+        _nds_action_preview_in_subshell || rc=$?
+        if [[ "$rc" -eq 0 ]]; then
+            _nds_action_load || return 1
+            return 0
+        fi
         if [[ "$rc" -eq 2 ]]; then
             if [[ -n "${NDS_ACTION:-}" ]]; then
                 error "Cannot go back — NDS_ACTION is set to ${NDS_ACTION}"

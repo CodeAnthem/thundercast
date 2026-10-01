@@ -44,24 +44,7 @@ _bundle_rewrite_paths() {
         cp -a "${_R[GIT_KEYS_DIR]}/." "${_bundle_stage}/secrets/git/" || return 1
         nds_recipe_set "$_bundle_name" GIT_KEYS_DIR secrets/git
     fi
-    if [[ -n ${_R[TARGET_SEED_DIR]:-} && -d ${_R[TARGET_SEED_DIR]} ]]; then
-        mkdir -p "${_bundle_stage}/seed"
-        cp -a "${_R[TARGET_SEED_DIR]}/." "${_bundle_stage}/seed/" || return 1
-        nds_recipe_set "$_bundle_name" TARGET_SEED_DIR seed
-    fi
-    unset '_R[LEAF_PUSH_DIR]' '_R[LEAF_PUSH_MESSAGE]'
-}
-
-_bundle_copy_scope_logs() {
-    local _bundle_stage=$1 _bundle_compose="" _bundle_install=""
-    mkdir -p "${_bundle_stage}/logs"
-    nds_logs_compose
-    _bundle_compose=$(logger_scopeGetPath internal_compose)
-    _bundle_install=$(logger_scopeGetPath install)
-    [[ -f "$_bundle_compose" ]] && cp "$_bundle_compose" "${_bundle_stage}/logs/nds.log"
-    [[ -f "$_bundle_install" ]] && cp "$_bundle_install" "${_bundle_stage}/logs/nixosInstallation.log"
-    [[ -f "${_bundle_stage}/logs/nds.log" ]] || : > "${_bundle_stage}/logs/nds.log"
-    [[ -f "${_bundle_stage}/logs/nixosInstallation.log" ]] || : > "${_bundle_stage}/logs/nixosInstallation.log"
+    unset '_R[LEAF_PUSH_DIR]' '_R[LEAF_PUSH_MESSAGE]' '_R[TARGET_SEED_DIR]'
 }
 
 _bundle_save_on_target() {
@@ -85,13 +68,6 @@ _bundle_save_on_target() {
     info "Bundle on the installed system: ${_bundle_dest}"
 }
 
-_bundle_copy_tree() {
-    local _bundle_src=$1 _bundle_dest=$2
-    [[ -d "$_bundle_src" ]] || return 0
-    mkdir -p "$_bundle_dest"
-    cp -a "${_bundle_src}/." "$_bundle_dest/" 2>/dev/null || true
-}
-
 nds_bundle() {
     local -A R=()
     local _bundle_file=$1 _bundle_stage _bundle_user _bundle_home _bundle_out _bundle_n=0
@@ -101,11 +77,8 @@ nds_bundle() {
     (( _bundle_n == 0 )) || return 1
     _bundle_stage=$(mktemp -d)
     _NDS_BUNDLE_STAGE=$_bundle_stage
-    mkdir -p "${_bundle_stage}/secrets" "${_bundle_stage}/config" "${_bundle_stage}/logs"
+    mkdir -p "${_bundle_stage}/secrets"
     _bundle_rewrite_paths R "$_bundle_stage" || return 1
-    _bundle_copy_tree "$(nds_session_dir config)" "${_bundle_stage}/config"
-    _bundle_copy_tree "$(nds_session_dir logs)" "${_bundle_stage}/logs"
-    _bundle_copy_scope_logs "$_bundle_stage"
     nds_recipe_export R "${_bundle_stage}/nds-restore.recipe" || return 1
     nds_bundle_quickstart R "${_bundle_stage}/QUICK_START.md" || return 1
     eventRun bundle.collect R || return 1

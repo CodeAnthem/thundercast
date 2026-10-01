@@ -41,7 +41,6 @@ suite_installFlake() {
     nds_test_stubBins systemd-detect-virt age-keygen
     declare -gA _NDS_RECIPE=()
     nds_pipeline_recipe _NDS_RECIPE local installFlake || { bts_fail "unattended cook failed"; return; }
-    nds_recipe_materialize _NDS_RECIPE || { bts_fail "materialize failed"; return; }
     sealed="${ nds_session_dir recipe; }/sealed.recipe"
     nds_recipe_seal _NDS_RECIPE "$sealed" || { bts_fail "seal failed"; return; }
     text=$(<"$sealed")

@@ -2,7 +2,7 @@
 # ==================================================================================================
 # NDS - Remote catalog action
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Date:          Created: 2026-07-01 | Modified: 2026-09-26
+# Date:          Created: 2026-07-01 | Modified: 2026-10-01
 # Description:   Clone a catalog and cook the named action after its preview
 # ==================================================================================================
 
@@ -17,28 +17,11 @@ action_preview() {
     ui_b "Clone the catalog, accept that action, then cook its recipe."
 }
 
-action_pins() {
-    printf '%s\n' INSTALL_KIND=flake
+hook_access() {
+    nds_access_read "$1" CATALOG_URL
 }
 
-action_recipe() {
-    local -n _R=$1
-    local _cat_dir _cat_name _cat_setup
-    _cat_dir="${ nds_session_dir work; }/catalog"
-    if [[ ! -d "${_cat_dir}/.git" ]]; then
-        git_clone "${_R[GIT_KEYS_DIR]:-}" "${_R[CATALOG_URL]}" "$_cat_dir" || return 1
-    fi
-    nds_action_discover remote "${_cat_dir}/.nds/actions" || return 1
-    _cat_name=${_R[CATALOG_ACTION]:-}
-    _nds_action_store_has remote "$_cat_name" || {
-        error "CATALOG_ACTION: not in the catalog"
-        return 1
-    }
-    _cat_setup="${_cat_dir}/.nds/actions/${_cat_name}/setup.sh"
-    _nds_action_clear_sourced
-    import_file "$_cat_setup" || return 1
-    if ! nds_skip action.preview; then
-        _nds_action_ui_preview || return 1
-    fi
-    nds_pipeline_recipe "$1" remote "$_cat_name" || return 1
+hook_ask() {
+    nds_ask_if_empty "$1" CATALOG_ACTION nds_ask_catalogAction
+    nds_catalog_load "$1"
 }

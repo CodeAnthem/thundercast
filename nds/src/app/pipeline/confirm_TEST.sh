@@ -25,7 +25,7 @@ suite_confirm() {
     nds_mode_resolve
     unset NDS_YES NDS_SKIP NDS_SKIP_INSTALL_CONFIRM
     _file="${ nds_session_dir recipe; }/sealed.recipe"
-    printf '%s\n' 'INSTALL_KIND="classic"' 'INSTALL_MODE="local"' 'DISK_STRATEGY="flake"' > "$_file"
+    printf '%s\n' 'INSTALL_MODE="local"' 'DISK_STRATEGY="flake"' 'COOK_PHASES="disk install_classic"' > "$_file"
     prompt() { UI_PROMPT_RESULT=n; }
     if nds_confirm "$_file" 2>/dev/null; then
         bts_fail "decline returned success"

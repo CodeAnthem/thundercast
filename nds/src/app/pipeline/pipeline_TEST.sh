@@ -61,11 +61,11 @@ _pipe_reset() {
     _cook_path=
     _pipe_order=()
     _pipe_cooked=0
-    unset -f action_groups action_preview action_defaults action_pins action_recipe
+    unset -f action_groups action_preview action_defaults action_pins action_recipe action_plan
 }
 
 suite_pipeline() {
-    local sealed got rc root apply_root marker
+    local sealed got rc root
     nds_test_session
     _pipe_root=$(mktemp -d)
     _pipe_write_action "$_pipe_root" stub
@@ -146,34 +146,8 @@ suite_pipeline() {
         bts_fail "override value was '${got}'"
     fi
 
-    bts_section "Apply and remote"
+    bts_section "Remote"
     unset NDS_STUB_KEY NDS_RECIPE_FILE
-    marker=0
-    apply_hook() { :; }
-    mkdir -p "${_pipe_root}/loaded"
-    cat > "${_pipe_root}/loaded/setup.sh" <<'EOF'
-# Description: loaded by apply
-action_groups() { printf '%s\n' zzstub; }
-action_preview() { :; }
-action_recipe() { marker=1; }
-eventRegister recipe.done apply_hook
-EOF
-    nds_action_discover local "$_pipe_root" 2>/dev/null || true
-    printf '%s\n' 'INSTALL_ACTION=loaded' 'STUB_KEY=from-file' > "$(nds_session_dir recipe)/apply.recipe"
-    export NDS_RECIPE_FILE="$(nds_session_dir recipe)/apply.recipe"
-    export NDS_CURRENT_ACTION=apply
-    action_groups() { printf '%s\n' zzstub; }
-    action_preview() { :; }
-    unset -f action_recipe action_pins
-    declare -gA _NDS_RECIPE=()
-    nds_pipeline_recipe _NDS_RECIPE local apply || { bts_fail "apply cook failed"; return; }
-    if [[ "$marker" -eq 0 ]] && declare -f apply_hook >/dev/null; then
-        bts_pass "apply sources the recipe action and does not run its cook"
-    else
-        bts_fail "apply marker=${marker}"
-    fi
-
-    unset NDS_RECIPE_FILE
     export NDS_STUB_KEY=remote-env
     export NDS_CURRENT_ACTION=other
     action_groups() { printf '%s\n' zzstub; }

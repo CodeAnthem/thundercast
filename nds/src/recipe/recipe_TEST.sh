@@ -278,6 +278,7 @@ suite_recipe() {
     fi
 
     bts_section "Validate"
+    nds_schema_field zzcheck PROBE_REQ string --required
     nds_schema_enable install zzcheck
     _recipe_clear
     _recipe_checks=()
@@ -285,7 +286,7 @@ suite_recipe() {
     rc=0
     nds_recipe_validate R || rc=$?
     _recipe_unwatch
-    if [[ "$rc" -ge 1 ]] && [[ "$(_recipe_joined "${_errors[@]}")" == *INSTALL_KIND* ]]; then
+    if [[ "$rc" -ge 1 ]] && [[ "$(_recipe_joined "${_errors[@]}")" == *PROBE_REQ* ]]; then
         bts_pass "validate returns the problem count and names the key"
     else
         bts_fail "validate rc was ${rc} errors '${_errors[*]-}'"
@@ -302,14 +303,15 @@ suite_recipe() {
     _recipe_clear
     nds_recipe_loadFile R "${_RECIPE_FIX}/incomplete.recipe" 2>/dev/null || true
     rc=0
-    nds_recipe_seal R "$out" 2>/dev/null || rc=$?  # missing INSTALL_KIND
+    nds_recipe_seal R "$out" 2>/dev/null || rc=$?  # missing PROBE_REQ
     if [[ "$rc" -eq 1 && ! -e "$out" ]]; then
         bts_pass "seal refuses an incomplete recipe and writes nothing"
     else
         bts_fail "incomplete seal rc was ${rc}"
     fi
     _recipe_clear
-    nds_recipe_set R INSTALL_KIND classic
+    nds_recipe_set R PROBE_REQ set
+    nds_recipe_set R COOK_PHASES 'disk write_classic'
     nds_recipe_set R INSTALL_MODE local
     nds_recipe_set R PROBE_A 'a"b\c'
     a="${tmp}/a.recipe"
@@ -328,14 +330,15 @@ suite_recipe() {
     nds_schema_enable region network access flake
     _recipe_clear
     nds_recipe_loadFile R "${_RECIPE_FIX}/classic_min.recipe"
-    got=${ nds_recipe_get R INSTALL_KIND; }
+    got=${ nds_recipe_get R COOK_PHASES; }
     local mode_got tz_got
     mode_got=${ nds_recipe_get R INSTALL_MODE; }
     tz_got=${ nds_recipe_get R REGION_TIMEZONE; }
-    if [[ "$got" == classic && "$mode_got" == local && "$tz_got" == UTC ]]; then
+    if [[ "$got" == "disk write_classic hardware_nix copy_configs install_classic bootloader verify" \
+        && "$mode_got" == local && "$tz_got" == UTC ]]; then
         bts_pass "loadFile accepts KEY=v and KEY=\"v\""
     else
-        bts_fail "classic load was kind '${got}' mode '${mode_got}' tz '${tz_got}'"
+        bts_fail "classic load was phases '${got}' mode '${mode_got}' tz '${tz_got}'"
     fi
     tmp=$(mktemp)
     printf '%s\n' '# comment' '[ignored]' 'PROBE_A="a\"b\\c"' > "$tmp"
@@ -348,7 +351,7 @@ suite_recipe() {
     else
         bts_fail "unescaped value was '${got}'"
     fi
-    printf '%s\n' 'export INSTALL_KIND=classic' > "$tmp"
+    printf '%s\n' 'export COOK_PHASES=disk' > "$tmp"
     rc=0
     nds_recipe_loadFile R "$tmp" 2>/dev/null || rc=$?  # export prefix
     if [[ "$rc" -eq 1 ]]; then
@@ -479,13 +482,21 @@ suite_recipe() {
     else
         bts_fail "materialize rewrote the path count ${gen_n}"
     fi
+    rm -f "$path"
+    nds_recipe_materialize R
+    got=${ nds_recipe_get R PROBE_SECRET_FILE; }
+    if [[ "$gen_n" -eq 2 && -f "$got" ]]; then
+        bts_pass "materialize generates again when the secret file is absent"
+    else
+        bts_fail "absent secret count was ${gen_n}"
+    fi
     eval "$gen_saved"
     nds_test_session_drop
 
     bts_section "Portable"
     nds_schema_enable disk git
     _recipe_clear
-    nds_recipe_set R INSTALL_KIND classic
+    nds_recipe_set R COOK_PHASES 'disk write_classic'
     nds_recipe_set R INSTALL_MODE remote
     nds_recipe_set R REMOTE_TARGET_IP 10.1.1.1
     nds_recipe_set R DISK_TARGET /dev/vda
@@ -502,7 +513,7 @@ suite_recipe() {
     nds_recipe_export R "$out" --portable
     got=$(<"$out")
     rm -f "$out"
-    if [[ "$got" == *INSTALL_KIND* && "$got" == *GIT_PERSIST_ACCESS* \
+    if [[ "$got" == *COOK_PHASES* && "$got" == *GIT_PERSIST_ACCESS* \
         && "$got" != *DISK_TARGET* && "$got" != *REMOTE_TARGET_IP* \
         && "$got" != *GIT_KEYS_DIR* && "$got" != *LEAF_PUSH_DIR* \
         && "$got" != *LEAF_PUSH_MESSAGE* && "$got" != *TARGET_SEED_DIR* \

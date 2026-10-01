@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==================================================================================================
-# NDS - Cook plans
+# NDS - Cook phase runner
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Date:          Created: 2026-09-26 | Modified: 2026-09-26
 # ==================================================================================================
@@ -49,12 +49,12 @@ suite_cook() {
     printf '%s\n' '{ outputs = { ... }: {}; }' > "${flake}/flake.nix"
     out=$(mktemp)
 
-    bts_section "Plans"
+    bts_section "Phases"
     : >"$NDS_TEST_BIN_LOG"
     rc=0
     nds_cook "${_FIX}/incomplete.recipe" >/dev/null 2>/dev/null || rc=$? # validation
-    if [[ "$rc" -eq 1 && ! -s "$NDS_TEST_BIN_LOG" ]]; then
-        bts_pass "incomplete recipe returns 1 with no tool call"
+    if [[ "$rc" -eq 0 && ! -s "$NDS_TEST_BIN_LOG" ]]; then
+        bts_pass "a recipe with no phases returns 0 and calls no tool"
     else
         bts_fail "incomplete rc was ${rc}"
     fi
@@ -110,7 +110,8 @@ suite_cook() {
     _cook_variant "${_FIX}/flake_local.recipe" "$out" \
         FLAKE_LOCAL_PATH "$flake" FLAKE_INSTALL_PATH "${root}/etc/nixos" \
         ACCESS_ADMIN_PASSWORD_FILE "$pass" ENCRYPTION false \
-        LEAF_PUSH_DIR "$leaf" LEAF_PUSH_MESSAGE 'add host' GIT_KEYS_DIR "$keys"
+        LEAF_PUSH_DIR "$leaf" LEAF_PUSH_MESSAGE 'add host' GIT_KEYS_DIR "$keys" \
+        COOK_PHASES "leaf_push disk stage_flake hardware_facter write_generated_host host_structure stage_host_files prefetch eval install_flake bootloader verify"
     : >"$NDS_TEST_BIN_LOG"
     rc=0
     nds_cook "$out" >/dev/null 2>/dev/null || rc=$?
@@ -128,7 +129,8 @@ suite_cook() {
     _cook_variant "${_FIX}/flake_local.recipe" "$out" \
         FLAKE_LOCAL_PATH "$flake" FLAKE_INSTALL_PATH "${root}/etc/nixos" \
         ACCESS_ADMIN_PASSWORD_FILE "$pass" ENCRYPTION false \
-        TARGET_SEED_DIR "$seed"
+        TARGET_SEED_DIR "$seed" \
+        COOK_PHASES "disk stage_flake hardware_facter write_generated_host host_structure stage_host_files prefetch eval install_flake seed bootloader verify"
     : >"$NDS_TEST_BIN_LOG"
     rc=0
     nds_cook "$out" >/dev/null 2>/dev/null || rc=$?
@@ -138,10 +140,24 @@ suite_cook() {
         bts_fail "seed rc was ${rc}"
     fi
 
+    printf '%s\n' classic-seed > "${seed}/marker"
+    _cook_variant "${_FIX}/classic_min.recipe" "$out" \
+        ACCESS_ADMIN_PASSWORD_FILE "$pass" ENCRYPTION false \
+        TARGET_SEED_DIR "$seed" \
+        COOK_PHASES "disk write_classic hardware_nix copy_configs install_classic seed bootloader verify"
+    rc=0
+    nds_cook "$out" >/dev/null 2>/dev/null || rc=$?
+    if [[ "$rc" -eq 0 && $(<"${root}/marker") == classic-seed ]]; then
+        bts_pass "classic with a seed copies it onto the target"
+    else
+        bts_fail "classic seed rc was ${rc}"
+    fi
+
     _cook_variant "${_FIX}/flake_local.recipe" "$out" \
         FLAKE_LOCAL_PATH "$flake" FLAKE_INSTALL_PATH "${root}/etc/nixos" \
         ACCESS_ADMIN_PASSWORD_FILE "$pass" ENCRYPTION false \
-        INSTALL_MODE remote REMOTE_TARGET_IP 10.1.1.1 TARGET_SEED_DIR "$seed"
+        INSTALL_MODE remote REMOTE_TARGET_IP 10.1.1.1 TARGET_SEED_DIR "$seed" \
+        COOK_PHASES "stage_flake prefetch eval install_anywhere"
     : >"$NDS_TEST_BIN_LOG"
     rc=0
     nds_cook "$out" >/dev/null 2>/dev/null || rc=$?
@@ -151,6 +167,32 @@ suite_cook() {
         bts_pass "flake remote passes --extra-files when a seed is set"
     else
         bts_fail "remote log was '${log}' rc ${rc}"
+    fi
+
+    bts_section "Phase list"
+    _cook_variant "${_FIX}/classic_min.recipe" "$out" \
+        ACCESS_ADMIN_PASSWORD_FILE "$pass" ENCRYPTION false
+    sed -i 's/^COOK_PHASES=.*/COOK_PHASES="nope"/' "$out"
+    : >"$NDS_TEST_BIN_LOG"
+    rc=0
+    nds_cook "$out" >/dev/null 2>/dev/null || rc=$?
+    if [[ "$rc" -eq 1 && ! -s "$NDS_TEST_BIN_LOG" ]]; then
+        bts_pass "an unknown phase returns 1 with no tool call"
+    else
+        bts_fail "unknown phase rc was ${rc}"
+    fi
+    _cook_variant "${_FIX}/classic_min.recipe" "$out" \
+        ACCESS_ADMIN_PASSWORD_FILE "$pass" ENCRYPTION false \
+        COOK_PHASES "disk write_classic copy_configs install_classic bootloader verify"
+    : >"$NDS_TEST_BIN_LOG"
+    rc=0
+    nds_cook "$out" >/dev/null 2>/dev/null || rc=$?
+    log=$(<"$NDS_TEST_BIN_LOG")
+    if [[ "$rc" -eq 0 && "$log" == *"nixos-install --root ${root} "* \
+        && "$log" != *'nixos-generate-config'* ]]; then
+        bts_pass "omitting hardware_nix skips nixos-generate-config"
+    else
+        bts_fail "skip hardware rc was ${rc} log '${log}'"
     fi
 
     bts_section "Hooks"
@@ -190,7 +232,8 @@ suite_cook() {
     _cook_variant "${_FIX}/flake_local.recipe" "$out" \
         FLAKE_LOCAL_PATH "$flake" FLAKE_INSTALL_PATH "${root}/etc/nixos" \
         ACCESS_ADMIN_PASSWORD_FILE "$pass" ENCRYPTION false \
-        LEAF_PUSH_DIR "$leaf" LEAF_PUSH_MESSAGE 'add host' GIT_KEYS_DIR "$keys"
+        LEAF_PUSH_DIR "$leaf" LEAF_PUSH_MESSAGE 'add host' GIT_KEYS_DIR "$keys" \
+        COOK_PHASES "leaf_push disk stage_flake hardware_facter write_generated_host host_structure stage_host_files prefetch eval install_flake bootloader verify"
     : >"$NDS_TEST_BIN_LOG"
     rc=0
     nds_cook "$out" >/dev/null 2>/dev/null || rc=$?

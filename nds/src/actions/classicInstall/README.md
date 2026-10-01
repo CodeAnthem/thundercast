@@ -2,7 +2,7 @@
 
 Install NixOS from a generated `configuration.nix`. No flake.
 
-Groups: `install region network access boot disk encryption platform`. Pin: `INSTALL_KIND=classic`. No `action_recipe`.
+Groups: `install region network access boot disk encryption platform`. No pin. `action_plan` writes the classic phase list. No `action_recipe`.
 
 Birth is `nds_cook`: partition (LUKS when encryption is on), hardware configuration, `nixos-install`, then the restore bundle.
 

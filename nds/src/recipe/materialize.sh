@@ -8,6 +8,10 @@
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
+nds_materialize() {
+    nds_recipe_materialize "$1"
+}
+
 nds_recipe_materialize() {
     local _nds_mat_name=$1
     local -n _nds_mat_aa=$1
@@ -20,7 +24,9 @@ nds_recipe_materialize() {
             nds_schema_isActive "$_nds_mat_name" "$_nds_mat_key" || continue
             _nds_mat_fn=${_NDS_SCHEMA_ATTR[$_nds_mat_key|generate]:-}
             [[ -n "$_nds_mat_fn" ]] || continue
-            [[ -z ${_nds_mat_aa[$_nds_mat_key]:-} ]] || continue
+            if [[ -n ${_nds_mat_aa[$_nds_mat_key]:-} && -f ${_nds_mat_aa[$_nds_mat_key]} ]]; then
+                continue
+            fi
             _nds_mat_when=${_NDS_SCHEMA_ATTR[$_nds_mat_key|generate_when]:-}
             [[ -n "$_nds_mat_when" ]] || continue
             _nds_schema_condHolds "$_nds_mat_name" "$_nds_mat_when" || continue

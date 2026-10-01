@@ -28,15 +28,13 @@ nds_bundle_quickstart() {
             "- **Hostname:** ${_qs_host}" \
             "- **Address:** ${_qs_ip}" \
             "- **NDS version:** ${_qs_ver}" \
-            "- **Kind:** ${_R[INSTALL_KIND]:-}" \
+            "- **Phases:** ${_R[COOK_PHASES]:-(none)}" \
             "- **Mode:** ${_R[INSTALL_MODE]:-local}" "" \
             "## What's in this bundle" "" \
             "| Path | What |" \
             "|------|------|" \
-            '| `nds-restore.recipe` | Settings recipe. Pass this file, or pass the whole bundle zip. |' \
-            '| `config/*` | Generated artifacts |' \
-            '| `logs/nds.log` | Session log |' \
-            '| `logs/nixosInstallation.log` | Installer output |'
+            '| `nds-restore.recipe` | Action and choices. Pass this file, or pass the whole bundle zip. |' \
+            '| `secrets/` | Passwords, LUKS, age keys, and git keys |'
         if [[ ${_R[ENCRYPTION]:-} == true && ${_R[ENCRYPTION_PASSWORD]:-} == true ]]; then
             printf '%s\n' '| `secrets/` | LUKS passphrase file |'
         fi
@@ -86,14 +84,11 @@ nds_bundle_quickstart() {
         printf '%s\n' "" "## Restore this install" "" \
             "Pass the recipe file from an unpacked bundle:" "" \
             '```bash' \
-            'export NDS_RECIPE_FILE="$PWD/nds-restore.recipe"' \
-            'export NDS_YES=true' \
-            'bash nds/src/app/main.sh apply "$NDS_RECIPE_FILE"' \
+            'bash nds/src/app/main.sh --import "$PWD/nds-restore.recipe"' \
             '```' "" \
-            "Or pass the whole bundle. \`apply\` reads \`nds-restore.recipe\` out of the zip:" "" \
+            "Or pass the whole bundle. The preview still runs:" "" \
             '```bash' \
-            'export NDS_YES=true' \
-            'bash nds/src/app/main.sh apply /path/to/nds_bundle.zip' \
+            'bash nds/src/app/main.sh --restore /path/to/nds_bundle.zip' \
             '```' "" \
             "Online docs: https://github.com/CodeAnthem/thundercast"
     } > "$_qs_out"

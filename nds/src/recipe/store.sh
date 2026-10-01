@@ -8,6 +8,8 @@
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
+declare -gA _NDS_ANSWERED=()
+
 nds_recipe_get() {
     local -n _nds_recipe_aa=$1
     local _nds_recipe_key=$2
@@ -18,6 +20,17 @@ nds_recipe_get() {
     fi
 }
 
+nds_default() {
+    nds_recipe_has "$1" "$2" && return 0
+    nds_recipe_set "$1" "$2" "$3"
+}
+
+nds_pin() {
+    nds_recipe_set "$1" "$2" "$3"
+    nds_schema_lock "$2"
+    _NDS_ANSWERED[$2]=1
+}
+
 nds_recipe_set() {
     local -n _nds_recipe_set_aa=$1
     if [[ ${_NDS_SCHEMA_ATTR[$2|locked]:-} == 1 ]]; then
@@ -26,6 +39,9 @@ nds_recipe_set() {
         return 1
     fi
     _nds_recipe_set_aa[$2]=$3
+    if [[ ${_NDS_MARK_ANSWERED:-} == 1 ]]; then
+        _NDS_ANSWERED[$2]=1
+    fi
 }
 
 nds_recipe_has() {

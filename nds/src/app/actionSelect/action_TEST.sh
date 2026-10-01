@@ -208,11 +208,45 @@ suite_action() {
     _action_menu=0
     _action_preview=0
     nds_action_select || { bts_fail "interactive select failed"; _action_drop; return; }
-    if [[ "$NDS_CURRENT_ACTION" == picked && "$_action_menu" -eq 0 && "$_action_preview" -eq 1 ]]; then
-        bts_pass "NDS_ACTION on a terminal still runs the preview"
+    if [[ "$NDS_CURRENT_ACTION" == picked && "$_action_menu" -eq 0 && "$_action_preview" -eq 0 ]] \
+        && declare -f action_preview >/dev/null; then
+        bts_pass "preview runs in a subshell; the setup is sourced in the parent after accept"
     else
-        bts_fail "interactive current='${NDS_CURRENT_ACTION}' menu=${_action_menu} preview=${_action_preview}"
+        bts_fail "interactive current='${NDS_CURRENT_ACTION}' preview=${_action_preview}"
     fi
+
+    bts_section "Preview subshell"
+    mkdir -p "${src}/leak"
+    printf '%s\n' \
+        '# Description: leak probe' \
+        '_leak_hook() { :; }' \
+        'eventRegister actionSelect.leak _leak_hook' \
+        'action_groups() { printf "%s\n" install; }' \
+        'action_preview() { ui_h "Leak"; ui_b "This must not register in the parent."; }' \
+        >"${src}/leak/setup.sh"
+    nds_action_discover local "$src" || { bts_fail "leak discover failed"; _action_drop; return; }
+    export NDS_ACTION=leak
+    export NDS_MODE=interactive
+    unset NDS_SKIP_ACTION_PREVIEW
+    _nds_action_ui_preview() { return 2; }
+    rc=0
+    nds_action_select 2>/dev/null || rc=$?
+    local hooks
+    hooks=${ eventHookCount actionSelect.leak; }
+    if [[ "$rc" -ne 0 && "$hooks" == 0 ]] && ! declare -f _leak_hook >/dev/null; then
+        bts_pass "a hook registered during preview does not exist after back"
+    else
+        bts_fail "leak after back rc=${rc} hooks='${hooks}'"
+    fi
+    _nds_action_ui_preview() { return 0; }
+    nds_action_select || { bts_fail "leak accept failed"; _action_drop; return; }
+    hooks=${ eventHookCount actionSelect.leak; }
+    if [[ "$hooks" == 1 ]] && declare -f _leak_hook >/dev/null; then
+        bts_pass "accept sources setup.sh in the parent and the hook registers"
+    else
+        bts_fail "leak after accept hooks='${hooks}'"
+    fi
+    eventUnregister actionSelect.leak _leak_hook || true
 
     _nds_action_ui_preview() { return 2; }
     rc=0

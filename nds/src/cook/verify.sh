@@ -44,8 +44,8 @@ _nds_cook_verify_boot() {
 
 nds_cook_verify() {
     local -n _R=$1
-    local _ver_kind=$2
-    local _ver_issue _ver_artifact _ver_dest _ver_host _ver_dir _ver_gen
+    local _ver_phases=" ${_R[COOK_PHASES]:-} "
+    local _ver_issue _ver_dest _ver_host _ver_dir _ver_gen
     _NDS_COOK_VERIFY_FAILS=()
     mountpoint -q "$_NDS_TARGET_ROOT" || _nds_cook_verify_fail "Target root is not mounted at ${_NDS_TARGET_ROOT}"
     nixos_systemProfileOk "$_NDS_TARGET_ROOT" || _nds_cook_verify_fail "NixOS system profile missing"
@@ -55,23 +55,26 @@ nds_cook_verify() {
         [[ -d "${_NDS_TARGET_ROOT}/nix/store" ]] || _nds_cook_verify_fail "Nix store missing on the installed system"
     fi
     mountpoint -q "${_NDS_TARGET_ROOT}/boot" || _nds_cook_verify_fail "Boot partition is not mounted at ${_NDS_TARGET_ROOT}/boot"
-    if [[ "$_ver_kind" == flake ]]; then
+    if [[ "$_ver_phases" == *" hardware_facter "* || "$_ver_phases" == *" write_generated_host "* ]]; then
         _ver_host=${_R[FLAKE_HOST]:-}
         _ver_dir="${_R[FLAKE_INSTALL_PATH]:-${_NDS_TARGET_ROOT}/etc/nixos}/${_R[FLAKE_HOST_DIR]:-hosts/x86_64-linux}/${_ver_host}"
-        _ver_artifact=${ hwconfig_artifactName flake; }
+    fi
+    if [[ "$_ver_phases" == *" hardware_facter "* ]]; then
         case "${_R[FLAKE_HARDWARE_PLACEMENT]:-host-dir}" in
-            skip) ;;
-            etc-nixos) _ver_dest="${_NDS_TARGET_ROOT}/etc/nixos/${_ver_artifact}" ;;
-            *) _ver_dest="${_ver_dir}/${_ver_artifact}" ;;
+            etc-nixos) _ver_dest="${_NDS_TARGET_ROOT}/etc/nixos/facter.json" ;;
+            *) _ver_dest="${_ver_dir}/facter.json" ;;
         esac
-        if [[ -n ${_ver_dest:-} ]]; then
-            [[ -s "$_ver_dest" ]] || _nds_cook_verify_fail "Hardware artifact missing: ${_ver_dest}"
-        fi
+        [[ -s "$_ver_dest" ]] || _nds_cook_verify_fail "Hardware artifact missing: ${_ver_dest}"
+    fi
+    if [[ "$_ver_phases" == *" write_generated_host "* ]]; then
         _ver_gen="${_ver_dir}/nds_generated.nix"
         [[ -f "$_ver_gen" ]] || _nds_cook_verify_fail "nds_generated.nix missing: ${_ver_gen}"
-    else
+    fi
+    if [[ "$_ver_phases" == *" write_classic "* ]]; then
         [[ -s "${_NDS_TARGET_ROOT}/etc/nixos/configuration.nix" ]] \
             || _nds_cook_verify_fail "configuration.nix missing"
+    fi
+    if [[ "$_ver_phases" == *" hardware_nix "* ]]; then
         [[ -s "${_NDS_TARGET_ROOT}/etc/nixos/hardware-configuration.nix" ]] \
             || _nds_cook_verify_fail "hardware-configuration.nix missing"
     fi
