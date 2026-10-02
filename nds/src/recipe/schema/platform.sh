@@ -13,7 +13,7 @@ _nds_platform_virt() {
         _nds_plat_virt=$(systemd-detect-virt 2>/dev/null || true)
         # -v reports the hypervisor. WSL reports "wsl" here and "microsoft" with -v.
         if [[ "$_nds_plat_virt" == wsl ]]; then
-            printf '%s\n' none
+            printf '%s\n' wsl
             return 0
         fi
         _nds_plat_virt=$(systemd-detect-virt -v 2>/dev/null || true)
@@ -56,15 +56,21 @@ nds_detect_platformType() {
 }
 
 nds_detect_platformTools() {
-    nds_detect_platformVm
+    local _nds_plat_virt
+    _nds_plat_virt=${ _nds_platform_virt; }
+    if [[ "$_nds_plat_virt" == wsl || "$_nds_plat_virt" == none ]]; then
+        printf '%s\n' false
+        return 0
+    fi
+    printf '%s\n' true
 }
 
 nds_schema_group platform "Platform"
 nds_schema_field platform PLATFORM_RUN_ON_VM bool --detect nds_detect_platformVm --label 'Running in a virtual machine'
 nds_schema_field platform PLATFORM_VM_TYPE choice --detect nds_detect_platformType \
     --when 'PLATFORM_RUN_ON_VM=true' \
-    --choices 'none|vmware|qemu|kvm|xen|hyperv|virtualbox|other' \
-    --labels 'none=Physical|vmware=VMware|qemu=QEMU|kvm=KVM|xen=Xen|hyperv=Hyper-V|virtualbox=VirtualBox|other=Other' \
+    --choices 'none|wsl|vmware|qemu|kvm|xen|hyperv|virtualbox|other' \
+    --labels 'none=Physical|wsl=WSL|vmware=VMware|qemu=QEMU|kvm=KVM|xen=Xen|hyperv=Hyper-V|virtualbox=VirtualBox|other=Other' \
     --label 'Virtual machine type'
 nds_schema_field platform PLATFORM_VM_GUEST_TOOLS bool --detect nds_detect_platformTools \
     --when 'PLATFORM_RUN_ON_VM=true' --label 'Install VM guest tools'
