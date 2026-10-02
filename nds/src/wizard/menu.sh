@@ -37,12 +37,31 @@ _nds_settings_show_pubkey() {
 _nds_settings_show() {
     local _set_value=$1
     case "$_set_value" in
-        true) printf '%s\n' yes ;;
-        false) printf '%s\n' no ;;
+        true|false)
+            if declare -f ui_formatBool >/dev/null; then
+                ui_formatBool "$_set_value"
+                printf '\n'
+            elif [[ "$_set_value" == true ]]; then
+                printf '%s\n' yes
+            else
+                printf '%s\n' no
+            fi
+            ;;
         "") printf '%s\n' '-' ;;
         ssh-*|ecdsa-*|sk-*) _nds_settings_show_pubkey "$_set_value" ;;
         *) printf '%s\n' "$_set_value" ;;
     esac
+}
+
+_nds_settings_row_label() {
+    local _set_name=$1 _set_key=$2 _set_label
+    _set_label=$(nds_schema_attr "$_set_key" label)
+    _set_label=${_set_label:-$_set_key}
+    if [[ $(nds_schema_attr "$_set_key" required) == 1 && -z $(nds_recipe_get "$_set_name" "$_set_key") ]]; then
+        printf '* %s\n' "$_set_label"
+        return 0
+    fi
+    printf '%s\n' "$_set_label"
 }
 
 # A generated secret is not a setting while its generate-when holds.
@@ -62,8 +81,8 @@ _nds_settings_summary() {
         _nds_settings_visible "$_set_name" "$_set_key" || continue
         _set_value=$(nds_recipe_get "$_set_name" "$_set_key")
         [[ -n "$_set_value" ]] || _set_value=$(nds_schema_attr "$_set_key" default)
-        _set_label=$(nds_schema_attr "$_set_key" label)
-        ui_kv "${_set_label:-$_set_key}" "$(_nds_settings_show "$_set_value")"
+        _set_label=$(_nds_settings_row_label "$_set_name" "$_set_key")
+        ui_kv "$_set_label" "$(_nds_settings_show "$_set_value")"
         _set_n=$((_set_n + 1))
     done < <(nds_schema_groupFields "$_set_group")
     [[ "$_set_n" -eq 0 ]] && ui_b "(no fields)"
@@ -144,9 +163,9 @@ _nds_settings_configure() {
         while IFS= read -r _set_key; do
             [[ -n "$_set_key" ]] || continue
             _nds_settings_visible "$_set_name" "$_set_key" || continue
-            _set_label=$(nds_schema_attr "$_set_key" label)
+            _set_label=$(_nds_settings_row_label "$_set_name" "$_set_key")
             _set_shown=$(_nds_settings_show "$(nds_recipe_get "$_set_name" "$_set_key")")
-            _set_opts+=("${_set_key}|${_set_label:-$_set_key}|${_set_shown}")
+            _set_opts+=("${_set_key}|${_set_label}|${_set_shown}")
         done < <(nds_schema_groupFields "$_set_group")
         if ((${#_set_opts[@]} == 0)); then
             _NDS_ASK_FORCE=
@@ -183,36 +202,20 @@ _nds_settings_configure() {
     done
 }
 
-_nds_settings_has_country() {
-    local _set_group
+_nds_settings_gaps() {
+    local _set_name=$1 _set_group _set_key
+    shift
+    _NDS_SETTINGS_GAPS=()
     for _set_group in "$@"; do
-        [[ "$_set_group" == region ]] || continue
-        nds_schema_hasKey REGION_COUNTRY && return 0
+        while IFS= read -r _set_key; do
+            [[ -n "$_set_key" ]] || continue
+            _nds_settings_visible "$_set_name" "$_set_key" || continue
+            [[ $(nds_schema_attr "$_set_key" required) == 1 ]] || continue
+            [[ -z $(nds_recipe_get "$_set_name" "$_set_key") ]] || continue
+            _NDS_SETTINGS_GAPS+=("$(_nds_settings_row_label "$_set_name" "$_set_key")")
+        done < <(nds_schema_groupFields "$_set_group")
     done
-    return 1
-}
-
-_nds_settings_summary_quick() {
-    local _set_name=$1 _set_country
-    ui_b "1. Quick Setup"
-    _set_country=$(nds_recipe_get "$_set_name" REGION_COUNTRY)
-    if [[ -n "$_set_country" ]]; then
-        ui_kv "Country" "$_set_country"
-    else
-        ui_kv "Country" "(manual region setup)"
-    fi
-}
-
-_nds_settings_configure_quick() {
-    local _set_rc=0
-    _NDS_ASK_FORCE=1
-    _nds_settings_clear
-    _nds_settings_title "Quick Setup"
-    ui_b "Country fills timezone, locale, and keyboard. Empty leaves them for Region."
-    ui_b ""
-    _nds_wizard_ask_one "$1" REGION_COUNTRY || _set_rc=$?
-    _NDS_ASK_FORCE=
-    [[ "$_set_rc" -eq 0 || "$_set_rc" -eq 2 ]] || return "$_set_rc"
+    ((${#_NDS_SETTINGS_GAPS[@]} > 0))
 }
 
 _nds_settings_ask_missing() {
@@ -241,25 +244,26 @@ _nds_settings_ask_missing() {
 }
 
 _nds_settings_draw() {
-    local _set_name=$1 _set_status=$2 _set_group _set_i=0 _set_quick=0
+    local _set_name=$1 _set_status=$2 _set_group _set_i=0 _set_gap
     shift 2
     _nds_settings_clear
     _nds_settings_title ""
-    [[ -n "$_set_status" ]] && ui_b "$_set_status" && ui_b ""
-    if _nds_settings_has_country "$@"; then
-        _nds_settings_summary_quick "$_set_name"
-        _set_quick=1
-        _set_i=1
-    fi
+    [[ -n "$_set_status" ]] && ui_b "$_set_status"
+    for _set_gap in "${_NDS_SETTINGS_GAPS[@]+"${_NDS_SETTINGS_GAPS[@]}"}"; do
+        ui_b "$_set_gap"
+    done
+    _NDS_SETTINGS_GAPS=()
+    [[ -n "$_set_status" ]] && ui_b ""
     for _set_group in "$@"; do
         _set_i=$((_set_i + 1))
         ui_b "${_set_i}. ${_NDS_SCHEMA_GROUP_TITLE[$_set_group]:-$_set_group}"
         _nds_settings_summary "$_set_name" "$_set_group"
     done
     ui_b ""
-    ui_b "Press a number to open a category, or x when ready."
+    ui_b "A star marks a required field that is still empty."
+    ui_b "x installs and erases the target disk."
+    ui_b "e saves a recipe in your home and stops."
     printf -v _NDS_SETTINGS_COUNT '%s' "$_set_i"
-    printf -v _NDS_SETTINGS_QUICK '%s' "$_set_quick"
 }
 
 nds_settings_menu() {
@@ -297,11 +301,14 @@ nds_settings_menu() {
             wheeldn) declare -f chrome_scrollDown >/dev/null && chrome_scrollDown 3 ;;
             home) declare -f chrome_scrollUp >/dev/null && chrome_scrollUp 1000000 ;;
             end) declare -f chrome_follow >/dev/null && chrome_follow ;;
-            x|X)
-                if _nds_settings_bad "$_set_name" "${_set_groups[@]}"; then
+            x|X|e|E)
+                if _nds_settings_gaps "$_set_name" "${_set_groups[@]}"; then
                     _set_status="Required fields are still empty."
                     _nds_settings_draw "$_set_name" "$_set_status" "${_set_groups[@]}"
                     continue
+                fi
+                if [[ "${_set_pick,,}" == e ]]; then
+                    _NDS_EXPORT_ONLY=1
                 fi
                 declare -f _ui_promptSessionEnd >/dev/null && _ui_promptSessionEnd
                 _nds_settings_chrome_end
@@ -310,20 +317,14 @@ nds_settings_menu() {
             [1-9])
                 declare -f _ui_promptSessionEnd >/dev/null && _ui_promptSessionEnd
                 _set_rc=0
-                if [[ ${_NDS_SETTINGS_QUICK:-0} == 1 && "$_set_pick" == 1 ]]; then
-                    _nds_settings_configure_quick "$_set_name" || _set_rc=$?
-                    _set_status="Quick Setup updated"
-                else
-                    _set_i=$_set_pick
-                    [[ ${_NDS_SETTINGS_QUICK:-0} == 1 ]] && _set_i=$((_set_pick - 1))
-                    if (( _set_i < 1 || _set_i > ${#_set_groups[@]} )); then
-                        declare -f _ui_promptSessionBegin >/dev/null && _ui_promptSessionBegin cbreak
-                        continue
-                    fi
-                    _set_group=${_set_groups[$((_set_i - 1))]}
-                    _nds_settings_configure "$_set_name" "$_set_group" || _set_rc=$?
-                    _set_status="${_NDS_SCHEMA_GROUP_TITLE[$_set_group]:-$_set_group} updated"
+                _set_i=$_set_pick
+                if (( _set_i < 1 || _set_i > ${#_set_groups[@]} )); then
+                    declare -f _ui_promptSessionBegin >/dev/null && _ui_promptSessionBegin cbreak
+                    continue
                 fi
+                _set_group=${_set_groups[$((_set_i - 1))]}
+                _nds_settings_configure "$_set_name" "$_set_group" || _set_rc=$?
+                _set_status="${_NDS_SCHEMA_GROUP_TITLE[$_set_group]:-$_set_group} updated"
                 if [[ "$_set_rc" -ne 0 ]]; then
                     _nds_settings_chrome_end
                     return "$_set_rc"

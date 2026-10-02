@@ -31,6 +31,9 @@ _nds_pipeline_hooks() {
     if declare -f hook_ask >/dev/null; then
         hook_ask "$_pipe_hook_name" || return 1
     fi
+    if [[ ${_NDS_EXPORT_ONLY:-} == 1 ]]; then
+        return 0
+    fi
     if [[ ${_NDS_RELOAD_HOOKS:-} == 1 ]]; then
         _NDS_RELOAD_HOOKS=0
         _nds_pipeline_hooks "$_pipe_hook_name"
@@ -160,6 +163,9 @@ nds_pipeline_recipe() {
         fi
     fi
     eventRun recipe.done "$_pipe_name" || return 1
+    if [[ ${_NDS_EXPORT_ONLY:-} == 1 ]]; then
+        return 0
+    fi
     nds_recipe_validate "$_pipe_name" || return 1
 }
 
@@ -198,6 +204,16 @@ nds_pipeline_run() {
     info "Action: ${NDS_CURRENT_ACTION}"
     declare -gA _NDS_RECIPE=()
     nds_pipeline_recipe _NDS_RECIPE local "$NDS_CURRENT_ACTION" || return 1
+    if [[ ${_NDS_EXPORT_ONLY:-} == 1 ]]; then
+        _pipe_sealed=$(nds_recipe_saveHome _NDS_RECIPE) || return 1
+        if declare -f chrome_end >/dev/null; then
+            chrome_end || true
+        fi
+        printf 'Recipe saved: %s\n' "$_pipe_sealed" >&2
+        printf 'Nothing was installed. Import it with --import %s\n' "$_pipe_sealed" >&2
+        info "Recipe: ${_pipe_sealed}"
+        return 0
+    fi
     if ! declare -f hook_material >/dev/null; then
         nds_recipe_materialize _NDS_RECIPE || return 1
     fi
@@ -207,9 +223,6 @@ nds_pipeline_run() {
     _pipe_sealed="${ nds_session_dir recipe; }/sealed.recipe"
     nds_recipe_seal _NDS_RECIPE "$_pipe_sealed" || return 1
     debug "Sealed recipe ${_pipe_sealed}"
-    if ! nds_skip install.confirm; then
-        nds_confirm "$_pipe_sealed" || return 1
-    fi
     if declare -f hook_cook >/dev/null; then
         hook_cook _NDS_RECIPE || return 1
     else

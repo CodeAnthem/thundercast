@@ -96,7 +96,10 @@ _nds_recipe_applyValue() {
         return 0
     fi
     if nds_schema_isLocked "$_nds_load_key"; then
-        warn "${_nds_load_key}: ignored locked key"
+        local -n _nds_load_aa=$_nds_load_name
+        if [[ -v "_nds_load_aa[$_nds_load_key]" && "${_nds_load_aa[$_nds_load_key]}" != "$_nds_load_value" ]]; then
+            warn "${_nds_load_key}: ignored locked key"
+        fi
         return 0
     fi
     _nds_load_type=${_NDS_SCHEMA_FIELD_TYPE[$_nds_load_key]}

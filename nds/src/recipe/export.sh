@@ -51,6 +51,34 @@ nds_recipe_export() {
     mv "$_nds_exp_tmp" "$_nds_exp_out"
 }
 
+nds_recipe_home() {
+    local _nds_exp_user _nds_exp_home=""
+    if declare -f nds_session_sshUser >/dev/null; then
+        _nds_exp_user=$(nds_session_sshUser)
+        if [[ -n "$_nds_exp_user" ]]; then
+            _nds_exp_home=$(getent passwd "$_nds_exp_user" 2>/dev/null | awk -F: '{print $6; exit}')
+        fi
+    fi
+    if [[ -z "$_nds_exp_home" || ! -d "$_nds_exp_home" ]]; then
+        _nds_exp_home=${HOME:-/tmp}
+    fi
+    printf '%s\n' "$_nds_exp_home"
+}
+
+# User choices for another machine. Session paths stay out. The action name stays in.
+nds_recipe_saveHome() {
+    local _nds_exp_name=$1 _nds_exp_home _nds_exp_out _nds_exp_action
+    _nds_exp_home=$(nds_recipe_home)
+    _nds_exp_out="${_nds_exp_home}/nds.recipe"
+    nds_recipe_export "$_nds_exp_name" "$_nds_exp_out" --portable || return 1
+    _nds_exp_action=$(nds_recipe_get "$_nds_exp_name" INSTALL_ACTION)
+    if [[ -n "$_nds_exp_action" ]] && ! grep -q '^INSTALL_ACTION=' "$_nds_exp_out"; then
+        printf 'INSTALL_ACTION="%s"\n' "$_nds_exp_action" >> "$_nds_exp_out"
+    fi
+    chmod 600 "$_nds_exp_out" || true
+    printf '%s\n' "$_nds_exp_out"
+}
+
 nds_recipe_seal() {
     local _nds_exp_name=$1 _nds_exp_out=$2 _nds_exp_n=0
     nds_recipe_validate "$_nds_exp_name" || _nds_exp_n=$?
