@@ -39,12 +39,10 @@ _nds_pipeline_hooks() {
         _nds_pipeline_hooks "$_pipe_hook_name"
         return 0
     fi
-    if declare -f nds_flake_note_disko >/dev/null; then
-        nds_flake_note_disko "$_pipe_hook_name"
-    fi
+    nds_flake_note_disko "$_pipe_hook_name"
     if declare -f hook_material >/dev/null; then
         hook_material "$_pipe_hook_name" || return 1
-    elif declare -f nds_recipe_materialize >/dev/null; then
+    else
         nds_recipe_materialize "$_pipe_hook_name"
     fi
     nds_recipe_validate "$_pipe_hook_name"
@@ -146,18 +144,12 @@ nds_pipeline_recipe() {
     if declare -f hook_access >/dev/null || declare -f hook_ask >/dev/null || declare -f hook_material >/dev/null; then
         _nds_pipeline_hooks "$_pipe_name"
     else
-        if declare -f nds_access_run >/dev/null; then
-            nds_access_run "$_pipe_name"
-        fi
+        nds_access_run "$_pipe_name"
         if nds_mode_is_interactive; then
             nds_wizard_fill "$_pipe_name"
         fi
-        if declare -f nds_flake_note_disko >/dev/null; then
-            nds_flake_note_disko "$_pipe_name"
-        fi
-        if declare -f nds_recipe_materialize >/dev/null; then
-            nds_recipe_materialize "$_pipe_name"
-        fi
+        nds_flake_note_disko "$_pipe_name"
+        nds_recipe_materialize "$_pipe_name"
         if declare -f action_recipe >/dev/null; then
             action_recipe "$_pipe_name"
         fi
@@ -206,9 +198,7 @@ nds_pipeline_run() {
     nds_pipeline_recipe _NDS_RECIPE local "$NDS_CURRENT_ACTION" || return 1
     if [[ ${_NDS_EXPORT_ONLY:-} == 1 ]]; then
         _pipe_sealed=$(nds_recipe_saveHome _NDS_RECIPE) || return 1
-        if declare -f chrome_end >/dev/null; then
-            chrome_end || true
-        fi
+        chrome_end || true
         printf 'Recipe saved: %s\n' "$_pipe_sealed" >&2
         printf 'Nothing was installed. Import it with --import %s\n' "$_pipe_sealed" >&2
         info "Recipe: ${_pipe_sealed}"
@@ -223,6 +213,9 @@ nds_pipeline_run() {
     _pipe_sealed="${ nds_session_dir recipe; }/sealed.recipe"
     nds_recipe_seal _NDS_RECIPE "$_pipe_sealed" || return 1
     debug "Sealed recipe ${_pipe_sealed}"
+    if ! nds_skip install.confirm; then
+        nds_confirm "$_pipe_sealed" || return 1
+    fi
     if declare -f hook_cook >/dev/null; then
         hook_cook _NDS_RECIPE || return 1
     else

@@ -67,7 +67,7 @@ nds_confirm() {
     local _con_file=$1
     local -A R=()
     local _con_line _con_rc=0 _con_strategy _con_mode _con_host _con_path _con_source
-    nds_schema_enableAll || return 1
+    ui_section "Confirm"
     nds_recipe_loadFile R "$_con_file" || return 1
     _con_mode=${R[INSTALL_MODE]:-local}
     _con_strategy=${R[DISK_STRATEGY]:-nds}

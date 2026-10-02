@@ -32,7 +32,7 @@ nds_generate_password() {
     _nds_gen_len=${ _nds_generate_passwordLength "$1" "$_nds_gen_key"; }
     [[ "$_nds_gen_len" =~ ^[0-9]+$ && "$_nds_gen_len" -gt 0 ]] || return 1
     _nds_gen_raw=$(LC_ALL=C tr -dc 'A-Za-z0-9' < <(head -c "$((_nds_gen_len * 8 + 128))" /dev/urandom))
-    printf '%s\n' "${_nds_gen_raw:0:_nds_gen_len}" > "$_nds_gen_dest" || return 1
+    printf '%s' "${_nds_gen_raw:0:_nds_gen_len}" > "$_nds_gen_dest" || return 1
     chmod 600 "$_nds_gen_dest"
 }
 

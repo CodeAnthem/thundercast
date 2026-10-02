@@ -159,6 +159,7 @@ _cook_run_region() {
 nds_cook_run() {
     local -n R=$1
     local _cook_list=$2
+    ui_section "Install"
     nds_cook_preflight "$1"
     debug "Cook phases ${_cook_list:-<none>}"
     debug "Target root ${_NDS_TARGET_ROOT}"

@@ -224,7 +224,7 @@ suite_classic_config() {
     assert_contains "$content" 'matchConfig.Type = "ether"' "remote-unlock configuration.nix"
     assert_not_contains "$content" 'matchConfig.Name = "eth0"' "remote-unlock configuration.nix"
     assert_contains "$content" 'boot.initrd.availableKernelModules' "remote-unlock configuration.nix"
-    assert_contains "$content" 'command="systemctl default 2>/dev/null"' "remote-unlock configuration.nix"
+    assert_contains "$content" 'command="systemd-tty-ask-password-agent"' "remote-unlock configuration.nix"
     assert_contains "$content" 'RequiredForOnline = "routable"' "remote-unlock configuration.nix"
     assert_contains "$content" 'boot.initrd.systemd.network.enable = true' "remote-unlock configuration.nix"
     assert_contains "$content" 'dhcpV4Config.ClientIdentifier = "mac"' "remote-unlock configuration.nix"

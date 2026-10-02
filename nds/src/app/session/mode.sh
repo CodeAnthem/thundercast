@@ -21,9 +21,7 @@ nds_mode_resolve() {
         NDS_MODE=interactive
     fi
     export NDS_MODE
-    if declare -f chrome_setSubtitle >/dev/null; then
-        chrome_setSubtitle "$NDS_MODE"
-    fi
+    chrome_setSubtitle "$NDS_MODE"
 }
 
 nds_mode_is_unattended() {

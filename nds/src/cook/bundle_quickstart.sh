@@ -10,7 +10,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, 
 
 nds_bundle_quickstart() {
     local -n _R=$1
-    local _qs_out=$2 _qs_ver="unknown" _qs_host _qs_ip _qs_port _qs_user
+    local _qs_out=$2 _qs_ver="unknown" _qs_host _qs_ip _qs_port _qs_user _qs_list _qs_bit
+    local -a _qs_bits=()
     local _qs_file
     _qs_file="$(dirname "${BASH_SOURCE[0]}")/../VERSION"
     [[ -f "$_qs_file" ]] && _qs_ver=$(<"$_qs_file")
@@ -28,21 +29,29 @@ nds_bundle_quickstart() {
             "- **Hostname:** ${_qs_host}" \
             "- **Address:** ${_qs_ip}" \
             "- **NDS version:** ${_qs_ver}" \
-            "- **Phases:** ${_R[COOK_PHASES]:-(none)}" \
             "- **Mode:** ${_R[INSTALL_MODE]:-local}" "" \
             "## What's in this bundle" "" \
             "| Path | What |" \
             "|------|------|" \
-            '| `nds-restore.recipe` | Action and choices. Pass this file, or pass the whole bundle zip. |' \
-            '| `secrets/` | Passwords, LUKS, age keys, and git keys |'
+            '| `nds-restore.recipe` | Action and choices. Pass this file, or pass the whole bundle zip. |'
+        _qs_bits=()
+        [[ -n ${_R[ACCESS_ADMIN_PASSWORD_FILE]:-} ]] && _qs_bits+=("admin password")
         if [[ ${_R[ENCRYPTION]:-} == true && ${_R[ENCRYPTION_PASSWORD]:-} == true ]]; then
-            printf '%s\n' '| `secrets/` | LUKS passphrase file |'
+            _qs_bits+=("LUKS passphrase")
         fi
         if [[ ${_R[ENCRYPTION]:-} == true && ${_R[ENCRYPTION_KEY]:-} == true ]]; then
-            printf '%s\n' '| `secrets/` | LUKS keyfile — copy it to the USB before reboot |'
+            _qs_bits+=("LUKS keyfile (copy it to the USB before reboot)")
         fi
-        if [[ -n ${_R[GIT_KEYS_DIR]:-} ]]; then
-            printf '%s\n' '| `secrets/git/*` | Private SSH keys for flake access |'
+        [[ -n ${_R[GIT_KEYS_DIR]:-} ]] && _qs_bits+=("git keys in secrets/git")
+        if ((${#_qs_bits[@]})); then
+            _qs_list=""
+            for _qs_bit in "${_qs_bits[@]}"; do
+                [[ -n "$_qs_list" ]] && _qs_list+=", "
+                _qs_list+="$_qs_bit"
+            done
+            printf '%s\n' "| \`secrets/\` | ${_qs_list} |"
+        else
+            printf '%s\n' '| `secrets/` | Generated secret files |'
         fi
         if [[ -n ${_R[TOOLKIT_AGE_KEY_FILE]:-} || ${_R[INSTALL_ACTION]:-} == toolkit ]]; then
             printf '%s\n\n%s\n%s\n' "" "## Operator keys (keep this zip)" \
@@ -53,7 +62,7 @@ nds_bundle_quickstart() {
                 "Unlock the disk before login. The initrd SSH server listens on port ${_R[ENCRYPTION_REMOTE_PORT]:-2222} as root." \
                 "Use the private key that matches the public key installed during setup." "" \
                 '```bash' \
-                "ssh -p ${_R[ENCRYPTION_REMOTE_PORT]:-2222} -i /path/to/unlock-key -o IdentitiesOnly=yes root@${_qs_ip}" \
+                "ssh -p ${_R[ENCRYPTION_REMOTE_PORT]:-2222} -o IdentitiesOnly=yes root@${_qs_ip} -i /path/to/unlock-key" \
                 '```' "" \
                 "### Initrd host key vs your unlock key" "" \
                 "The initrd host key identifies the machine. Your unlock key is the client key and is not in this zip."
@@ -89,7 +98,6 @@ nds_bundle_quickstart() {
             "Or pass the whole bundle. The preview still runs:" "" \
             '```bash' \
             'bash nds/src/app/main.sh --restore /path/to/nds_bundle.zip' \
-            '```' "" \
-            "Online docs: https://github.com/CodeAnthem/thundercast"
+            '```'
     } > "$_qs_out"
 }

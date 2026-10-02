@@ -93,7 +93,7 @@ boot.initrd.network.enable = true;
 boot.initrd.network.ssh = {
   enable = true;
   port = @@REMOTE_PORT@@;
-  authorizedKeys = [ ''command="systemctl default 2>/dev/null" @@SSH_KEY@@'' ];
+  authorizedKeys = [ ''command="systemd-tty-ask-password-agent" @@SSH_KEY@@'' ];
   hostKeys = [ "/etc/secrets/initrd/ssh_host_ed25519_key" ];
 };
 boot.initrd.systemd.enable = true;

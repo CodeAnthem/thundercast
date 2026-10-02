@@ -38,14 +38,8 @@ _nds_settings_show() {
     local _set_value=$1
     case "$_set_value" in
         true|false)
-            if declare -f ui_formatBool >/dev/null; then
-                ui_formatBool "$_set_value"
-                printf '\n'
-            elif [[ "$_set_value" == true ]]; then
-                printf '%s\n' yes
-            else
-                printf '%s\n' no
-            fi
+            ui_formatBool "$_set_value"
+            printf '\n'
             ;;
         "") printf '%s\n' '-' ;;
         ssh-*|ecdsa-*|sk-*) _nds_settings_show_pubkey "$_set_value" ;;
@@ -61,7 +55,7 @@ _nds_settings_row_label() {
         printf '* %s\n' "$_set_label"
         return 0
     fi
-    printf '%s\n' "$_set_label"
+    printf '  %s\n' "$_set_label"
 }
 
 # A generated secret is not a setting while its generate-when holds.
@@ -103,53 +97,34 @@ _nds_settings_bad() {
 
 _nds_settings_read_key() {
     local _set_dest=$1 _set_tok=""
-    if ! declare -f _ui_promptGetKey >/dev/null; then
-        IFS= read -r -n1 _set_tok || return 1
-        printf -v "$_set_dest" '%s' "$_set_tok"
-        return 0
-    fi
     _ui_promptGetKey _set_tok one || return 1
     printf -v "$_set_dest" '%s' "$_set_tok"
 }
 
 _nds_settings_chrome_begin() {
     _NDS_SETTINGS_FOOTER=${__CHROME_FOOTER_ROWS:-1}
-    if declare -f chrome_setFooterRows >/dev/null; then
-        chrome_setFooterRows 0
-    fi
+    chrome_setFooterRows 0
 }
 
 _nds_settings_chrome_end() {
     _NDS_ASK_FORCE=
-    if declare -f chrome_setFooterRows >/dev/null; then
-        chrome_setFooterRows "${_NDS_SETTINGS_FOOTER:-1}"
-    fi
-    if declare -f chrome_setSubtitle >/dev/null; then
-        chrome_setSubtitle "${NDS_MODE:-interactive}"
-    fi
-    if declare -f _nds_chrome_subtitleIdle >/dev/null; then
-        _nds_chrome_subtitleIdle
-    fi
+    chrome_setFooterRows "${_NDS_SETTINGS_FOOTER:-1}"
+    chrome_setSubtitle "${NDS_MODE:-interactive}"
+    chrome_setHeader 1 -b 238 -f 250
 }
 
 _nds_settings_title() {
     local _set_cat=$1
-    if declare -f chrome_setSubtitle >/dev/null; then
-        if [[ -n "$_set_cat" ]]; then
-            chrome_setSubtitle "Configuration — ${_set_cat}"
-        else
-            chrome_setSubtitle "Configuration"
-        fi
+    if [[ -n "$_set_cat" ]]; then
+        chrome_setSubtitle "Configuration — ${_set_cat}"
+    else
+        chrome_setSubtitle "Configuration"
     fi
-    if declare -f _nds_chrome_subtitleWait >/dev/null; then
-        _nds_chrome_subtitleWait
-    fi
+    chrome_setHeader 1 -b 24 -f 255
 }
 
 _nds_settings_clear() {
-    if declare -f chrome_clear >/dev/null; then
-        chrome_clear
-    fi
+    chrome_clear
     ui_b ""
 }
 
@@ -260,9 +235,7 @@ _nds_settings_draw() {
         _nds_settings_summary "$_set_name" "$_set_group"
     done
     ui_b ""
-    ui_b "A star marks a required field that is still empty."
-    ui_b "x installs and erases the target disk."
-    ui_b "e saves a recipe in your home and stops."
+    ui_b "A star marks a required field that is still empty.    x continues to confirm.    e saves the recipe and stops."
     printf -v _NDS_SETTINGS_COUNT '%s' "$_set_i"
 }
 
@@ -278,29 +251,27 @@ nds_settings_menu() {
         return "$_set_rc"
     fi
     _nds_settings_draw "$_set_name" "" "${_set_groups[@]}"
-    if declare -f _ui_promptSessionBegin >/dev/null; then
-        _ui_promptSessionBegin cbreak || _set_rc=$?
-        if [[ "$_set_rc" -ne 0 ]]; then
-            _nds_settings_chrome_end
-            return "$_set_rc"
-        fi
+    _ui_promptSessionBegin cbreak || _set_rc=$?
+    if [[ "$_set_rc" -ne 0 ]]; then
+        _nds_settings_chrome_end
+        return "$_set_rc"
     fi
     while true; do
         _set_pick=""
         _set_rc=0
         _nds_settings_read_key _set_pick || _set_rc=$?
         if [[ "$_set_rc" -ne 0 ]]; then
-            declare -f _ui_promptSessionEnd >/dev/null && _ui_promptSessionEnd
+            _ui_promptSessionEnd
             _nds_settings_chrome_end
             return "$_set_rc"
         fi
         case "$_set_pick" in
-            pageup) declare -f chrome_scrollUp >/dev/null && chrome_scrollUp ;;
-            pagedown) declare -f chrome_scrollDown >/dev/null && chrome_scrollDown ;;
-            wheelup) declare -f chrome_scrollUp >/dev/null && chrome_scrollUp 3 ;;
-            wheeldn) declare -f chrome_scrollDown >/dev/null && chrome_scrollDown 3 ;;
-            home) declare -f chrome_scrollUp >/dev/null && chrome_scrollUp 1000000 ;;
-            end) declare -f chrome_follow >/dev/null && chrome_follow ;;
+            pageup) chrome_scrollUp ;;
+            pagedown) chrome_scrollDown ;;
+            wheelup) chrome_scrollUp 3 ;;
+            wheeldn) chrome_scrollDown 3 ;;
+            home) chrome_scrollUp 1000000 ;;
+            end) chrome_follow ;;
             x|X|e|E)
                 if _nds_settings_gaps "$_set_name" "${_set_groups[@]}"; then
                     _set_status="Required fields are still empty."
@@ -310,16 +281,16 @@ nds_settings_menu() {
                 if [[ "${_set_pick,,}" == e ]]; then
                     _NDS_EXPORT_ONLY=1
                 fi
-                declare -f _ui_promptSessionEnd >/dev/null && _ui_promptSessionEnd
+                _ui_promptSessionEnd
                 _nds_settings_chrome_end
                 return 0
                 ;;
             [1-9])
-                declare -f _ui_promptSessionEnd >/dev/null && _ui_promptSessionEnd
+                _ui_promptSessionEnd
                 _set_rc=0
                 _set_i=$_set_pick
                 if (( _set_i < 1 || _set_i > ${#_set_groups[@]} )); then
-                    declare -f _ui_promptSessionBegin >/dev/null && _ui_promptSessionBegin cbreak
+                    _ui_promptSessionBegin cbreak
                     continue
                 fi
                 _set_group=${_set_groups[$((_set_i - 1))]}
@@ -329,7 +300,7 @@ nds_settings_menu() {
                     _nds_settings_chrome_end
                     return "$_set_rc"
                 fi
-                declare -f _ui_promptSessionBegin >/dev/null && _ui_promptSessionBegin cbreak
+                _ui_promptSessionBegin cbreak
                 _nds_settings_draw "$_set_name" "$_set_status" "${_set_groups[@]}"
                 ;;
         esac
