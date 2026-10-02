@@ -80,7 +80,7 @@ nds_confirm() {
         ui_h "Ready to install"
     fi
     ui_b "Review the summary below. Installation does not start until you confirm at the end."
-    _nds_confirm_groups R
+    # _nds_confirm_groups R
     if [[ -n "$_con_host" ]]; then
         ui_h "Flake target"
         ui_i "${_con_path}#${_con_host} (source: ${_con_source}, mode: ${_con_mode})"
