@@ -9,7 +9,7 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 action_groups() {
-    printf '%s\n' install region network access boot disk encryption platform
+    printf '%s\n' install region network access boot disk encryption platform bundle
 }
 
 action_preview() {
@@ -19,7 +19,7 @@ action_preview() {
 }
 
 hook_ask() {
-    nds_ask_groups_if_empty "$1" region network access boot disk encryption platform
+    nds_ask_groups_if_empty "$1" region network access boot disk encryption platform bundle
 }
 
 hook_material() {

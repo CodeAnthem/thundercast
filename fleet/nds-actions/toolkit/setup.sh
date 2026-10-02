@@ -11,7 +11,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, 
 import_dir "${BASH_SOURCE[0]%/*}/logic" --depth 0
 
 action_groups() {
-    printf '%s\n' install toolkit flake git network access boot disk encryption platform
+    printf '%s\n' install toolkit flake git network access boot disk encryption platform bundle
 }
 
 action_preview() {
@@ -31,7 +31,7 @@ hook_ask() {
     nds_ask_if_empty "$1" FLAKE_HOST nds_ask_flakeHost
     nds_ask_if_empty "$1" TOOLKIT_CLONE_URL
     nds_flake_note_disko "$1"
-    nds_ask_groups_if_empty "$1" network access boot disk encryption platform
+    nds_ask_groups_if_empty "$1" network access boot disk encryption platform bundle
 }
 
 hook_material() {

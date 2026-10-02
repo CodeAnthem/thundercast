@@ -9,7 +9,7 @@
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, not run directly." >&2; exit 1; fi
 
 action_groups() {
-    printf '%s\n' install flake git network access boot disk encryption
+    printf '%s\n' install flake git network access boot disk encryption bundle
 }
 
 action_preview() {
@@ -29,7 +29,7 @@ hook_ask() {
         return 0
     fi
     nds_flake_note_disko "$1"
-    nds_ask_groups_if_empty "$1" network access boot disk encryption
+    nds_ask_groups_if_empty "$1" network access boot disk encryption bundle
 }
 
 hook_material() {

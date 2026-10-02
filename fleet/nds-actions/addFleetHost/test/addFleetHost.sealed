@@ -1,8 +1,4 @@
 # nds-recipe 1
-[cook]
-LEAF_PUSH_DIR="@SESSION@/work/leaf"
-LEAF_PUSH_MESSAGE="nds: new host webhost (role web)"
-BUNDLE_SAVE_ON_TARGET="false"
 [install]
 INSTALL_MODE="local"
 INSTALL_ACTION="addFleetHost"
@@ -41,3 +37,5 @@ ENCRYPTION_REMOTE_UNLOCK="false"
 ENCRYPTION_PASSWORD_AUTO="true"
 ENCRYPTION_PASSWORD_LENGTH="64"
 ENCRYPTION_PASSPHRASE_FILE="@SESSION@/secrets/ENCRYPTION_PASSPHRASE"
+[bundle]
+BUNDLE_SAVE_ON_TARGET="false"

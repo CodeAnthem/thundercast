@@ -327,7 +327,7 @@ suite_recipe() {
     rm -rf "$tmp"
 
     bts_section "Load"
-    nds_schema_enable region network access flake
+    nds_schema_enable region network access flake cook install
     _recipe_clear
     nds_recipe_loadFile R "${_RECIPE_FIX}/classic_min.recipe"
     got=${ nds_recipe_get R COOK_PHASES; }
@@ -494,7 +494,7 @@ suite_recipe() {
     nds_test_session_drop
 
     bts_section "Portable"
-    nds_schema_enable disk git
+    nds_schema_enable disk git cook install access
     _recipe_clear
     nds_recipe_set R COOK_PHASES 'disk write_classic'
     nds_recipe_set R INSTALL_MODE remote

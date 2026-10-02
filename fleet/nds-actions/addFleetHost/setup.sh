@@ -11,7 +11,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then echo "This script must be sourced, 
 import_dir "${BASH_SOURCE[0]%/*}/logic" --depth 0
 
 action_groups() {
-    printf '%s\n' install flake git scaffold network boot disk encryption
+    printf '%s\n' install flake git scaffold network boot disk encryption bundle
 }
 
 action_preview() {
@@ -28,7 +28,7 @@ hook_ask() {
     nds_ask_if_empty "$1" SCAFFOLD_MODE
     nds_ask_if_empty "$1" SCAFFOLD_ROLE
     nds_flake_note_disko "$1"
-    nds_ask_groups_if_empty "$1" network boot disk encryption
+    nds_ask_groups_if_empty "$1" network boot disk encryption bundle
 }
 
 hook_material() {

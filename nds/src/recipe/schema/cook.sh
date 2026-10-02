@@ -66,7 +66,4 @@ nds_schema_group cook "Cook" --check nds_check_phases
 nds_schema_field cook LEAF_PUSH_DIR dir
 nds_schema_field cook LEAF_PUSH_MESSAGE string
 nds_schema_field cook TARGET_SEED_DIR dir
-nds_schema_field cook BUNDLE_SAVE_ON_TARGET bool --default false \
-    --label 'Copy the bundle into the installed admin home'
 nds_schema_field cook COOK_PHASES string --label 'Cook phases'
-nds_schema_enable cook

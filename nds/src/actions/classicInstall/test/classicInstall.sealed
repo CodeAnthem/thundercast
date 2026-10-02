@@ -1,6 +1,4 @@
 # nds-recipe 1
-[cook]
-BUNDLE_SAVE_ON_TARGET="false"
 [install]
 INSTALL_MODE="local"
 INSTALL_ACTION="classicInstall"
@@ -38,3 +36,5 @@ ENCRYPTION_PASSWORD_LENGTH="64"
 ENCRYPTION_PASSPHRASE_FILE="@SESSION@/secrets/ENCRYPTION_PASSPHRASE"
 [platform]
 PLATFORM_RUN_ON_VM="false"
+[bundle]
+BUNDLE_SAVE_ON_TARGET="false"
